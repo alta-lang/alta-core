@@ -10,13 +10,13 @@ namespace AltaCore {
     class Variable: public ScopeItem {
       public:
         virtual const NodeType nodeType();
-        virtual Variable* clone();
-        virtual Variable* deepClone();
+        virtual std::shared_ptr<Node> clone();
+        virtual std::shared_ptr<Node> deepClone();
 
-        Type* type;
+        std::shared_ptr<Type> type;
         bool isLiteral = false;
 
-        Variable(std::string name, Type* type, Scope* parentScope = nullptr);
+        Variable(std::string name, std::shared_ptr<Type> type, std::shared_ptr<Scope> parentScope = nullptr);
     };
   };
 };

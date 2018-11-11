@@ -1,12 +1,12 @@
-#include "../include/altacore/ast/root-node.hpp"
-#include "../include/altacore/modules.hpp"
+#include "../../include/altacore/ast/root-node.hpp"
+#include "../../include/altacore/modules.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::RootNode::nodeType() {
   return NodeType::RootNode;
 };
 
 AltaCore::AST::RootNode::RootNode() {};
-AltaCore::AST::RootNode::RootNode(std::vector<AltaCore::AST::StatementNode*> _statements):
+AltaCore::AST::RootNode::RootNode(std::vector<std::shared_ptr<AltaCore::AST::StatementNode>> _statements):
   statements(_statements)
   {};
 
@@ -21,7 +21,7 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
       moduleName = (filePath.dirname() / filePath.filename()).uproot().toString("/");
     }
   }
-  $module = new DET::Module(moduleName);
+  $module = DET::Module::create(moduleName, filePath);
 
   for (auto& stmt: statements) {
     stmt->detail($module->scope);

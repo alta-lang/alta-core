@@ -1,4 +1,4 @@
-#include "../include/altacore/ast/function-definition-node.hpp"
+#include "../../include/altacore/ast/function-definition-node.hpp"
 #include <algorithm>
 
 const AltaCore::AST::NodeType AltaCore::AST::FunctionDefinitionNode::nodeType() {
@@ -7,10 +7,10 @@ const AltaCore::AST::NodeType AltaCore::AST::FunctionDefinitionNode::nodeType() 
 
 AltaCore::AST::FunctionDefinitionNode::FunctionDefinitionNode(
   std::string _name,
-  std::vector<AltaCore::AST::Parameter*> _parameters,
-  AltaCore::AST::Type* _returnType,
+  std::vector<std::shared_ptr<AltaCore::AST::Parameter>> _parameters,
+  std::shared_ptr<AltaCore::AST::Type> _returnType,
   std::vector<std::string> _modifiers,
-  AltaCore::AST::BlockNode* _body
+  std::shared_ptr<AltaCore::AST::BlockNode> _body
 ):
   name(_name),
   parameters(_parameters),
@@ -19,8 +19,8 @@ AltaCore::AST::FunctionDefinitionNode::FunctionDefinitionNode(
   body(_body)
   {};
 
-void AltaCore::AST::FunctionDefinitionNode::detail(AltaCore::DET::Scope* scope) {
-  std::vector<std::tuple<std::string, DET::Type*>> params;
+void AltaCore::AST::FunctionDefinitionNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
+  std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>>> params;
 
   for (auto& param: parameters) {
     param->detail(scope);
@@ -29,7 +29,7 @@ void AltaCore::AST::FunctionDefinitionNode::detail(AltaCore::DET::Scope* scope) 
 
   returnType->detail(scope);
 
-  $function = new DET::Function(scope, name, params, returnType->$type);
+  $function = DET::Function::create(scope, name, params, returnType->$type);
   scope->items.push_back($function);
 
   $function->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();

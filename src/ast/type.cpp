@@ -1,4 +1,4 @@
-#include "../include/altacore/ast/type.hpp"
+#include "../../include/altacore/ast/type.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::Type::nodeType() {
   return NodeType::Type;
@@ -9,7 +9,7 @@ AltaCore::AST::Type::Type(std::string _name, std::vector<uint8_t> _modifiers):
   modifiers(_modifiers)
   {};
 
-void AltaCore::AST::Type::detail(AltaCore::DET::Scope* scope) {
+void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
   DET::NativeType nt;
 
   if (name == "int") {
@@ -20,5 +20,5 @@ void AltaCore::AST::Type::detail(AltaCore::DET::Scope* scope) {
     throw std::runtime_error("non-native types aren't currently supported");
   }
   
-  $type = new DET::Type(nt, modifiers);
+  $type = std::make_shared<DET::Type>(nt, modifiers);
 };

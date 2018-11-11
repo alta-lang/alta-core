@@ -11,12 +11,12 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
-        ExpressionNode* expression = nullptr;
+        std::shared_ptr<ExpressionNode> expression = nullptr;
 
         ExpressionStatement();
-        ExpressionStatement(ExpressionNode* expression);
+        ExpressionStatement(std::shared_ptr<ExpressionNode> expression);
 
-        virtual void detail(DET::Scope* scope);
+        virtual void detail(std::shared_ptr<DET::Scope> scope);
     };
   };
 };

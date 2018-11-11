@@ -14,13 +14,13 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
-        std::vector<StatementNode*> statements;
+        std::vector<std::shared_ptr<StatementNode>> statements;
 
-        DET::Module* $module;
-        RootNode* parent = nullptr;
+        std::shared_ptr<DET::Module> $module;
+        std::shared_ptr<RootNode> parent = nullptr;
 
         RootNode();
-        RootNode(std::vector<StatementNode*> statements);
+        RootNode(std::vector<std::shared_ptr<StatementNode>> statements);
 
         void detail(Filesystem::Path filePath, std::string moduleName = "");
         void detail(std::string filePath, std::string moduleName = "");

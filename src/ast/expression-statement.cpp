@@ -1,15 +1,15 @@
-#include "../include/altacore/ast/expression-statement.hpp"
+#include "../../include/altacore/ast/expression-statement.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::ExpressionStatement::nodeType() {
   return NodeType::ExpressionStatement;
 };
 
 AltaCore::AST::ExpressionStatement::ExpressionStatement() {};
-AltaCore::AST::ExpressionStatement::ExpressionStatement(AltaCore::AST::ExpressionNode* _expression):
+AltaCore::AST::ExpressionStatement::ExpressionStatement(std::shared_ptr<AltaCore::AST::ExpressionNode> _expression):
   expression(_expression)
   {};
 
 
-void AltaCore::AST::ExpressionStatement::detail(AltaCore::DET::Scope* scope) {
+void AltaCore::AST::ExpressionStatement::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
   expression->detail(scope);
 };

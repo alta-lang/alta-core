@@ -11,12 +11,12 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
-        std::vector<StatementNode*> statements;
+        std::vector<std::shared_ptr<StatementNode>> statements;
 
         BlockNode();
-        BlockNode(std::vector<StatementNode*> statements);
+        BlockNode(std::vector<std::shared_ptr<StatementNode>> statements);
         
-        virtual void detail(DET::Scope* scope);
+        virtual void detail(std::shared_ptr<DET::Scope> scope);
     };
   };
 };

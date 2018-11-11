@@ -8,17 +8,17 @@
 
 namespace AltaCore {
   namespace DET {
-    class Type: public Node {
+    class Type: public Node, public std::enable_shared_from_this<Type> {
       public:
         virtual const NodeType nodeType();
-        virtual Type* clone();
-        virtual Type* deepClone();
+        virtual std::shared_ptr<Node> clone();
+        virtual std::shared_ptr<Node> deepClone();
 
         // why is this a static method and not a constructor?
         // because it can return `nullptr` if it doesn't find an
         // underlying type for the given expression, whereas with a
         // constructor, we can't do that
-        static Type* getUnderlyingType(AST::ExpressionNode* expression);
+        static std::shared_ptr<Type> getUnderlyingType(AST::ExpressionNode* expression);
 
         bool isNative = true;
         NativeType nativeTypeName = NativeType::Integer;
@@ -30,24 +30,24 @@ namespace AltaCore {
         /**
          * @brief Add a `ref` to this type
          */
-        Type* reference();
+        std::shared_ptr<Type> reference();
         /**
          * @brief Remove a `ref` from this type (if present)
          */
-        Type* dereference();
+        std::shared_ptr<Type> dereference();
         /**
          * @brief Add a `ptr` to this type
          */
-        Type* point();
+        std::shared_ptr<Type> point();
         /**
          * @brief Remove a `ptr` from this type (if present)
          */
-        Type* follow();
+        std::shared_ptr<Type> follow();
         /**
          * @brief Remove a `ref` or `ptr` from this type (if present)
          * Basically, decreases the indirection level by one, regardless of the kind of indirection
          */
-        Type* followBlindly();
+        std::shared_ptr<Type> followBlindly();
 
         Type(NativeType nativeTypeName, std::vector<uint8_t> modifiers);
     };

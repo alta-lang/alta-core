@@ -1,19 +1,23 @@
-#include "../include/altacore/ast/variable-definition-expression.hpp"
+#include "../../include/altacore/ast/variable-definition-expression.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::VariableDefinitionExpression::nodeType() {
   return NodeType::VariableDefinitionExpression;
 };
 
-AltaCore::AST::VariableDefinitionExpression::VariableDefinitionExpression(std::string _name, AltaCore::AST::Type* _type, AltaCore::AST::ExpressionNode* _initializationExpression):
+AltaCore::AST::VariableDefinitionExpression::VariableDefinitionExpression(
+  std::string _name,
+  std::shared_ptr<AltaCore::AST::Type> _type,
+  std::shared_ptr<AltaCore::AST::ExpressionNode> _initializationExpression
+):
   name(_name),
   type(_type),
   initializationExpression(_initializationExpression)
   {};
 
-void AltaCore::AST::VariableDefinitionExpression::detail(AltaCore::DET::Scope* scope) {
+void AltaCore::AST::VariableDefinitionExpression::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
   type->detail(scope);
 
-  $variable = new DET::Variable(name, type->$type, scope);
+  $variable = std::make_shared<DET::Variable>(name, type->$type, scope);
   scope->items.push_back($variable);
 
   if (initializationExpression != nullptr) {

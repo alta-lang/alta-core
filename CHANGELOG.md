@@ -6,6 +6,22 @@ This project follows [semantic versioning](https://semver.org).
 ## [Unreleased]
 Nothing yet.
 
+## [0.1.0] - 2018-11-11
+### Added
+#### General
+  * Smart pointers galore! Nearly all raw pointers were replaced with smart pointers, thus providing easy, automatic, and effortless memory management (quite necessary due to the huge amount of objects dynamically allocated in a project like this)
+#### AST
+  * New node:
+    * `AssignmentExpression`
+#### DET
+  * Certain classes now use factory-style construction (`create`) rather than straight-up constructors
+    * Affected classes are:
+      * `Function`
+      * `Module`
+    * Why? Because of smart pointers and the fact that `Scope`s contain `weak_ptr`s to their parents. Tried `enable_shared_from_this`, but that's a big no-no in constructors
+#### Palo (parser)
+  * Assignment expression parsing has been added
+
 ## [0.0.0] - 2018-11-08
 ### Added
 #### Waterwheel (lexer)

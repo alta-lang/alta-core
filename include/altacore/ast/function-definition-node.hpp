@@ -17,16 +17,16 @@ namespace AltaCore {
         virtual const NodeType nodeType();
 
         std::string name;
-        std::vector<Parameter*> parameters;
-        Type* returnType;
+        std::vector<std::shared_ptr<Parameter>> parameters;
+        std::shared_ptr<Type> returnType;
         std::vector<std::string> modifiers;
-        BlockNode* body;
+        std::shared_ptr<BlockNode> body;
 
-        DET::Function* $function;
+        std::shared_ptr<DET::Function> $function;
 
-        FunctionDefinitionNode(std::string name, std::vector<Parameter*> parameters, Type* returnType, std::vector<std::string> modifiers, BlockNode* body);
+        FunctionDefinitionNode(std::string name, std::vector<std::shared_ptr<Parameter>> parameters, std::shared_ptr<Type> returnType, std::vector<std::string> modifiers, std::shared_ptr<BlockNode> body);
 
-        virtual void detail(DET::Scope* scope);
+        virtual void detail(std::shared_ptr<DET::Scope> scope);
     };
   };
 };

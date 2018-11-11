@@ -1,35 +1,42 @@
-#include "../include/altacore/det/function.hpp"
+#include "../../include/altacore/det/function.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Function::nodeType() {
   return NodeType::Function;
 };
 
-AltaCore::DET::Function* AltaCore::DET::Function::clone() {
-  return new Function(*this);
+std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Function::clone() {
+  return std::make_shared<Function>(*this);
 };
 
-AltaCore::DET::Function* AltaCore::DET::Function::deepClone() {
-  Function* self = clone();
+std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Function::deepClone() {
+  auto self = std::dynamic_pointer_cast<Function>(clone());
   self->parameters.clear();
   for (auto& param: parameters) {
     auto& [name, type] = param;
-    self->parameters.push_back(std::make_tuple(name, type->deepClone()));
+    self->parameters.push_back(std::make_tuple(name, std::dynamic_pointer_cast<Type>(type->deepClone())));
   }
   self->parameterVariables.clear();
   for (auto& paramVar: parameterVariables) {
-    self->parameterVariables.push_back(paramVar->deepClone());
+    self->parameterVariables.push_back(std::dynamic_pointer_cast<Variable>(paramVar->deepClone()));
   }
-  self->scope = scope->deepClone();
+  self->scope = std::dynamic_pointer_cast<Scope>(scope->deepClone());
+  self->scope->parentFunction = self;
   return self;
 };
 
-AltaCore::DET::Function::Function(AltaCore::DET::Scope* _parentScope, std::string _name, std::vector<std::tuple<std::string, AltaCore::DET::Type*>> _parameters, AltaCore::DET::Type* _returnType):
-  ScopeItem(_name, _parentScope),
-  parameters(_parameters),
-  returnType(_returnType),
-  scope(new Scope(this))
-{
+std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::create(std::shared_ptr<AltaCore::DET::Scope> parentScope, std::string name, std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>>> parameters, std::shared_ptr<AltaCore::DET::Type> returnType) {
+  auto func = std::make_shared<Function>(parentScope, name);
+  func->parameters = parameters;
+  func->returnType = returnType;
+  func->scope = std::make_shared<Scope>(func);
+
   for (auto& param: parameters) {
-    parameterVariables.push_back(new Variable(std::get<0>(param), std::get<1>(param)->deepClone()));
+    func->parameterVariables.push_back(std::make_shared<Variable>(std::get<0>(param), std::dynamic_pointer_cast<Type>(std::get<1>(param)->deepClone())));
   }
+
+  return func;
 };
+
+AltaCore::DET::Function::Function(std::shared_ptr<AltaCore::DET::Scope> _parentScope, std::string _name):
+  ScopeItem(_name, _parentScope)
+  {};

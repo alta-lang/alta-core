@@ -1,20 +1,24 @@
-#include "../include/altacore/det/variable.hpp"
+#include "../../include/altacore/det/variable.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Variable::nodeType() {
   return NodeType::Variable;
 };
 
-AltaCore::DET::Variable* AltaCore::DET::Variable::clone() {
-  return new Variable(*this);
+std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Variable::clone() {
+  return std::make_shared<Variable>(*this);
 };
 
-AltaCore::DET::Variable* AltaCore::DET::Variable::deepClone() {
-  Variable* self = clone();
-  self->type = type->deepClone();
+std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Variable::deepClone() {
+  auto self = std::dynamic_pointer_cast<Variable>(clone());
+  self->type = std::dynamic_pointer_cast<Type>(type->deepClone());
   return self;
 };
 
-AltaCore::DET::Variable::Variable(std::string _name, AltaCore::DET::Type* _type, AltaCore::DET::Scope* _parentScope):
+AltaCore::DET::Variable::Variable(
+  std::string _name,
+  std::shared_ptr<AltaCore::DET::Type> _type,
+  std::shared_ptr<AltaCore::DET::Scope> _parentScope
+):
   ScopeItem(_name, _parentScope),
   type(_type)
   {};

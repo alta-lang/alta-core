@@ -1,14 +1,14 @@
-#include "../include/altacore/ast/return-directive-node.hpp"
+#include "../../include/altacore/ast/return-directive-node.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::ReturnDirectiveNode::nodeType() {
   return NodeType::ReturnDirectiveNode;
 };
 
-AltaCore::AST::ReturnDirectiveNode::ReturnDirectiveNode(AltaCore::AST::ExpressionNode* _expression):
+AltaCore::AST::ReturnDirectiveNode::ReturnDirectiveNode(std::shared_ptr<AltaCore::AST::ExpressionNode> _expression):
   expression(_expression)
   {};
 
-void AltaCore::AST::ReturnDirectiveNode::detail(AltaCore::DET::Scope* scope) {
+void AltaCore::AST::ReturnDirectiveNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
   if (expression != nullptr) {
     return expression->detail(scope);
   }

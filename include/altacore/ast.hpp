@@ -17,5 +17,6 @@
 #include "ast/variable-definition-expression.hpp"
 #include "ast/accessor.hpp"
 #include "ast/fetch.hpp"
+#include "ast/assignment-expression.hpp"
 
 #endif // ALTACORE_AST_HPP

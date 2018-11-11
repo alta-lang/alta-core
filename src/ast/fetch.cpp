@@ -1,4 +1,4 @@
-#include "../include/altacore/ast/fetch.hpp"
+#include "../../include/altacore/ast/fetch.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::Fetch::nodeType() {
   return NodeType::Fetch;
@@ -8,7 +8,7 @@ AltaCore::AST::Fetch::Fetch(std::string _query):
   query(_query)
   {};
 
-void AltaCore::AST::Fetch::detail(AltaCore::DET::Scope* scope) {
+void AltaCore::AST::Fetch::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
   auto items = scope->findAll(query);
 
   if (items.size() == 1) {

@@ -11,17 +11,19 @@ namespace AltaCore {
     class Module: public Node {
       public:
         virtual const NodeType nodeType();
-        virtual Module* clone();
-        virtual Module* deepClone();
+        virtual std::shared_ptr<Node> clone();
+        virtual std::shared_ptr<Node> deepClone();
+        
+        static std::shared_ptr<Module> create(std::string name, Filesystem::Path path = Filesystem::Path());
 
         std::string name;
         Filesystem::Path path;
-        Scope* scope;
-        Module* parent = nullptr;
-        std::vector<Module*> dependencies;
-        std::vector<Module*> dependents;
+        std::shared_ptr<Scope> scope;
+        std::shared_ptr<Module> parent = nullptr;
+        std::vector<std::shared_ptr<Module>> dependencies;
+        std::vector<std::shared_ptr<Module>> dependents;
 
-        Module(std::string name, Filesystem::Path path = Filesystem::Path());
+        Module();
     };
   };
 };

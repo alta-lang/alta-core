@@ -12,11 +12,11 @@ namespace AltaCore {
 
         std::string query;
 
-        DET::ScopeItem* $item;
+        std::shared_ptr<DET::ScopeItem> $item;
 
         Fetch(std::string query);
         
-        virtual void detail(DET::Scope* scope);
+        virtual void detail(std::shared_ptr<DET::Scope> scope);
     };
   };
 };

@@ -31,6 +31,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/variable-definition-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/accessor.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/fetch.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/assignment-expression.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

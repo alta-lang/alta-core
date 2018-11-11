@@ -15,11 +15,11 @@ namespace AltaCore {
         virtual const NodeType nodeType();
 
         std::string name;
-        Type* type;
+        std::shared_ptr<Type> type;
 
-        Parameter(std::string name, Type* type);
+        Parameter(std::string name, std::shared_ptr<Type> type);
 
-        virtual void detail(DET::Scope* scope);
+        virtual void detail(std::shared_ptr<DET::Scope> scope);
     };
   };
 };

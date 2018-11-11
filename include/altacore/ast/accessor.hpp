@@ -10,14 +10,14 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
-        AST::ExpressionNode* target;
+        std::shared_ptr<AST::ExpressionNode> target;
         std::string query;
 
-        DET::ScopeItem* $item;
+        std::shared_ptr<DET::ScopeItem> $item;
 
-        Accessor(AST::ExpressionNode* target, std::string query);
+        Accessor(std::shared_ptr<AST::ExpressionNode> target, std::string query);
 
-        virtual void detail(DET::Scope* scope);
+        virtual void detail(std::shared_ptr<DET::Scope> scope);
     };
   };
 };

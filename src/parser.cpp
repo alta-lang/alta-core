@@ -27,7 +27,7 @@ namespace AltaCore {
           }
         }
         if (!expectation.isToken) {
-          AST::Node* tmp = runRule(expectation.rule);
+          auto tmp = runRule(expectation.rule);
           if (tmp != nullptr) {
             ret.valid = true;
             ret.type.isToken = false;
@@ -68,13 +68,13 @@ namespace AltaCore {
     };
 
     // <helper-functions>
-    std::vector<AST::Parameter*> Parser::expectParameters() {
-      std::vector<AST::Parameter*> parameters;
+    std::vector<std::shared_ptr<AST::Parameter>> Parser::expectParameters() {
+      std::vector<std::shared_ptr<AST::Parameter>> parameters;
       Expectation param;
       param = expect(RuleType::Parameter);
       if (param.valid) {
         do {
-          AST::Parameter* parameter = dynamic_cast<AST::Parameter*>(param.item);
+          std::shared_ptr<AST::Parameter> parameter = std::dynamic_pointer_cast<AST::Parameter>(param.item);
           if (parameter == nullptr) throw std::runtime_error("oh no.");
           parameters.push_back(parameter);
           State state = currentState;
@@ -106,20 +106,20 @@ namespace AltaCore {
     };
     // </helper-functions>
 
-    AST::Node* Parser::runRule(RuleType rule) {
+    std::shared_ptr<AST::Node> Parser::runRule(RuleType rule) {
       if (rule == RuleType::Root) {
         // TODO: use custom `ParserError`s instead of throwing `std::runtime_error`s
-        std::vector<AST::StatementNode*> statements;
+        std::vector<std::shared_ptr<AST::StatementNode>> statements;
         Expectation exp;
         while ((exp = expect(RuleType::Statement)), exp.valid) {
-          auto stmt = dynamic_cast<AST::StatementNode*>(exp.item);
+          auto stmt = std::dynamic_pointer_cast<AST::StatementNode>(exp.item);
           if (stmt == nullptr) throw std::runtime_error("AST node given was not of the expected type");
           statements.push_back(stmt);
         }
         if (currentState.currentPosition < tokens.size()) {
           throw std::runtime_error("Oof."); // TODO: better error message. i'm just lazy right now
         }
-        return new AST::RootNode(statements);
+        return std::make_shared<AST::RootNode>(statements);
       } else if (rule == RuleType::Statement) {
         auto exp = expect({
           RuleType::FunctionDefinition,
@@ -128,17 +128,18 @@ namespace AltaCore {
         });
         expect(TokenType::Semicolon); // optional
         if (!exp.valid) return nullptr;
-        auto ret = dynamic_cast<AST::StatementNode*>(exp.item);
+        auto ret = std::dynamic_pointer_cast<AST::StatementNode>(exp.item);
         if (!exp.type.isToken && exp.type.rule == RuleType::Expression) {
-          auto expr = dynamic_cast<AST::ExpressionNode*>(exp.item);
+          auto expr = std::dynamic_pointer_cast<AST::ExpressionNode>(exp.item);
           if (expr == nullptr) throw std::runtime_error("wtf");
-          ret = new AST::ExpressionStatement(expr);
+          ret = std::make_shared<AST::ExpressionStatement>(expr);
         }
         return ret;
       } else if (rule == RuleType::Expression) {
         auto exp = expect({
           RuleType::IntegralLiteral,
           RuleType::VariableDefinition,
+          RuleType::Assignment,
           RuleType::Accessor,
           RuleType::Fetch,
         });
@@ -156,24 +157,24 @@ namespace AltaCore {
         auto returnType = expect(RuleType::Type);
         if (!returnType.valid) return nullptr;
         if (!expect(TokenType::OpeningBrace).valid) return nullptr;
-        std::vector<AST::StatementNode*> statements;
+        std::vector<std::shared_ptr<AST::StatementNode>> statements;
         Expectation stmt;
         while ((stmt = expect(RuleType::Statement)), stmt.valid) {
-          auto statement = dynamic_cast<AST::StatementNode*>(stmt.item);
+          auto statement = std::dynamic_pointer_cast<AST::StatementNode>(stmt.item);
           if (statement == nullptr) throw std::runtime_error("uhm...");
           statements.push_back(statement);
         }
         if (!expect(TokenType::ClosingBrace).valid) return nullptr;
-        return new AST::FunctionDefinitionNode(name.token.raw, parameters, dynamic_cast<AST::Type*>(returnType.item), modifiers, new AST::BlockNode(statements));
+        return std::make_shared<AST::FunctionDefinitionNode>(name.token.raw, parameters, std::dynamic_pointer_cast<AST::Type>(returnType.item), modifiers, std::make_shared<AST::BlockNode>(statements));
       } else if (rule == RuleType::Parameter) {
         auto name = expect(TokenType::Identifier);
         if (!name.valid) return nullptr;
         if (!expect(TokenType::Colon).valid) return nullptr;
         auto type = expect(RuleType::Type);
         if (!type.valid) return nullptr;
-        auto actualType = dynamic_cast<AST::Type*>(type.item);
+        auto actualType = std::dynamic_pointer_cast<AST::Type>(type.item);
         auto actualName = name.token.raw;
-        return new AST::Parameter(actualName, actualType);
+        return std::make_shared<AST::Parameter>(actualName, actualType);
       } else if (rule == RuleType::Type) {
         auto modifiers = expectModifiers(ModifierTargetType::Type);
         auto name = expect(TokenType::Identifier);
@@ -186,28 +187,31 @@ namespace AltaCore {
             modifierBitflags.push_back(0);
           } else if (modifier == "const") {
             bitFlag |= (uint8_t)AST::TypeModifierFlag::Constant;
+          } else if (modifier == "ref") {
+            bitFlag |= (uint8_t)AST::TypeModifierFlag::Reference;
+            modifierBitflags.push_back(0);
           }
         }
         if (modifierBitflags.back() == 0) {
           modifierBitflags.pop_back();
         }
         if (!name.valid) return nullptr;
-        return new AST::Type(name.token.raw, modifierBitflags);
+        return std::make_shared<AST::Type>(name.token.raw, modifierBitflags);
       } else if (rule == RuleType::IntegralLiteral) {
         auto integer = expect(TokenType::Integer);
         if (!integer.valid) return nullptr;
-        return new AST::IntegerLiteralNode(integer.token.raw);
+        return std::make_shared<AST::IntegerLiteralNode>(integer.token.raw);
       } else if (rule == RuleType::ReturnDirective) {
         auto keyword = expect(TokenType::Identifier);
         if (!(keyword.valid && keyword.token.raw == "return")) return nullptr;
         rulesToIgnore.push_back(RuleType::ReturnDirective);
         auto expr = expect(RuleType::Expression);
         rulesToIgnore.pop_back();
-        AST::ExpressionNode* exprNode = nullptr;
+        std::shared_ptr<AST::ExpressionNode> exprNode = nullptr;
         if (expr.valid) {
-          exprNode = dynamic_cast<AST::ExpressionNode*>(expr.item);
+          exprNode = std::dynamic_pointer_cast<AST::ExpressionNode>(expr.item);
         }
-        return new AST::ReturnDirectiveNode(exprNode);
+        return std::make_shared<AST::ReturnDirectiveNode>(exprNode);
       } else if (rule == RuleType::VariableDefinition) {
         auto mods = expectModifiers(ModifierTargetType::Variable);
         auto keyword = expect(TokenType::Identifier);
@@ -217,19 +221,19 @@ namespace AltaCore {
         if (!expect(TokenType::Colon).valid) return nullptr;
         auto type = expect(RuleType::Type);
         auto eq = expect(TokenType::EqualSign);
-        AST::ExpressionNode* initExpr = nullptr;
+        std::shared_ptr<AST::ExpressionNode> initExpr = nullptr;
         if (eq.valid) {
           auto expr = expect(RuleType::Expression);
           if (!expr.valid) return nullptr;
-          initExpr = dynamic_cast<AST::ExpressionNode*>(expr.item);
+          initExpr = std::dynamic_pointer_cast<AST::ExpressionNode>(expr.item);
         }
-        auto varDef = new AST::VariableDefinitionExpression(name.token.raw, dynamic_cast<AST::Type*>(type.item), initExpr);
+        auto varDef = std::make_shared<AST::VariableDefinitionExpression>(name.token.raw, std::dynamic_pointer_cast<AST::Type>(type.item), initExpr);
         varDef->modifiers = mods;
         return varDef;
       } else if (rule == RuleType::Fetch) {
         auto id = expect(TokenType::Identifier);
         if (!id.valid) return nullptr;
-        return new AST::Fetch(id.token.raw);
+        return std::make_shared<AST::Fetch>(id.token.raw);
       } else if (rule == RuleType::Accessor) {
         rulesToIgnore.push_back(RuleType::Accessor);
         auto exprExp = expect(RuleType::Expression);
@@ -239,23 +243,32 @@ namespace AltaCore {
         if (!dot.valid) return nullptr;
         auto queryExp = expect(TokenType::Identifier);
         if (!queryExp.valid) return nullptr;
-        auto acc = new AST::Accessor(dynamic_cast<AST::ExpressionNode*>(exprExp.item), queryExp.token.raw);
+        auto acc = std::make_shared<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(exprExp.item), queryExp.token.raw);
         while (true) {
           dot = expect(TokenType::Dot);
           if (!dot.valid) break;
           queryExp = expect(TokenType::Identifier);
           if (!queryExp.valid) break;
           auto tmp = acc;
-          acc = new AST::Accessor(acc, queryExp.token.raw);
+          acc = std::make_shared<AST::Accessor>(acc, queryExp.token.raw);
         }
         return acc;
+      } else if (rule == RuleType::Assignment) {
+        rulesToIgnore.push_back(RuleType::Assignment);
+        auto targetExp = expect(RuleType::Expression);
+        rulesToIgnore.pop_back();
+        if (!targetExp.valid) return nullptr;
+        if (!expect(TokenType::EqualSign).valid) return nullptr;
+        auto valueExp = expect(RuleType::Expression);
+        if (!valueExp.valid) return nullptr;
+        return std::make_shared<AST::AssignmentExpression>(std::dynamic_pointer_cast<AST::ExpressionNode>(targetExp.item), std::dynamic_pointer_cast<AST::ExpressionNode>(valueExp.item));
       }
       return nullptr;
     };
     void Parser::parse() {
       Expectation exp = expect(RuleType::Root);
       if (!exp.valid) return;
-      root = dynamic_cast<AST::RootNode*>(exp.item);
+      root = std::dynamic_pointer_cast<AST::RootNode>(exp.item);
     };
   };
 };

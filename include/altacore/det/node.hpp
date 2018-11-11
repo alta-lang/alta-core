@@ -2,14 +2,17 @@
 #define ALTACORE_DET_NODE_HPP
 
 #include "../det-shared.hpp"
+#include <memory>
 
 namespace AltaCore {
   namespace DET {
     class Node {
       public:
+        virtual ~Node() = default;
+
         virtual const NodeType nodeType();
-        virtual Node* clone();
-        virtual Node* deepClone();
+        std::shared_ptr<Node> clone();
+        std::shared_ptr<Node> deepClone();
     };
   };
 };

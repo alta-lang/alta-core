@@ -13,16 +13,18 @@ namespace AltaCore {
     class Function: public ScopeItem {
       public:
         virtual const NodeType nodeType();
-        virtual Function* clone();
-        virtual Function* deepClone();
+        virtual std::shared_ptr<Node> clone();
+        virtual std::shared_ptr<Node> deepClone();
 
-        std::vector<std::tuple<std::string, Type*>> parameters;
-        std::vector<Variable*> parameterVariables;
-        Type* returnType;
-        Scope* scope;
+        static std::shared_ptr<Function> create(std::shared_ptr<Scope> parentScope, std::string name, std::vector<std::tuple<std::string, std::shared_ptr<Type>>> parameters, std::shared_ptr<Type> returnType);
+
+        std::vector<std::tuple<std::string, std::shared_ptr<Type>>> parameters;
+        std::vector<std::shared_ptr<Variable>> parameterVariables;
+        std::shared_ptr<Type> returnType;
+        std::shared_ptr<Scope> scope;
         bool isLiteral;
 
-        Function(Scope* parentScope, std::string name, std::vector<std::tuple<std::string, Type*>> parameters, Type* returnType);
+        Function(std::shared_ptr<Scope> parentScope, std::string name);
     };
   };
 };

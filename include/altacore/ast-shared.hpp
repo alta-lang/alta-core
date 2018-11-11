@@ -23,6 +23,7 @@ namespace AltaCore {
       VariableDefinitionExpression,
       Accessor,
       Fetch,
+      AssignmentExpression,
     };
 
     static const char* const NodeType_names[] = {
@@ -41,6 +42,7 @@ namespace AltaCore {
       "VariableDefinitionExpression",
       "Accessor",
       "Fetch",
+      "AssignmentExpression",
     };
   };
 };

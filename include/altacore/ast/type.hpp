@@ -22,11 +22,11 @@ namespace AltaCore {
          */
         std::vector<uint8_t> modifiers;
 
-        DET::Type* $type;
+        std::shared_ptr<DET::Type> $type;
 
         Type(std::string name, std::vector<uint8_t> modifiers);
 
-        virtual void detail(DET::Scope* scope);
+        virtual void detail(std::shared_ptr<DET::Scope> scope);
     };
   };
 };

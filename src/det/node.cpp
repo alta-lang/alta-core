@@ -1,13 +1,13 @@
-#include "../include/altacore/det/node.hpp"
+#include "../../include/altacore/det/node.hpp"
+#include <memory>
 
 const AltaCore::DET::NodeType AltaCore::DET::Node::nodeType() {
   return NodeType::Node;
 };
 
-AltaCore::DET::Node* AltaCore::DET::Node::clone() {
-  return new Node(*this);
+std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Node::clone() {
+  return std::make_shared<Node>(*this);
 };
-
-AltaCore::DET::Node* AltaCore::DET::Node::deepClone() {
+std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Node::deepClone() {
   return clone();
 };

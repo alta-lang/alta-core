@@ -9,26 +9,26 @@
 
 namespace AltaCore {
   namespace DET {
-    class Scope: public Node {
+    class Scope: public Node, public std::enable_shared_from_this<Scope> {
       public:
         virtual const NodeType nodeType();
-        virtual Scope* clone();
-        virtual Scope* deepClone();
+        virtual std::shared_ptr<Node> clone();
+        virtual std::shared_ptr<Node> deepClone();
 
-        Scope* parent = nullptr;
-        Module* parentModule = nullptr;
-        Function* parentFunction = nullptr;
+        std::weak_ptr<Scope> parent;
+        std::weak_ptr<Module> parentModule;
+        std::weak_ptr<Function> parentFunction;
 
-        std::vector<ScopeItem*> items;
+        std::vector<std::shared_ptr<ScopeItem>> items;
         size_t relativeID = 0;
         size_t nextChildID = 0;
 
         Scope();
-        Scope(Scope* parent);
-        Scope(Module* parentModule);
-        Scope(Function* parentFunction);
+        Scope(std::shared_ptr<Scope> parent);
+        Scope(std::shared_ptr<Module> parentModule);
+        Scope(std::shared_ptr<Function> parentFunction);
 
-        std::vector<ScopeItem*> findAll(std::string name);
+        std::vector<std::shared_ptr<ScopeItem>> findAll(std::string name);
     };
   };
 };

@@ -8,9 +8,11 @@ namespace AltaCore {
   namespace AST {
     class Node {
       public:
+        virtual ~Node() = default;
+
         virtual const NodeType nodeType();
 
-        virtual void detail(DET::Scope* scope);
+        virtual void detail(std::shared_ptr<DET::Scope> scope);
     };
   };
 };

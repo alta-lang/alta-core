@@ -30,7 +30,8 @@ namespace AltaCore {
       },
       {
         "ptr",
-        "const"
+        "const",
+        "ref",
       },
     };
 
@@ -47,6 +48,7 @@ namespace AltaCore {
       VariableDefinition,
       Fetch,
       Accessor,
+      Assignment,
     };
 
     struct ExpectationType {
@@ -67,13 +69,19 @@ namespace AltaCore {
     struct Expectation {
       bool valid = false;
       ExpectationType type;
-      AST::Node* item = nullptr;
+      std::shared_ptr<AST::Node> item = nullptr;
       Token token;
 
       Expectation():
         valid(false),
         type(RuleType::None),
         item(nullptr),
+        token(Token())
+        {};
+      Expectation(ExpectationType _type, std::shared_ptr<AST::Node> _item):
+        valid(true),
+        type(_type),
+        item(_item),
         token(Token())
         {};
       Expectation(ExpectationType _type, AST::Node* _item):
@@ -112,13 +120,13 @@ namespace AltaCore {
         Expectation expect(ExpectationType expectation);
 
         // <helper-functions>
-        std::vector<AST::Parameter*> expectParameters();
+        std::vector<std::shared_ptr<AST::Parameter>> expectParameters();
         std::vector<std::string> expectModifiers(ModifierTargetType mtt);
         // </helper-functions>
 
-        AST::Node* runRule(RuleType rule);
+        std::shared_ptr<AST::Node> runRule(RuleType rule);
       public:
-        AST::RootNode* root;
+        std::shared_ptr<AST::RootNode> root;
 
         void parse();
 

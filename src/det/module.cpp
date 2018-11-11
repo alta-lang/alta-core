@@ -1,21 +1,27 @@
-#include "../include/altacore/det/module.hpp"
+#include "../../include/altacore/det/module.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Module::nodeType() {
   return NodeType::Module;
 };
 
-AltaCore::DET::Module* AltaCore::DET::Module::clone() {
-  return new Module(*this);
+std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Module::clone() {
+  return std::make_shared<Module>(*this);
 };
 
-AltaCore::DET::Module* AltaCore::DET::Module::deepClone() {
-  Module* self = clone();
-  self->scope = scope->deepClone();
+std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Module::deepClone() {
+  auto self = std::dynamic_pointer_cast<Module>(clone());
+  self->scope = std::dynamic_pointer_cast<Scope>(scope->deepClone());
+  self->scope->parentModule = self;
   return self;
 };
 
-AltaCore::DET::Module::Module(std::string _name, AltaCore::Filesystem::Path _path):
-  name(_name),
-  path(_path),
-  scope(new Scope(this))
-  {};
+std::shared_ptr<AltaCore::DET::Module> AltaCore::DET::Module::create(std::string name, AltaCore::Filesystem::Path path) {
+  auto mod = std::make_shared<Module>();
+  mod->name = name;
+  mod->path = path;
+  mod->scope = std::make_shared<Scope>(mod);
+
+  return mod;
+};
+
+AltaCore::DET::Module::Module() {};
