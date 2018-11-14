@@ -49,7 +49,12 @@ namespace AltaCore {
          */
         std::shared_ptr<Type> followBlindly();
 
-        Type(NativeType nativeTypeName, std::vector<uint8_t> modifiers);
+        bool isCompatiableWith(const Type& other);
+
+        Type(NativeType nativeTypeName, std::vector<uint8_t> modifiers = {});
+
+        // operator for `isCompatiableWith`
+        bool operator %(const Type& other);
     };
   };
 };

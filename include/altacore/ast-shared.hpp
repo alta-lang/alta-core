@@ -24,6 +24,9 @@ namespace AltaCore {
       Accessor,
       Fetch,
       AssignmentExpression,
+      BooleanLiteralNode,
+      BinaryOperation,
+      ImportStatement,
     };
 
     static const char* const NodeType_names[] = {
@@ -43,6 +46,16 @@ namespace AltaCore {
       "Accessor",
       "Fetch",
       "AssignmentExpression",
+      "BooleanLiteralNode",
+      "BinaryOperation",
+      "ImportStatement",
+    };
+
+    enum class OperatorType {
+      Addition,
+      Subtraction,
+      Multiplication,
+      Division,
     };
   };
 };

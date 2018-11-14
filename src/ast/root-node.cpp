@@ -1,5 +1,6 @@
 #include "../../include/altacore/ast/root-node.hpp"
 #include "../../include/altacore/modules.hpp"
+#include "../../include/altacore/ast/import-statement.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::RootNode::nodeType() {
   return NodeType::RootNode;
@@ -22,9 +23,14 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
     }
   }
   $module = DET::Module::create(moduleName, filePath);
+  $module->ast = shared_from_this();
 
   for (auto& stmt: statements) {
     stmt->detail($module->scope);
+    if (stmt->nodeType() == NodeType::ImportStatement) {
+      auto import = std::dynamic_pointer_cast<ImportStatement>(stmt);
+      $dependencyASTs.push_back(import->$importedAST);
+    }
   }
 };
 void AltaCore::AST::RootNode::detail(std::string filePath, std::string moduleName) {

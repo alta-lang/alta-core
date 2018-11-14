@@ -2,8 +2,10 @@
 #define ALTACORE_MODULES_HPP
 
 #include "fs.hpp"
+#include "det-shared.hpp"
 #include <string>
 #include <exception>
+#include <functional>
 
 namespace AltaCore {
   namespace Modules {
@@ -26,6 +28,7 @@ namespace AltaCore {
     };
 
     extern Filesystem::Path stlPath;
+    extern std::function<std::shared_ptr<AST::RootNode>(std::string importRequest, Filesystem::Path requestingModulePath)> parseModule;
     Filesystem::Path resolve(std::string importRequest, Filesystem::Path relativeTo);
     Filesystem::Path findInfo(Filesystem::Path moduleOrPackagePath);
     PackageInfo getInfo(Filesystem::Path moduleOrPackagePath, bool findInfo = true);

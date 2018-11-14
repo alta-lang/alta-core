@@ -7,6 +7,10 @@
 #include "../fs.hpp"
 
 namespace AltaCore {
+  namespace AST {
+    class RootNode; // forward declaration
+  };
+
   namespace DET {
     class Module: public Node {
       public:
@@ -19,9 +23,11 @@ namespace AltaCore {
         std::string name;
         Filesystem::Path path;
         std::shared_ptr<Scope> scope;
+        std::shared_ptr<Scope> exports;
         std::shared_ptr<Module> parent = nullptr;
         std::vector<std::shared_ptr<Module>> dependencies;
         std::vector<std::shared_ptr<Module>> dependents;
+        std::weak_ptr<AST::RootNode> ast;
 
         Module();
     };

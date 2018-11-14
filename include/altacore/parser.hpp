@@ -24,9 +24,11 @@ namespace AltaCore {
     static std::vector<const char*> modifiersForTargets[] = {
       {
         "literal",
+        "export",
       },
       {
         "literal",
+        "export",
       },
       {
         "ptr",
@@ -49,6 +51,11 @@ namespace AltaCore {
       Fetch,
       Accessor,
       Assignment,
+      AdditionOrSubtraction,
+      MultiplicationOrDivision,
+      ModuleOnlyStatement,
+      Import,
+      BooleanLiteral,
     };
 
     struct ExpectationType {
@@ -96,6 +103,8 @@ namespace AltaCore {
         item(nullptr),
         token(_token)
         {};
+      
+      explicit operator bool() const;
     };
 
     class State {
@@ -122,6 +131,7 @@ namespace AltaCore {
         // <helper-functions>
         std::vector<std::shared_ptr<AST::Parameter>> expectParameters();
         std::vector<std::string> expectModifiers(ModifierTargetType mtt);
+        bool expectKeyword(std::string keyword);
         // </helper-functions>
 
         std::shared_ptr<AST::Node> runRule(RuleType rule);

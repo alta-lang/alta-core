@@ -31,6 +31,10 @@ namespace AltaCore {
       Comma,
       EqualSign,
       Dot,
+      PlusSign,
+      MinusSign,
+      Asterisk,
+      ForwardSlash,
       LAST, // always keep this as last, it counts the number of items in the enum
     };
 
@@ -49,6 +53,10 @@ namespace AltaCore {
       ',',
       '=',
       '.',
+      '+',
+      '-',
+      '*',
+      '/',
       '\0',
     };
 

@@ -20,6 +20,7 @@ std::shared_ptr<AltaCore::DET::Module> AltaCore::DET::Module::create(std::string
   mod->name = name;
   mod->path = path;
   mod->scope = std::make_shared<Scope>(mod);
+  mod->exports = std::make_shared<Scope>(mod);
 
   return mod;
 };

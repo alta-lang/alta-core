@@ -26,11 +26,13 @@ namespace AltaCore {
     enum class NativeType {
       Integer,
       Byte,
+      Bool,
     };
 
     static const char* const NativeType_names[] = {
       "Integer",
       "Byte",
+      "Bool",
     };
 
 

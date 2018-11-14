@@ -1,5 +1,6 @@
 #include "../../include/altacore/det/type.hpp"
 #include "../../include/altacore/ast.hpp"
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Type::nodeType() {
   return NodeType::Type;
@@ -43,6 +44,12 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     } else {
       throw std::runtime_error("Only functions and variables have underlying types");
     }
+  } else if (exprType == ExpressionType::BooleanLiteralNode) {
+    return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
+  } else if (exprType == ExpressionType::BinaryOperation) {
+    auto binOp = dynamic_cast<AST::BinaryOperation*>(expression);
+    if (binOp == nullptr) throw std::runtime_error("wah.");
+    return getUnderlyingType(binOp->left.get());
   }
 
   return nullptr;
@@ -88,9 +95,17 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::followBlindly() {
   }
   return shared_from_this();
 };
+bool AltaCore::DET::Type::isCompatiableWith(const AltaCore::DET::Type& other) {
+  // TODO
+  return true;
+};
 
 AltaCore::DET::Type::Type(AltaCore::DET::NativeType _nativeTypeName, std::vector<uint8_t> _modifiers):
   isNative(true),
   nativeTypeName(_nativeTypeName),
   modifiers(_modifiers)
   {};
+
+bool AltaCore::DET::Type::operator %(const AltaCore::DET::Type& other) {
+  return isCompatiableWith(other);
+};

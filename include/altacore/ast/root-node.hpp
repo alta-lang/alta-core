@@ -10,13 +10,14 @@
 
 namespace AltaCore {
   namespace AST {
-    class RootNode: public Node {
+    class RootNode: public Node, public std::enable_shared_from_this<RootNode> {
       public:
         virtual const NodeType nodeType();
 
         std::vector<std::shared_ptr<StatementNode>> statements;
 
         std::shared_ptr<DET::Module> $module;
+        std::vector<std::shared_ptr<AST::RootNode>> $dependencyASTs;
         std::shared_ptr<RootNode> parent = nullptr;
 
         RootNode();

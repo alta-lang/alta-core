@@ -1,5 +1,6 @@
 #include "../../include/altacore/ast/function-definition-node.hpp"
 #include <algorithm>
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::FunctionDefinitionNode::nodeType() {
   return NodeType::FunctionDefinitionNode;
@@ -33,8 +34,15 @@ void AltaCore::AST::FunctionDefinitionNode::detail(std::shared_ptr<AltaCore::DET
   scope->items.push_back($function);
 
   $function->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
+  $function->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
 
   for (auto& stmt: body->statements) {
     stmt->detail($function->scope);
+  }
+
+  if ($function->isExport) {
+    if (auto mod = Util::getModule(scope.get()).lock()) {
+      mod->exports->items.push_back($function);
+    }
   }
 };

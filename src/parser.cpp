@@ -3,6 +3,10 @@
 
 namespace AltaCore {
   namespace Parser {
+    Expectation::operator bool() const {
+      return valid;
+    };
+
     Expectation Parser::expect(std::initializer_list<ExpectationType> expectations) {
       Expectation ret; // by default, Expectations are invalid
       const State stateAtStart = currentState;
@@ -104,6 +108,10 @@ namespace AltaCore {
       }
       return modifiers;
     };
+    bool Parser::expectKeyword(std::string keyword) {
+      auto exp = expect(TokenType::Identifier);
+      return (exp && exp.token.raw == keyword);
+    };
     // </helper-functions>
 
     std::shared_ptr<AST::Node> Parser::runRule(RuleType rule) {
@@ -111,7 +119,10 @@ namespace AltaCore {
         // TODO: use custom `ParserError`s instead of throwing `std::runtime_error`s
         std::vector<std::shared_ptr<AST::StatementNode>> statements;
         Expectation exp;
-        while ((exp = expect(RuleType::Statement)), exp.valid) {
+        while ((exp = expect({
+          RuleType::ModuleOnlyStatement,
+          RuleType::Statement,
+        })), exp.valid) {
           auto stmt = std::dynamic_pointer_cast<AST::StatementNode>(exp.item);
           if (stmt == nullptr) throw std::runtime_error("AST node given was not of the expected type");
           statements.push_back(stmt);
@@ -136,10 +147,14 @@ namespace AltaCore {
         }
         return ret;
       } else if (rule == RuleType::Expression) {
+        // lowest to highest precedence
         auto exp = expect({
-          RuleType::IntegralLiteral,
           RuleType::VariableDefinition,
           RuleType::Assignment,
+          RuleType::AdditionOrSubtraction,
+          RuleType::MultiplicationOrDivision,
+          RuleType::BooleanLiteral,
+          RuleType::IntegralLiteral,
           RuleType::Accessor,
           RuleType::Fetch,
         });
@@ -262,6 +277,152 @@ namespace AltaCore {
         auto valueExp = expect(RuleType::Expression);
         if (!valueExp.valid) return nullptr;
         return std::make_shared<AST::AssignmentExpression>(std::dynamic_pointer_cast<AST::ExpressionNode>(targetExp.item), std::dynamic_pointer_cast<AST::ExpressionNode>(valueExp.item));
+      } else if (rule == RuleType::AdditionOrSubtraction) {
+        // TODO: move the MDAS (as in, PEMDAS) logic into a reusable function
+        //       for now, the code here and in MultiplicationOrDivision has been copy-pasted
+        //       and edited where necessary (and that's not very DRY)
+        rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
+        auto leftExp = expect(RuleType::Expression);
+        rulesToIgnore.pop_back();
+        if (!leftExp.valid) return nullptr;
+
+        auto opExp = expect({
+          TokenType::PlusSign,
+          TokenType::MinusSign,
+        });
+        if (!opExp.valid) return nullptr;
+        auto op = AST::OperatorType::Addition;
+        if (opExp.token.type == TokenType::MinusSign) {
+          op = AST::OperatorType::Subtraction;
+        }
+
+        rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
+        auto rightExp = expect(RuleType::Expression);
+        rulesToIgnore.pop_back();
+        if (!rightExp.valid) return nullptr;
+
+        auto binOp = std::make_shared<AST::BinaryOperation>(op, std::dynamic_pointer_cast<AST::ExpressionNode>(leftExp.item), std::dynamic_pointer_cast<AST::ExpressionNode>(rightExp.item));
+
+        while ((opExp = expect({ TokenType::PlusSign, TokenType::MinusSign })), opExp.valid) {
+          if (opExp.token.type == TokenType::PlusSign) {
+            op = AST::OperatorType::Addition;
+          } else {
+            op = AST::OperatorType::Subtraction;
+          }
+
+          rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
+          rightExp = expect(RuleType::Expression);
+          rulesToIgnore.pop_back();
+          if (!rightExp.valid) break;
+
+          binOp = std::make_shared<AST::BinaryOperation>(op, std::dynamic_pointer_cast<AST::ExpressionNode>(binOp), std::dynamic_pointer_cast<AST::ExpressionNode>(rightExp.item));
+        }
+
+        return binOp;
+      } else if (rule == RuleType::MultiplicationOrDivision) {
+        rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
+        auto leftExp = expect(RuleType::Expression);
+        rulesToIgnore.pop_back();
+        if (!leftExp.valid) return nullptr;
+
+        auto opExp = expect({
+          TokenType::Asterisk,
+          TokenType::ForwardSlash,
+        });
+        if (!opExp.valid) return nullptr;
+        auto op = AST::OperatorType::Multiplication;
+        if (opExp.token.type == TokenType::ForwardSlash) {
+          op = AST::OperatorType::Division;
+        }
+
+        rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
+        auto rightExp = expect(RuleType::Expression);
+        rulesToIgnore.pop_back();
+        if (!rightExp.valid) return nullptr;
+
+        auto binOp = std::make_shared<AST::BinaryOperation>(op, std::dynamic_pointer_cast<AST::ExpressionNode>(leftExp.item), std::dynamic_pointer_cast<AST::ExpressionNode>(rightExp.item));
+
+        while ((opExp = expect({ TokenType::Asterisk, TokenType::ForwardSlash })), opExp.valid) {
+          if (opExp.token.type == TokenType::Asterisk) {
+            op = AST::OperatorType::Multiplication;
+          } else {
+            op = AST::OperatorType::Division;
+          }
+
+          rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
+          rightExp = expect(RuleType::Expression);
+          rulesToIgnore.pop_back();
+          if (!rightExp.valid) break;
+
+          binOp = std::make_shared<AST::BinaryOperation>(op, std::dynamic_pointer_cast<AST::ExpressionNode>(binOp), std::dynamic_pointer_cast<AST::ExpressionNode>(rightExp.item));
+        }
+
+        return binOp;
+      } else if (rule == RuleType::ModuleOnlyStatement) {
+        auto exp = expect({
+          RuleType::Import,
+        });
+        expect(TokenType::Semicolon); // optional
+        if (!exp.valid) return nullptr;
+        return std::dynamic_pointer_cast<AST::StatementNode>(exp.item);
+      } else if (rule == RuleType::Import) {
+        if (!expectKeyword("import")) return nullptr;
+        bool isAlias = false;
+        std::string modName;
+        std::vector<std::string> imports;
+        std::string alias;
+        if (expect(TokenType::OpeningBrace)) {
+          Expectation importExp = expect(TokenType::Identifier);
+          while (importExp) {
+            imports.push_back(importExp.token.raw);
+            if (!expect(TokenType::Comma)) break;
+            importExp = expect(TokenType::Identifier);
+          }
+          expect(TokenType::Comma); // optional trailing comma
+          if (!expect(TokenType::ClosingBrace)) return nullptr;
+          if (!expectKeyword("from")) return nullptr;
+          auto mod = expect(TokenType::String);
+          if (!mod) return nullptr;
+          modName = mod.token.raw.substr(1, mod.token.raw.length() - 2);
+        } else {
+          if (auto mod = expect(TokenType::String)) {
+            isAlias = true;
+            modName = mod.token.raw.substr(1, mod.token.raw.length() - 2);
+            if (!expectKeyword("as")) return nullptr;
+            auto aliasExp = expect(TokenType::Identifier);
+            if (!aliasExp) return nullptr;
+            alias = aliasExp.token.raw;
+          } else {
+            Expectation importExp;
+            bool isFirst = true;
+            while (importExp = expect(TokenType::Identifier)) {
+              if (importExp.token.raw == "from") break;
+              imports.push_back(importExp.token.raw);
+              if (isFirst) {
+                isFirst = false;
+              } else {
+                if (!expect(TokenType::Comma)) break;
+              }
+            }
+            if (imports.size() == 0) return nullptr; // braced cherry-pick imports can have 0, but not freestyle cherry-pick imports
+            expect(TokenType::Comma); // optional trailing comma
+            expectKeyword("from"); // we probably already got it in the while loop, but just in case, check for it here
+            auto module = expect(TokenType::String);
+            if (!module) return nullptr;
+            modName = module.token.raw.substr(1, module.token.raw.length() - 2);
+          }
+        }
+        if (isAlias) {
+          return std::make_shared<AST::ImportStatement>(modName, alias);
+        } else {
+          return std::make_shared<AST::ImportStatement>(modName, imports);
+        }
+      } else if (rule == RuleType::BooleanLiteral) {
+        if (expectKeyword("true")) {
+          return std::make_shared<AST::BooleanLiteralNode>(true);
+        } else if (expectKeyword("false")) {
+          return std::make_shared<AST::BooleanLiteralNode>(false);
+        }
       }
       return nullptr;
     };

@@ -1,9 +1,35 @@
-#include "../include/altacore/modules.hpp"
+#include "../include/altacore.hpp"
 #include <yaml-cpp/yaml.h>
+#include <fstream>
 
 namespace AltaCore {
   namespace Modules {
     Filesystem::Path stlPath;
+    std::function<std::shared_ptr<AST::RootNode>(std::string importRequest, Filesystem::Path requestingModulePath)> parseModule = [](std::string importRequest, Filesystem::Path requestingModulePath) -> std::shared_ptr<AST::RootNode> {
+      auto modPath = resolve(importRequest, requestingModulePath);
+      std::ifstream file(modPath.toString());
+      std::string line;
+      Lexer::Lexer lexer;
+
+      if (!file.is_open()) {
+        throw std::runtime_error("oh no.");
+      }
+
+      while (std::getline(file, line)) {
+        if (file.peek() != EOF) {
+          line += "\n";
+        }
+        lexer.feed(line);
+      }
+
+      file.close();
+
+      Parser::Parser parser(lexer.tokens);
+      parser.parse();
+      parser.root->detail(modPath);
+
+      return parser.root;
+    };
   };
 };
 
@@ -63,8 +89,11 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
 
   relativeTo = relativeTo.normalize();
   auto importPath = Path(importRequest, std::string(1, '/'));
-  if (importPath.extname() == ".alta") {
+  if (importPath.extname() == "alta") {
     // resolve locally
+    if (!relativeTo.isDirectory()) {
+      relativeTo = relativeTo.dirname();
+    }
     auto truePath = importPath.absolutify(relativeTo);
     if (truePath.exists()) {
       return truePath;

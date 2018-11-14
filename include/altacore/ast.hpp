@@ -18,5 +18,8 @@
 #include "ast/accessor.hpp"
 #include "ast/fetch.hpp"
 #include "ast/assignment-expression.hpp"
+#include "ast/boolean-literal-node.hpp"
+#include "ast/binary-operation.hpp"
+#include "ast/import-statement.hpp"
 
 #endif // ALTACORE_AST_HPP

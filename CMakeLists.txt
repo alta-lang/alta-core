@@ -15,6 +15,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/parser.cpp"
   "${PROJECT_SOURCE_DIR}/src/fs.cpp"
   "${PROJECT_SOURCE_DIR}/src/modules.cpp"
+  "${PROJECT_SOURCE_DIR}/src/util.cpp"
 
   # AST nodes
   "${PROJECT_SOURCE_DIR}/src/ast/node.cpp"
@@ -32,6 +33,9 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/accessor.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/fetch.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/assignment-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/boolean-literal-node.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/binary-operation.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/import-statement.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

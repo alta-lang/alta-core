@@ -22,7 +22,8 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Variable>> parameterVariables;
         std::shared_ptr<Type> returnType;
         std::shared_ptr<Scope> scope;
-        bool isLiteral;
+        bool isLiteral = false;
+        bool isExport = false;
 
         Function(std::shared_ptr<Scope> parentScope, std::string name);
     };

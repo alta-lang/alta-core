@@ -6,5 +6,6 @@
 #include "altacore/ast.hpp"
 #include "altacore/det.hpp"
 #include "altacore/modules.hpp"
+#include "altacore/util.hpp"
 
 #endif // ALTACORE_ALTACORE_HPP

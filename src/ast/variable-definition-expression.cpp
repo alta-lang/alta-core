@@ -1,4 +1,5 @@
 #include "../../include/altacore/ast/variable-definition-expression.hpp"
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::VariableDefinitionExpression::nodeType() {
   return NodeType::VariableDefinitionExpression;
@@ -25,4 +26,11 @@ void AltaCore::AST::VariableDefinitionExpression::detail(std::shared_ptr<AltaCor
   }
 
   $variable->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
+  $variable->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
+
+  if ($variable->isExport) {
+    if (auto mod = Util::getModule(scope.get()).lock()) {
+      mod->exports->items.push_back($variable);
+    }
+  }
 };

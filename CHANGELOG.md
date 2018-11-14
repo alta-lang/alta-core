@@ -6,6 +6,38 @@ This project follows [semantic versioning](https://semver.org).
 ## [Unreleased]
 Nothing yet.
 
+## [0.2.0] - 2018-11-13
+### Added
+#### Waterwheel (lexer)
+  * New tokens:
+    * Addition and subtraction signs (`+` and `-`)
+    * Asterisks and forward slashes (`*` and `/`)
+#### Palo (parser)
+  * `Expectation`s can now be coerced to `bool`s
+    * This allows easy validition (i.e. `if (someExpectation)` instead of `if (someExpectation.valid)`)
+    * Also makes their use with `expect` much more natural (e.g. `if (expect(TokenType::Identifier))` instead of `if (expect(TokenType::Identifier).valid)`)
+  * `expectKeyword` shortcut for keyword expectation in rules
+  * New rules:
+    * `ModuleOnlyStatement` = Exactly what it sounds like: statements that can only appear at the root of a module
+    * `ImportStatement` = Only cherry-pick imports for now (`import foo, bar, foobar from "somewhere.alta"`)
+    * `AdditionOrSubtraction` = Left-associative addition and subtraction
+    * `MultiplicationOrDivision` = Left-associative multiplication and division
+    * `BooleanLiteral` = `true` or `false`
+#### AST
+  * New nodes:
+    * `BinaryOperation`
+    * `BooleanLiteralNode`
+    * `ImportStatement`
+#### DET
+  * Underlying type retrieval for boolean literals
+  * Dedicated `exports` scope on module to keep track of only exports (instead of fishing for them in the normal scope)
+  * `isCompatibleWith` method for types declared (*not* properly implemented yet)
+    * Also, `%` operator for `Type`s is an operator for `isCompatibleWith`
+  * `isExport` properties on functions and variables
+#### Module System
+  * `parseModule` method added to automatically read, lex, parse, and detail a module and return it
+    * It's user overridable, so it can be changed to fit user needs
+
 ## [0.1.0] - 2018-11-11
 ### Added
 #### General
