@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <optional>
 #include "lexer.hpp"
 #include "ast.hpp"
 
@@ -56,55 +57,57 @@ namespace AltaCore {
       ModuleOnlyStatement,
       Import,
       BooleanLiteral,
+      FrontendDirective,
+      FrontendSubstitution,
     };
 
-    struct ExpectationType {
+    template<typename RT, typename TT> struct GenericExpectationType {
+      bool valid = false;
       bool isToken; // if true, it's a token, otherwise, it's a parser rule
       union {
-        RuleType rule;
-        TokenType token;
+        RT rule;
+        TT token;
       };
-      ExpectationType(RuleType _rule):
+      GenericExpectationType():
+        valid(false),
+        isToken(false)
+        {};
+      GenericExpectationType(RT _rule):
+        valid(true),
         isToken(false),
         rule(_rule)
         {};
-      ExpectationType(TokenType _token):
+      GenericExpectationType(TT _token):
+        valid(true),
         isToken(true),
         token(_token)
         {};
     };
-    struct Expectation {
+    template<typename RT, typename TT, typename T> struct GenericExpectation {
+      using ExpectationType = GenericExpectationType<RT, TT>;
+
       bool valid = false;
       ExpectationType type;
-      std::shared_ptr<AST::Node> item = nullptr;
+      std::optional<T> item = std::nullopt;
       Token token;
 
-      Expectation():
-        valid(false),
-        type(RuleType::None),
-        item(nullptr),
-        token(Token())
+      GenericExpectation():
+        valid(false)
         {};
-      Expectation(ExpectationType _type, std::shared_ptr<AST::Node> _item):
+      GenericExpectation(ExpectationType _type, T _item):
         valid(true),
         type(_type),
-        item(_item),
-        token(Token())
+        item(_item)
         {};
-      Expectation(ExpectationType _type, AST::Node* _item):
+      GenericExpectation(ExpectationType _type, Token _token):
         valid(true),
         type(_type),
-        item(_item),
-        token(Token())
-        {};
-      Expectation(ExpectationType _type, Token _token):
-        valid(true),
-        type(_type),
-        item(nullptr),
         token(_token)
         {};
       
-      explicit operator bool() const;
+      explicit operator bool() const {
+        return valid;
+      };
     };
 
     class State {
@@ -112,39 +115,63 @@ namespace AltaCore {
         size_t currentPosition = 0;
     };
 
-    class Parser {
+    template<typename RT, typename TT, class T> class GenericParser {
+      public:
+        using Expectation = GenericExpectation<RT, TT, T>;
+        using ExpectationType = GenericExpectationType<RT, TT>;
       private:
+        std::map<RT, size_t> loopCache;
+        std::map<size_t, std::vector<RT>> failed;
+      protected:
         std::vector<Token> tokens;
+        std::vector<RT> rulesToIgnore;
         State currentState;
-        std::map<RuleType, size_t> loopCache;
-        std::vector<RuleType> rulesToIgnore;
-        /**
-         * keeps an index of rules that failed at certain indexes.
-         * because why try the same rule again if we already know
-         * it failed at that exact spot? this improves speed incredibly
-         */
-        std::map<size_t, std::vector<RuleType>> failed;
 
         Expectation expect(std::initializer_list<ExpectationType> expectations);
-        Expectation expect(ExpectationType expectation);
+        Expectation expect(ExpectationType expectation) {
+          return expect({ expectation });
+        };
+        Expectation expectAnyToken();
 
+        virtual std::optional<T> runRule(RT rule) {
+          return std::nullopt;
+        };
+      public:
+        std::optional<T> root;
+
+        virtual void parse() {};
+        void reset() {
+          currentState = State();
+          rulesToIgnore.clear();
+          failed.clear();
+          loopCache.clear();
+          root = nullptr;
+        };
+
+        GenericParser(std::vector<Token> _tokens):
+          tokens(_tokens)
+          {};
+    };
+
+    class Parser: public GenericParser<RuleType, TokenType, std::shared_ptr<AST::Node>> {
+      private:
         // <helper-functions>
         std::vector<std::shared_ptr<AST::Parameter>> expectParameters();
         std::vector<std::string> expectModifiers(ModifierTargetType mtt);
         bool expectKeyword(std::string keyword);
         // </helper-functions>
-
-        std::shared_ptr<AST::Node> runRule(RuleType rule);
+      protected:
+        std::optional<std::shared_ptr<AST::Node>> runRule(RuleType rule);
       public:
-        std::shared_ptr<AST::RootNode> root;
-
         void parse();
 
         Parser(std::vector<Token> _tokens):
-          tokens(_tokens)
+          GenericParser(_tokens)
           {};
     };
   };
 };
+
+#include "generic-parser.tpp" // include the GenericParser implementation
 
 #endif // ALTACORE_PARSER_HPP

@@ -60,6 +60,16 @@ namespace AltaCore {
       if (setHanging) hangingRule = rule;
       return tokens.back();
     };
+    Token& Lexer::appendNewToken(const TokenType rule, std::string data, bool setHanging) {
+      Token token;
+      token.line = currentLine;
+      token.column = currentColumn;
+      token.type = rule;
+      token.raw = data;
+      tokens.push_back(token);
+      if (setHanging) hangingRule = rule;
+      return tokens.back();
+    };
     void Lexer::feed(const std::string data) {
       backlog.append(data);
       lex();
@@ -90,10 +100,34 @@ namespace AltaCore {
         }
 
         bool cont = false;
-        for (int i = 1; i < (int)TokenType::LAST + 1; i++) {
+        for (int j = 1; j < (int)TokenType::LAST + 1; j++) {
           bool ended = false;
-          if (runRule((TokenType)i, character, true, &ended)) {
-            appendNewToken((TokenType)i, character);
+          if ((TokenType)j == TokenType::Equality) {
+            if (character == '=' && backlog.length() > i + 1 && backlog[i + 1] == '=') {
+              appendNewToken(TokenType::Equality, "==");
+              cont = true;
+              hangingRule = TokenType::None;
+              i++; // skip the next character
+              break;
+            }
+          } else if ((TokenType)j == TokenType::And) {
+            if (character == '&' && backlog.length() > i + 1 && backlog[i + 1] == '&') {
+              appendNewToken(TokenType::And, "&&");
+              cont = true;
+              hangingRule = TokenType::None;
+              i++; // skip the next character
+              break;
+            }
+          } else if ((TokenType)j == TokenType::Or) {
+            if (character == '|' && backlog.length() > i + 1 && backlog[i + 1] == '|') {
+              appendNewToken(TokenType::Or, "||");
+              cont = true;
+              hangingRule = TokenType::None;
+              i++; // skip the next character
+              break;
+            }
+          } else if (runRule((TokenType)j, character, true, &ended)) {
+            appendNewToken((TokenType)j, character);
             cont = true;
             if (ended) hangingRule = TokenType::None;
             break;

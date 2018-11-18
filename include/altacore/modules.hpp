@@ -3,6 +3,7 @@
 
 #include "fs.hpp"
 #include "det-shared.hpp"
+#include "ast/root-node.hpp"
 #include <string>
 #include <exception>
 #include <functional>

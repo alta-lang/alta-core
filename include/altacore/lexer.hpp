@@ -19,9 +19,16 @@ namespace AltaCore {
     // btw, order matters here
     enum class TokenType {
       None,
+      
+      // <special-rules>
       Identifier,
       Integer,
       String,
+      Equality,
+      And,
+      Or,
+      // </special-rules>
+
       OpeningBrace,
       ClosingBrace,
       OpeningParenthesis,
@@ -35,11 +42,15 @@ namespace AltaCore {
       MinusSign,
       Asterisk,
       ForwardSlash,
+      AtSign, // or Ampersat?
       LAST, // always keep this as last, it counts the number of items in the enum
     };
 
     // '\0' is for complex characters that have special rules
     static const char TokenType_simpleCharacters[] = {
+      '\0',
+      '\0',
+      '\0',
       '\0',
       '\0',
       '\0',
@@ -57,6 +68,7 @@ namespace AltaCore {
       '-',
       '*',
       '/',
+      '@',
       '\0',
     };
 
@@ -65,6 +77,9 @@ namespace AltaCore {
       "Identifier",
       "Integer",
       "String",
+      "Equality",
+      "And",
+      "Or",
       "Opening brace",
       "Closing brace",
       "Opening parenthesis",
@@ -74,6 +89,7 @@ namespace AltaCore {
       "Comma",
       "EqualSign",
       "Dot",
+      "AtSign",
       "LAST", // shouldn't be necessary, but just in case ;)
     };
     
@@ -99,7 +115,7 @@ namespace AltaCore {
          */
         bool runRule(const TokenType rule, const char character, bool first, bool* ended);
         Token& appendNewToken(const TokenType rule, const char character, bool setHanging = true);
-
+        Token& appendNewToken(const TokenType rule, std::string data, bool setHanging = true);
       public:
         bool throwOnAbsence = false;
         std::vector<Token> tokens;

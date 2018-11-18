@@ -36,3 +36,19 @@ std::weak_ptr<AltaCore::DET::Module> AltaCore::Util::getModule(AltaCore::DET::Sc
   }
   return std::weak_ptr<AltaCore::DET::Module>();
 };
+
+std::string AltaCore::Util::unescape(std::string data) {
+  std::string result;
+
+  for (size_t i = 0; i < data.length(); i++) {
+    auto& character = data[i];
+    if (character == '\\' && i + 1 < data.length()) {
+      result += data[i + 1];
+      i++; // skip the next character
+    } else {
+      result += character;
+    }
+  }
+
+  return result;
+};

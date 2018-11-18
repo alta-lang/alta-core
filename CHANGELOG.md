@@ -6,6 +6,41 @@ This project follows [semantic versioning](https://semver.org).
 ## [Unreleased]
 Nothing yet.
 
+## [0.3.0] - 2018-11-18
+### Fixed
+#### Palo (parser)
+  * Fixed freestyle cherry-pick imports
+    * Previously, a single import done in this style would work fine, but multiple imports of this style wouldn't
+    * Fixed by imitating the braced cherry-pick imports logic
+### Added
+#### Palo (parser)
+  * Factored out most of the parser logic into its own generic class
+    * Customizable to accomodate any future parsing needs
+    * Might be able to move the actually parser logic into its own library 🤔
+#### Preprocessor
+  * Brand new AltaCore component
+  * Enables compile-time code alternation
+    * This is just a fancy way of saying that it allows different code to be enabled given certain conditions at compile time
+  * Currently supports 5 different directives:
+    * `if <expression>`
+    * `else if <expression>`
+    * `else`
+    * `define <definition-name> [value-expression]`
+    * `undefine <definition-name>`
+  * Sufficient variety of expressions:
+    * Boolean logic operators: `&&` and `||`
+    * Boolean literals: `true` and `false`
+    * String literals (e.g. `"foobar"`)
+    * Macro calls (e.g. `defined(foobar)`; note: only builtin macros are supported at the moment)
+    * Comparative operators: `==`  (only `==` is supported for now)
+  * Definition substitution (`@<definition-name>@`, where `<definition-name>` is the name of the definition to substitute)
+    * Not supported in string literals or import statements
+  * 4 different expression types:
+    * Boolean
+    * String
+    * Null
+    * Undefined
+
 ## [0.2.0] - 2018-11-13
 ### Added
 #### Waterwheel (lexer)

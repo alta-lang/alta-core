@@ -26,9 +26,10 @@ namespace AltaCore {
 
       Parser::Parser parser(lexer.tokens);
       parser.parse();
-      parser.root->detail(modPath);
+      auto root = std::dynamic_pointer_cast<AST::RootNode>(parser.root.value());
+      root->detail(modPath);
 
-      return parser.root;
+      return root;
     };
   };
 };

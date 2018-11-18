@@ -16,6 +16,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/fs.cpp"
   "${PROJECT_SOURCE_DIR}/src/modules.cpp"
   "${PROJECT_SOURCE_DIR}/src/util.cpp"
+  "${PROJECT_SOURCE_DIR}/src/preprocessor.cpp"
 
   # AST nodes
   "${PROJECT_SOURCE_DIR}/src/ast/node.cpp"
