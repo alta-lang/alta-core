@@ -6,6 +6,13 @@ This project follows [semantic versioning](https://semver.org).
 ## [Unreleased]
 Nothing yet.
 
+## [0.3.1] - 2018-11-18
+### Fixed
+#### DET
+  * Use the same `Type` nodes for a `Function`'s `parameterVariables` and `parameters`
+    * Previously, it would be deep cloned when populating the `parameterVariables` vector
+  * Assign the `Function`'s scope to the `parentScope` property of parameter variables
+
 ## [0.3.0] - 2018-11-18
 ### Fixed
 #### Palo (parser)

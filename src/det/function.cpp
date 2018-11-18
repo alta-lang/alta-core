@@ -30,8 +30,10 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::create(std::sh
   func->returnType = returnType;
   func->scope = std::make_shared<Scope>(func);
 
-  for (auto& param: parameters) {
-    func->parameterVariables.push_back(std::make_shared<Variable>(std::get<0>(param), std::dynamic_pointer_cast<Type>(std::get<1>(param)->deepClone())));
+  for (auto& [name, type]: parameters) {
+    auto var = std::make_shared<Variable>(name, type);
+    var->parentScope = func->scope;
+    func->parameterVariables.push_back(var);
   }
 
   return func;
