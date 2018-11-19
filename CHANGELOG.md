@@ -6,6 +6,13 @@ This project follows [semantic versioning](https://semver.org).
 ## [Unreleased]
 Nothing yet.
 
+## [0.4.0] - 2018-11-18
+### Added
+#### Waterwheel (lexer)
+  * New token: `Returns` (i.e. `->`)
+#### Palo (parser), AST, DET
+  * Function-pointer type support
+
 ## [0.3.1] - 2018-11-18
 ### Fixed
 #### DET

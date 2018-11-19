@@ -125,7 +125,6 @@ namespace AltaCore {
         return std::make_shared<AST::Parameter>(actualName, actualType);
       } else if (rule == RuleType::Type) {
         auto modifiers = expectModifiers(ModifierTargetType::Type);
-        auto name = expect(TokenType::Identifier);
         std::vector<uint8_t> modifierBitflags;
         modifierBitflags.push_back(0);
         for (auto& modifier: modifiers) {
@@ -143,8 +142,41 @@ namespace AltaCore {
         if (modifierBitflags.back() == 0) {
           modifierBitflags.pop_back();
         }
-        if (!name.valid) return std::nullopt;
-        return std::make_shared<AST::Type>(name.token.raw, modifierBitflags);
+
+        if (expect(TokenType::OpeningParenthesis)) {
+          std::vector<std::shared_ptr<AST::Type>> args;
+          auto firstType = expect(RuleType::Type);
+          if (expect(TokenType::Comma)) {
+            args.push_back(std::dynamic_pointer_cast<AST::Type>(firstType.item.value()));
+            auto next = expect(RuleType::Type);
+            while (next) {
+              args.push_back(std::dynamic_pointer_cast<AST::Type>(next.item.value()));
+              if (!expect(TokenType::Comma)) break;
+              next = expect(RuleType::Type);
+            }
+            expect(TokenType::Comma); // optional trailing comma
+          }
+          if (!expect(TokenType::ClosingParenthesis)) return std::nullopt;
+          if (expect(TokenType::Returns)) {
+            if (args.size() < 1 && firstType) {
+              args.push_back(std::dynamic_pointer_cast<AST::Type>(firstType.item.value()));
+            }
+            auto ret = expect(RuleType::Type);
+            if (!ret) return std::nullopt;
+            return std::make_shared<AST::Type>(std::dynamic_pointer_cast<AST::Type>(ret.item.value()), args, modifierBitflags);
+          } else if (args.size() > 0) {
+            // somehow, we detected parameters, but there's no return indicator,
+            // so this isn't a type
+            return std::nullopt;
+          } else {
+            if (!firstType) return std::nullopt;
+            return firstType.item;
+          }
+        } else {
+          auto name = expect(TokenType::Identifier);
+          if (!name.valid) return std::nullopt;
+          return std::make_shared<AST::Type>(name.token.raw, modifierBitflags);
+        }
       } else if (rule == RuleType::IntegralLiteral) {
         auto integer = expect(TokenType::Integer);
         if (!integer.valid) return std::nullopt;

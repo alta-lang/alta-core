@@ -13,6 +13,9 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
+        bool isFunction = false;
+        std::shared_ptr<Type> returnType;
+        std::vector<std::shared_ptr<Type>> parameters;
         std::string name;
         /**
          * identifies the proper association of modifiers with each other
@@ -25,6 +28,7 @@ namespace AltaCore {
         std::shared_ptr<DET::Type> $type;
 
         Type(std::string name, std::vector<uint8_t> modifiers);
+        Type(std::shared_ptr<Type> returnType, std::vector<std::shared_ptr<Type>> parameters, std::vector<uint8_t> modifiers);
 
         virtual void detail(std::shared_ptr<DET::Scope> scope);
     };

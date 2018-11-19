@@ -40,7 +40,11 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
       return std::dynamic_pointer_cast<Type>(var->type->clone());
     } else if (item->nodeType() == NodeType::Function) {
       auto func = dynamic_cast<Function*>(item);
-      throw std::runtime_error("function types are not supported at the moment");
+      std::vector<std::shared_ptr<Type>> params;
+      for (auto& [name, type]: func->parameters) {
+        params.push_back(type);
+      }
+      return std::make_shared<Type>(func->returnType, params);
     } else {
       throw std::runtime_error("Only functions and variables have underlying types");
     }
@@ -102,7 +106,15 @@ bool AltaCore::DET::Type::isCompatiableWith(const AltaCore::DET::Type& other) {
 
 AltaCore::DET::Type::Type(AltaCore::DET::NativeType _nativeTypeName, std::vector<uint8_t> _modifiers):
   isNative(true),
+  isFunction(false),
   nativeTypeName(_nativeTypeName),
+  modifiers(_modifiers)
+  {};
+AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std::vector<std::shared_ptr<AltaCore::DET::Type>> _parameters, std::vector<uint8_t> _modifiers):
+  isNative(true),
+  isFunction(true),
+  returnType(_returnType),
+  parameters(_parameters),
   modifiers(_modifiers)
   {};
 

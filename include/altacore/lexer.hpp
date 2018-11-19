@@ -27,6 +27,7 @@ namespace AltaCore {
       Equality,
       And,
       Or,
+      Returns,
       // </special-rules>
 
       OpeningBrace,
@@ -48,6 +49,7 @@ namespace AltaCore {
 
     // '\0' is for complex characters that have special rules
     static const char TokenType_simpleCharacters[] = {
+      '\0',
       '\0',
       '\0',
       '\0',
@@ -80,6 +82,7 @@ namespace AltaCore {
       "Equality",
       "And",
       "Or",
+      "Returns",
       "Opening brace",
       "Closing brace",
       "Opening parenthesis",

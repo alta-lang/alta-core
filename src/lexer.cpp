@@ -126,6 +126,14 @@ namespace AltaCore {
               i++; // skip the next character
               break;
             }
+          } else if ((TokenType)j == TokenType::Returns) {
+            if (character == '-' && backlog.length() > i + 1 && backlog[i + 1] == '>') {
+              appendNewToken(TokenType::Returns, "->");
+              cont = true;
+              hangingRule = TokenType::None;
+              i++; // skip the next character
+              break;
+            }
           } else if (runRule((TokenType)j, character, true, &ended)) {
             appendNewToken((TokenType)j, character);
             cont = true;
