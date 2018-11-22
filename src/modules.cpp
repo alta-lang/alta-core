@@ -108,9 +108,14 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
     }
   } else {
     // try stl first (it takes precedence)
-    auto stlResolved = importPath.absolutify(stlPath) + ".alta";
+    auto stlResolved = importPath.absolutify(stlPath);
     if (stlResolved.exists()) {
-      return stlResolved;
+      auto info = getInfo(stlResolved); // stlResolved should be a package path, not a module path
+      if (info.main) {
+        return info.main;
+      }
+      // welp, this shouldn't ever happen. but just in case...
+      return stlResolved / "main.alta";
     } else {
       // otherwise, try finding the module in a package
       while (!relativeTo.isRoot()) {

@@ -77,6 +77,8 @@ namespace AltaCore {
         bool isDirectory();
         bool isAbsolute();
 
+        bool hasParentDirectory(const Path& parentDir);
+
         Path operator /(const Path& rhs);
         Path operator /(const std::string& rhs);
         Path operator +(const std::string& rhs);

@@ -324,6 +324,16 @@ bool AltaCore::Filesystem::Path::isAbsolute() {
   return hasRoot;
 };
 
+bool AltaCore::Filesystem::Path::hasParentDirectory(const AltaCore::Filesystem::Path& other) {
+  if (hasRoot != other.hasRoot) return false;
+  if (root != other.root) return false;
+  if (other.components.size() > components.size()) return false;
+  for (size_t i = 0; i < other.components.size(); i++) {
+    if (other.components[i] != components[i]) return false;
+  }
+  return true;
+};
+
 AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator /(const AltaCore::Filesystem::Path& rhs) {
   auto newPath = Path(*this);
   newPath.components.insert(newPath.components.end(), rhs.components.begin(), rhs.components.end());
