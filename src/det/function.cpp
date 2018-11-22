@@ -34,6 +34,7 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::create(std::sh
     auto var = std::make_shared<Variable>(name, type);
     var->parentScope = func->scope;
     func->parameterVariables.push_back(var);
+    func->scope->items.push_back(var);
   }
 
   return func;
