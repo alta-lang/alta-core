@@ -6,7 +6,12 @@ This project follows [semantic versioning](https://semver.org).
 ## [Unreleased]
 Nothing yet.
 
-## [0.5.0] - 2018-11-20
+## [0.5.1] - 2018-11-22
+### Added
+  * semver.c
+    * For some reason, it hadn't been added in the last few commits (even though it should've been)
+
+## [0.5.0] - 2018-11-22
 Oh boy, this one's a big one.
 ### Changed
 #### Module System
