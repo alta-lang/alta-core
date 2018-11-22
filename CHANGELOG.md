@@ -6,6 +6,38 @@ This project follows [semantic versioning](https://semver.org).
 ## [Unreleased]
 Nothing yet.
 
+## [0.5.0] - 2018-11-20
+Oh boy, this one's a big one.
+### Changed
+#### Module System
+  * The STL structure has been changed up a bit
+    * Previously, STL packages were expected to be created as single modules
+    * Now, STL packages are expected to be set up just like regular packages, each with their own folder, `package.alta.yaml`, and main module.
+### Added
+#### Waterwheel (lexer), Palo (parser), AST, DET
+  * **Function calls** have been added (!)
+#### Module System, AST, DET
+  * Modules now include their versions as part of their full name (to prevent module version conflicts)
+    * The full name is what's used when mangling names, it basically makes it easy to single out a specific item
+#### DET
+  * `Module`s now carry around their package information with them
+#### Module System
+  * We now properly implement semver version parsing for packages (by adding a new dependency: [semver.c](https://github.com/h2non/semver.c))
+#### Palo (parser)
+  * Wrapped expressions (expressions surrounded by parentheses) are now a thing (e.g. `(5)`, `(foobar)`, `5 * (aThing + 4)`)
+### Fixed
+#### Palo (parser)
+  * Parenthesized types should now properly have any additional modifiers appended
+    * i.e. Before, `ref (ptr byte)` would only be interpreted as `ptr byte`. Now it's correctly recognized as `ref ptr byte`
+#### DET
+  * Function parameters can now *actually be used* (😮)
+    * They weren't being added into the function's scope; now they are
+  * Scopes now properly search for scope items
+    * Previously, all items found with the given name would be returned
+    * Now, scope items that aren't functions can only return one result, and that's the first one found when traveling up the scope tree. Scope items that are functions will return all overloaded results, but any overloads from parent scopes with the same signature as overloads from the current scope will be ignored (i.e. current scope overloads take precedence over parent scope overloads)
+  * Function-pointer types should now work properly when the same function-pointer type is used in one function and later outside the scope of that function
+    * Fixed by hoisting the typedef definitions to the global scope
+
 ## [0.4.0] - 2018-11-18
 ### Added
 #### Waterwheel (lexer)
@@ -29,7 +61,7 @@ Nothing yet.
 ### Added
 #### Palo (parser)
   * Factored out most of the parser logic into its own generic class
-    * Customizable to accomodate any future parsing needs
+    * Customizable to accommodate any future parsing needs
     * Might be able to move the actually parser logic into its own library 🤔
 #### Preprocessor
   * Brand new AltaCore component
@@ -63,7 +95,7 @@ Nothing yet.
     * Asterisks and forward slashes (`*` and `/`)
 #### Palo (parser)
   * `Expectation`s can now be coerced to `bool`s
-    * This allows easy validition (i.e. `if (someExpectation)` instead of `if (someExpectation.valid)`)
+    * This allows easy validation (i.e. `if (someExpectation)` instead of `if (someExpectation.valid)`)
     * Also makes their use with `expect` much more natural (e.g. `if (expect(TokenType::Identifier))` instead of `if (expect(TokenType::Identifier).valid)`)
   * `expectKeyword` shortcut for keyword expectation in rules
   * New rules:
@@ -122,7 +154,7 @@ Nothing yet.
   * Dynamic expectation-based parsing
     * Allows for complex rules that would be ambiguous with traditional parsers
     * Simple to extend with reusable code (as evidenced by `expectModifiers` and `expectParameters`)
-  * Failure cache to avoid repitition and dramatically improve parse times and efficiency
+  * Failure cache to avoid repetition and dramatically improve parse times and efficiency
 #### AST
   * A bunch of new nodes (in alphabetical order, pretty self-explanatory):
     * `Accessor`
