@@ -80,6 +80,8 @@ namespace AltaCore {
         Path operator /(const Path& rhs);
         Path operator /(const std::string& rhs);
         Path operator +(const std::string& rhs);
+        bool operator ==(const Path& rhs);
+        explicit operator bool();
     };
     
     [[deprecated("Use `path.exists()` instead")]] bool exists(Path path);

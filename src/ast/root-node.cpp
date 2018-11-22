@@ -12,17 +12,28 @@ AltaCore::AST::RootNode::RootNode(std::vector<std::shared_ptr<AltaCore::AST::Sta
   {};
 
 void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::string moduleName) {
+  Modules::PackageInfo info;
   if (moduleName == "") {
     // attempt to find the module name
     try {
-      auto info = Modules::getInfo(filePath);
+      info = Modules::getInfo(filePath);
       auto relativeFilePath = filePath.relativeTo(info.root);
       moduleName = info.name + '/' + (relativeFilePath.dirname() / relativeFilePath.filename()).toString("/");
     } catch (const Modules::ModuleError&) {
       moduleName = (filePath.dirname() / filePath.filename()).uproot().toString("/");
+      info.main = filePath;
+      info.root = filePath.dirname();
+    }
+  } else {
+    try {
+      info = Modules::getInfo(filePath);
+    } catch (...) {
+      info.main = filePath;
+      info.name = moduleName;
+      info.root = filePath.dirname();
     }
   }
-  $module = DET::Module::create(moduleName, filePath);
+  $module = DET::Module::create(moduleName, info, filePath);
   $module->ast = shared_from_this();
 
   for (auto& stmt: statements) {

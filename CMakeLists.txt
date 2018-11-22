@@ -6,6 +6,8 @@ set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "disable yaml tests")
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/deps/yaml-cpp")
 
+include("${PROJECT_SOURCE_DIR}/deps/CMakeLists-semver.c.cmake")
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_EXTENSIONS off)
@@ -49,4 +51,7 @@ add_library(altacore
 )
 target_include_directories(altacore PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
+target_compile_definitions(altacore PUBLIC ALTACORE_LOCAL_SEMVER)
+
 target_link_libraries(altacore PRIVATE yaml-cpp)
+target_link_libraries(altacore PUBLIC semver_c)

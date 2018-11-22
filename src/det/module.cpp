@@ -21,6 +21,23 @@ std::shared_ptr<AltaCore::DET::Module> AltaCore::DET::Module::create(std::string
   mod->path = path;
   mod->scope = std::make_shared<Scope>(mod);
   mod->exports = std::make_shared<Scope>(mod);
+  if (path) {
+    try {
+      mod->packageInfo = Modules::getInfo(path);
+    } catch (...) {
+      // do nothing
+    }
+  }
+
+  return mod;
+};
+std::shared_ptr<AltaCore::DET::Module> AltaCore::DET::Module::create(std::string name, AltaCore::Modules::PackageInfo packageInfo, AltaCore::Filesystem::Path path) {
+  auto mod = std::make_shared<Module>();
+  mod->name = name;
+  mod->path = path;
+  mod->scope = std::make_shared<Scope>(mod);
+  mod->exports = std::make_shared<Scope>(mod);
+  mod->packageInfo = packageInfo;
 
   return mod;
 };

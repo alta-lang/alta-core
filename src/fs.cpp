@@ -342,3 +342,15 @@ AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator +(const std::str
   }
   return newPath;
 };
+bool AltaCore::Filesystem::Path::operator ==(const AltaCore::Filesystem::Path& rhs) {
+  if (hasRoot != rhs.hasRoot) return false;
+  if (root != rhs.root) return false;
+  if (components.size() != rhs.components.size()) return false;
+  for (size_t i = 0; i < rhs.components.size(); i++) {
+    if (components[i] != rhs.components[i]) return false;
+  }
+  return true;
+};
+AltaCore::Filesystem::Path::operator bool() {
+  return isValid();
+};

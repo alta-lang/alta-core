@@ -34,8 +34,10 @@ namespace AltaCore {
   };
 };
 
-std::string AltaCore::Modules::PackageVersion::toString() {
-  return std::to_string(major) + '.' + std::to_string(minor) + '.' + std::to_string(patch);
+AltaCore::Modules::PackageInfo::PackageInfo() {
+  if (semver_parse("0.0.0", &version) != 0) {
+    throw std::runtime_error("this is semver parsing error that should never happen");
+  }
 };
 
 AltaCore::Filesystem::Path AltaCore::Modules::findInfo(AltaCore::Filesystem::Path moduleOrPackagePath) {
@@ -50,18 +52,19 @@ AltaCore::Filesystem::Path AltaCore::Modules::findInfo(AltaCore::Filesystem::Pat
 };
 
 AltaCore::Modules::PackageInfo AltaCore::Modules::getInfo(AltaCore::Filesystem::Path moduleOrPackagePath, bool _findInfo) {
+  auto infoPath = moduleOrPackagePath;
   if (_findInfo) {
-    moduleOrPackagePath = findInfo(moduleOrPackagePath);
+    infoPath = findInfo(moduleOrPackagePath);
+    if (!infoPath) {
+      throw PackageInformationNotFoundError();
+    }
   }
-  if (!moduleOrPackagePath.isValid()) {
-    throw PackageInformationNotFoundError();
-  }
-  auto yamlRoot = YAML::LoadFile(moduleOrPackagePath.toString());
+  auto yamlRoot = YAML::LoadFile(infoPath.toString());
   if (!yamlRoot["name"]) {
     throw InvalidPackageInformationError();
   }
   PackageInfo info;
-  info.root = moduleOrPackagePath.dirname();
+  info.root = infoPath.dirname();
   info.name = yamlRoot["name"].as<std::string>();
   if (yamlRoot["main"]) {
     info.main = Filesystem::Path(yamlRoot["main"].as<std::string>()).absolutify(info.root);
@@ -75,12 +78,8 @@ AltaCore::Modules::PackageInfo AltaCore::Modules::getInfo(AltaCore::Filesystem::
     }
   }
   if (yamlRoot["version"]) {
-    auto verString = yamlRoot["version"].as<std::string>();
-    auto firstDot = verString.find_first_of('.');
-    auto secondDot = verString.find_last_of('.');
-    info.version.major = std::stoul(verString.substr(0, firstDot));
-    info.version.minor = std::stoul(verString.substr(firstDot + 1, secondDot));
-    info.version.patch = std::stoul(verString.substr(secondDot + 1));
+    auto str = yamlRoot["version"].as<std::string>();
+    semver_parse(str.c_str(), &info.version);
   }
   return info;
 };
@@ -117,7 +116,7 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
       while (!relativeTo.isRoot()) {
         auto modFolderPath = relativeTo / "alta-packages" / importPath;
         if (modFolderPath.exists()) {
-          PackageInfo info = getInfo(modFolderPath);
+          auto info = getInfo(modFolderPath);
           if (info.main.isValid()) {
             return info.main;
           }

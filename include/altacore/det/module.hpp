@@ -5,6 +5,7 @@
 #include "scope.hpp"
 #include <string>
 #include "../fs.hpp"
+#include "../modules.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -19,6 +20,7 @@ namespace AltaCore {
         virtual std::shared_ptr<Node> deepClone();
         
         static std::shared_ptr<Module> create(std::string name, Filesystem::Path path = Filesystem::Path());
+        static std::shared_ptr<Module> create(std::string name, Modules::PackageInfo packageInfo, Filesystem::Path path = Filesystem::Path());
 
         std::string name;
         Filesystem::Path path;
@@ -28,6 +30,9 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Module>> dependencies;
         std::vector<std::shared_ptr<Module>> dependents;
         std::weak_ptr<AST::RootNode> ast;
+        Modules::PackageInfo packageInfo;
+
+        std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
 
         Module();
     };

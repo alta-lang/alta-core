@@ -8,24 +8,31 @@
 #include <exception>
 #include <functional>
 
+#ifdef ALTACORE_LOCAL_SEMVER
+#include "../../deps/semver.c/semver.h"
+#else
+#include "semver.h"
+#endif
+
 namespace AltaCore {
+  namespace AST {
+    class RootNode; // forward declaration
+  };
   namespace Modules {
     class ModuleError: public std::exception {};
     class ModuleResolutionError: public ModuleError {};
     class InvalidPackageInformationError: public ModuleError {};
     class PackageInformationNotFoundError: public ModuleError {};
 
-    struct PackageVersion {
-      unsigned long major = 0;
-      unsigned long minor = 0;
-      unsigned long patch = 0;
-      std::string toString();
-    };
+    extern const semver_t versionZero;
+
     struct PackageInfo {
       std::string name;
-      PackageVersion version;
+      semver_t version;
       Filesystem::Path root;
       Filesystem::Path main;
+
+      PackageInfo();
     };
 
     extern Filesystem::Path stlPath;
