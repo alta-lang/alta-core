@@ -1,5 +1,6 @@
 #include "../../include/altacore/det/scope.hpp"
 #include "../../include/altacore/det/function.hpp"
+#include "../../include/altacore/det/module.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Scope::nodeType() {
   return NodeType::Scope;
@@ -109,3 +110,15 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
   }
 };
 
+void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::Type> type) {
+  if (!type->isFunction) return; // we don't need to hoist it if it's not a function pointer type
+  if (auto mod = parentModule.lock()) {
+    mod->hoistedFunctionalTypes.push_back(type);
+  } else if (auto func = parentFunction.lock()) {
+    func->hoistedFunctionalTypes.push_back(type);
+  } else if (auto scope = parent.lock()) {
+    scope->hoist(type);
+  } else {
+    throw std::runtime_error("failed to hoist type anywhere. no parent functions, modules, or scopes were found");
+  }
+};

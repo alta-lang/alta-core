@@ -24,6 +24,7 @@ void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
       detParams.push_back(param->$type);
     }
     $type = std::make_shared<DET::Type>(returnType->$type, detParams, modifiers);
+    scope->hoist($type);
   } else {
     DET::NativeType nt;
 

@@ -25,6 +25,8 @@ namespace AltaCore {
         bool isLiteral = false;
         bool isExport = false;
 
+        std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
+
         Function(std::shared_ptr<Scope> parentScope, std::string name);
     };
   };
