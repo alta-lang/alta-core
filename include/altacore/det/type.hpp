@@ -9,6 +9,8 @@
 namespace AltaCore {
   namespace DET {
     class Type: public Node, public std::enable_shared_from_this<Type> {
+      private:
+        bool commonCompatiblity(const Type& other);
       public:
         virtual const NodeType nodeType();
         virtual std::shared_ptr<Node> clone();
@@ -19,12 +21,18 @@ namespace AltaCore {
         // underlying type for the given expression, whereas with a
         // constructor, we can't do that
         static std::shared_ptr<Type> getUnderlyingType(AST::ExpressionNode* expression);
+        static std::shared_ptr<Type> getUnderlyingType(std::shared_ptr<ScopeItem> item);
+        static std::vector<std::shared_ptr<Type>> getUnderlyingTypes(AST::ExpressionNode* expression);
 
         bool isNative = true;
         bool isFunction = false;
         NativeType nativeTypeName = NativeType::Integer;
         std::shared_ptr<Type> returnType;
         std::vector<std::shared_ptr<Type>> parameters;
+
+        const size_t indirectionLevel() const;
+        const size_t referenceLevel() const;
+        const size_t pointerLevel() const;
 
         /**
          * follows the same format as `AltaCore::AST::Type::modifiers`
@@ -52,7 +60,9 @@ namespace AltaCore {
          */
         std::shared_ptr<Type> followBlindly();
 
-        bool isCompatiableWith(const Type& other);
+        size_t compatiblity(const Type& other);
+        bool isExactlyCompatibleWith(const Type& other);
+        bool isCompatibleWith(const Type& other);
 
         Type(NativeType nativeTypeName, std::vector<uint8_t> modifiers = {});
         Type(std::shared_ptr<Type> returnType, std::vector<std::shared_ptr<Type>> parameters, std::vector<uint8_t> modifiers = {});

@@ -9,6 +9,8 @@
 
 namespace AltaCore {
   namespace DET {
+    class Type; // forward declaration
+
     class Scope: public Node, public std::enable_shared_from_this<Scope> {
       public:
         virtual const NodeType nodeType();
@@ -28,7 +30,8 @@ namespace AltaCore {
         Scope(std::shared_ptr<Module> parentModule);
         Scope(std::shared_ptr<Function> parentFunction);
 
-        std::vector<std::shared_ptr<ScopeItem>> findAll(std::string name);
+        std::vector<std::shared_ptr<ScopeItem>> findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes = {});
+        void hoist(std::shared_ptr<Type> whatToHoist);
     };
   };
 };

@@ -3,6 +3,7 @@
 
 #include "expression-node.hpp"
 #include "../det/scope-item.hpp"
+#include "../det/type.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -12,10 +13,12 @@ namespace AltaCore {
 
         std::string query;
 
-        std::shared_ptr<DET::ScopeItem> $item;
+        std::vector<std::shared_ptr<DET::ScopeItem>> $items;
+        std::shared_ptr<DET::ScopeItem> $narrowedTo;
 
         Fetch(std::string query);
-        
+
+        void narrowTo(std::shared_ptr<DET::Type> type);
         virtual void detail(std::shared_ptr<DET::Scope> scope);
     };
   };
