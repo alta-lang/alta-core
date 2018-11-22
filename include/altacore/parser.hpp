@@ -57,8 +57,7 @@ namespace AltaCore {
       ModuleOnlyStatement,
       Import,
       BooleanLiteral,
-      FrontendDirective,
-      FrontendSubstitution,
+      FunctionCall,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {

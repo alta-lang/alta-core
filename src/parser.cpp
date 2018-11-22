@@ -80,18 +80,29 @@ namespace AltaCore {
         }
         return ret;
       } else if (rule == RuleType::Expression) {
-        // lowest to highest precedence
-        auto exp = expect({
-          RuleType::VariableDefinition,
-          RuleType::Assignment,
-          RuleType::AdditionOrSubtraction,
-          RuleType::MultiplicationOrDivision,
-          RuleType::BooleanLiteral,
-          RuleType::IntegralLiteral,
-          RuleType::Accessor,
-          RuleType::Fetch,
-        });
-        return exp.item;
+        if (expect(TokenType::OpeningParenthesis)) {
+          auto expr = expect(RuleType::Expression);
+          if (!expr) return std::nullopt;
+          if (!expect(TokenType::ClosingParenthesis)) return std::nullopt;
+          return expr.item;
+        } else {
+          // lowest to highest precedence
+          auto exp = expect({
+            RuleType::VariableDefinition,
+            RuleType::Assignment,
+            RuleType::AdditionOrSubtraction,
+            RuleType::MultiplicationOrDivision,
+            RuleType::FunctionCall,
+
+            // <special>
+            RuleType::BooleanLiteral,
+            RuleType::IntegralLiteral,
+            RuleType::Accessor,
+            RuleType::Fetch,
+            // </special>
+          });
+          return exp.item;
+        }
       } else if (rule == RuleType::FunctionDefinition) {
         auto modifiers = expectModifiers(ModifierTargetType::Function);
         auto $function = expect(TokenType::Identifier);
@@ -170,7 +181,9 @@ namespace AltaCore {
             return std::nullopt;
           } else {
             if (!firstType) return std::nullopt;
-            return firstType.item;
+            auto type = std::dynamic_pointer_cast<AST::Type>(firstType.item.value());
+            type->modifiers.insert(type->modifiers.begin(), modifierBitflags.begin(), modifierBitflags.end());
+            return type;
           }
         } else {
           auto name = expect(TokenType::Identifier);
@@ -392,6 +405,26 @@ namespace AltaCore {
         } else if (expectKeyword("false")) {
           return std::make_shared<AST::BooleanLiteralNode>(false);
         }
+      } else if (rule == RuleType::FunctionCall) {
+        rulesToIgnore.push_back(RuleType::FunctionCall);
+        auto target = expect(RuleType::Expression);
+        rulesToIgnore.pop_back();
+        if (!target) return std::nullopt;
+
+        if (!expect(TokenType::OpeningParenthesis)) return std::nullopt;
+
+        std::vector<std::shared_ptr<AST::ExpressionNode>> arguments;
+        auto arg = expect(RuleType::Expression);
+        while (arg) {
+          arguments.push_back(std::dynamic_pointer_cast<AST::ExpressionNode>(arg.item.value()));
+          if (!expect(TokenType::Comma)) break;
+          arg = expect(RuleType::Expression);
+        }
+        expect(TokenType::Comma); // optional trailing comma
+
+        if (!expect(TokenType::ClosingParenthesis)) return std::nullopt;
+        
+        return std::make_shared<AST::FunctionCallExpression>(std::dynamic_pointer_cast<AST::ExpressionNode>(target.item.value()), arguments);
       }
       return std::nullopt;
     };

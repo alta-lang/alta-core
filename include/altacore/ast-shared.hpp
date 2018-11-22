@@ -27,6 +27,7 @@ namespace AltaCore {
       BooleanLiteralNode,
       BinaryOperation,
       ImportStatement,
+      FunctionCallExpression,
     };
 
     static const char* const NodeType_names[] = {
@@ -49,6 +50,7 @@ namespace AltaCore {
       "BooleanLiteralNode",
       "BinaryOperation",
       "ImportStatement",
+      "FunctionCallExpression",
     };
 
     enum class OperatorType {

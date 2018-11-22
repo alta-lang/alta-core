@@ -39,6 +39,10 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     auto binOp = dynamic_cast<AST::BinaryOperation*>(expression);
     if (binOp == nullptr) throw std::runtime_error("wah.");
     return getUnderlyingType(binOp->left.get());
+  } else if (exprType == ExpressionType::FunctionCallExpression) {
+    auto call = dynamic_cast<AST::FunctionCallExpression*>(expression);
+    if (call == nullptr) throw std::runtime_error("bro wut dah heck.");
+    return call->$targetType->returnType;
   }
 
   return nullptr;
