@@ -1,6 +1,7 @@
 #include "../../include/altacore/det/scope.hpp"
 #include "../../include/altacore/det/function.hpp"
 #include "../../include/altacore/det/module.hpp"
+#include "../../include/altacore/det/alias.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Scope::nodeType() {
   return NodeType::Scope;
@@ -43,14 +44,18 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
 
   for (auto& item: items) {
     if (item->name == name) {
-      if (item->nodeType() != NodeType::Function) {
+      auto trueItem = item;
+      while (item->nodeType() == NodeType::Alias) {
+        trueItem = std::dynamic_pointer_cast<Alias>(item)->target;
+      }
+      if (trueItem->nodeType() != NodeType::Function) {
         if (allFunctions && first) {
           // we've already found a non-function scope item with that name
           throw std::runtime_error("found non-function scope item with same name as another scope item; this is a conflict");
         } else if (allFunctions && results.size() == 0) {
           // we don't have a first item yet, and allFunctions is still true and there's no functions found.
           // this means we found the first (and hopefully only) item
-          first = item;
+          first = trueItem;
         } else if (allFunctions) {
           // we've found functions with that name (since `results.size() > 0` here)
           throw std::runtime_error("found non-function scope item with same name as a function; this is a conflict");
@@ -60,7 +65,7 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
         // it is a function, but we already found a non-function item with that name
         throw std::runtime_error("found function scope item with same name as a non-function scope item; this is a conflict");
       } else {
-        auto type = Type::getUnderlyingType(item);
+        auto type = Type::getUnderlyingType(trueItem);
         bool ok = true;
         if (excludeTypes.size() > 0) {
           for (auto& excl: excludeTypes) {
@@ -71,7 +76,7 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
           }
         }
         if (ok) {
-          results.push_back(item);
+          results.push_back(trueItem);
           funcTypes.push_back(type);
         }
       }

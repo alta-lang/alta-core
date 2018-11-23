@@ -9,5 +9,6 @@
 #include "det/scope-item.hpp"
 #include "det/function.hpp"
 #include "det/type.hpp"
+#include "det/alias.hpp"
 
 #endif // ALTACORE_DET_HPP

@@ -4,7 +4,11 @@ All the changes for Alta's frontend/core functionality (parser, lexer, AST, DET,
 This project follows [semantic versioning](https://semver.org).
 
 ## [Unreleased]
-Nothing yet.
+### Added
+#### DET
+  * Aliases have been added
+    * Basically, these are needed in order to implement aliased cherry-pick imports (note: this is *not* the same as alias imports)
+    * They're basically item pointers (or more like references, since they will be recursively followed until a non-`Alias` is found), and they're resolved during item lookup in `Scope`s
 
 ## [0.5.1] - 2018-11-22
 ### Added

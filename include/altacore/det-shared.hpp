@@ -11,6 +11,7 @@ namespace AltaCore {
       Function,
       Type,
       Variable,
+      Alias,
     };
     
     static const char* const NodeType_names[] = {
@@ -21,6 +22,7 @@ namespace AltaCore {
       "Function",
       "Type",
       "Variable",
+      "Alias",
     };
 
     enum class NativeType {
