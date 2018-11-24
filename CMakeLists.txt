@@ -49,6 +49,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/det/function.cpp"
   "${PROJECT_SOURCE_DIR}/src/det/type.cpp"
   "${PROJECT_SOURCE_DIR}/src/det/variable.cpp"
+  "${PROJECT_SOURCE_DIR}/src/det/alias.cpp"
 )
 target_include_directories(altacore PUBLIC "${PROJECT_SOURCE_DIR}/include")
 

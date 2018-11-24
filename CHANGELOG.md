@@ -7,8 +7,12 @@ This project follows [semantic versioning](https://semver.org).
 ### Added
 #### DET
   * Aliases have been added
-    * Basically, these are needed in order to implement aliased cherry-pick imports (note: this is *not* the same as alias imports)
+    * Basically, these are needed in order to implement aliased cherry-pick imports
     * They're basically item pointers (or more like references, since they will be recursively followed until a non-`Alias` is found), and they're resolved during item lookup in `Scope`s
+  * Aliased cherry-pick imports have been added
+    * Note: this is *not* the same as alias imports
+    * Basically, allows you to import an item under a different name
+      * e.g. `import foo as bar from "some-module.alta"` would import an item named `foo` from "some-module.alta" and make it available under the name `bar` in your module
 
 ## [0.5.1] - 2018-11-22
 ### Added

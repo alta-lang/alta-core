@@ -45,7 +45,7 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
   for (auto& item: items) {
     if (item->name == name) {
       auto trueItem = item;
-      while (item->nodeType() == NodeType::Alias) {
+      while (trueItem->nodeType() == NodeType::Alias) {
         trueItem = std::dynamic_pointer_cast<Alias>(item)->target;
       }
       if (trueItem->nodeType() != NodeType::Function) {

@@ -42,8 +42,11 @@ namespace AltaCore {
       return modifiers;
     };
     bool Parser::expectKeyword(std::string keyword) {
+      auto state = currentState;
       auto exp = expect(TokenType::Identifier);
-      return (exp && exp.token.raw == keyword);
+      if (exp && exp.token.raw == keyword) return true;
+      currentState = state;
+      return false;
     };
     // </helper-functions>
 
@@ -347,12 +350,18 @@ namespace AltaCore {
         if (!expectKeyword("import")) return std::nullopt;
         bool isAlias = false;
         std::string modName;
-        std::vector<std::string> imports;
+        std::vector<std::pair<std::string, std::string>> imports;
         std::string alias;
         if (expect(TokenType::OpeningBrace)) {
           Expectation importExp = expect(TokenType::Identifier);
           while (importExp) {
-            imports.push_back(importExp.token.raw);
+            std::string aliasString = "";
+            if (expectKeyword("as")) {
+              auto aliasExp = expect(TokenType::Identifier);
+              if (!aliasExp) break;
+              aliasString = aliasExp.token.raw;
+            }
+            imports.push_back({ importExp.token.raw, aliasString });
             if (!expect(TokenType::Comma)) break;
             importExp = expect(TokenType::Identifier);
           }
@@ -378,7 +387,13 @@ namespace AltaCore {
                 from = true;
                 break;
               }
-              imports.push_back(importExp.token.raw);
+              std::string aliasString = "";
+              if (expectKeyword("as")) {
+                auto aliasExp = expect(TokenType::Identifier);
+                if (!aliasExp) break;
+                aliasString = aliasExp.token.raw;
+              }
+              imports.push_back({ importExp.token.raw, aliasString });
               if (!expect(TokenType::Comma)) break;
               importExp = expect(TokenType::Identifier);
             }

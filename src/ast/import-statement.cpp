@@ -6,7 +6,7 @@ const AltaCore::AST::NodeType AltaCore::AST::ImportStatement::nodeType() {
   return NodeType::ImportStatement;
 };
 
-AltaCore::AST::ImportStatement::ImportStatement(std::string _request, std::vector<std::string> _imports):
+AltaCore::AST::ImportStatement::ImportStatement(std::string _request, std::vector<std::pair<std::string, std::string>> _imports):
   isAliased(false),
   request(_request),
   imports(_imports)
@@ -27,10 +27,17 @@ void AltaCore::AST::ImportStatement::detail(std::shared_ptr<AltaCore::DET::Scope
     // TODO
     throw std::runtime_error("can't do aliased imports yet");
   } else {
-    for (auto& imp: imports) {
+    for (auto& [imp, alias]: imports) {
       auto items = $importedModule->exports->findAll(imp);
       $importedItems.insert($importedItems.end(), items.begin(), items.end());
-      $parentModule->scope->items.insert($parentModule->scope->items.end(), items.begin(), items.end());
+      if (!alias.empty()) {
+        for (auto& item: items) {
+          auto aliasItem = std::make_shared<DET::Alias>(alias, item, $parentModule->scope);
+          $parentModule->scope->items.push_back(aliasItem);
+        }
+      } else {
+        $parentModule->scope->items.insert($parentModule->scope->items.end(), items.begin(), items.end());
+      }
     }
   }
 };

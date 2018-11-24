@@ -582,6 +582,21 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
               break;
             }
             tok.next();
+            if (tok.hasNext() && tok.peek() == "as") {
+              tok.next();
+              auto aliasStr = tok.peek();
+              bool next = false;
+              if (aliasStr[aliasStr.length() - 1] == ',') {
+                next = true;
+                aliasStr = aliasStr.substr(0, aliasStr.length() - 1);
+              }
+              if (!PreprocessorUtils::isIdentifier(aliasStr)) {
+                hasIt = false;
+                break;
+              }
+              tok.next();
+              if (next) continue;
+            }
             if (tok.hasNext() && tok.peek() == ",") {
               tok.next(); // skip the next token (the comma)
               continue;
