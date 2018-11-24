@@ -99,6 +99,7 @@ namespace AltaCore {
         std::stack<std::string> conditionals;
         std::stack<bool> enteredConditionals;
         std::stack<bool> lastConditionalResults;
+        bool canSaveForLater = true;
       public:
         Filesystem::Path filePath;
         std::map<std::string, Expression>& definitions;

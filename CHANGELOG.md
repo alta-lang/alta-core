@@ -13,6 +13,11 @@ This project follows [semantic versioning](https://semver.org).
     * Note: this is *not* the same as alias imports
     * Basically, allows you to import an item under a different name
       * e.g. `import foo as bar from "some-module.alta"` would import an item named `foo` from "some-module.alta" and make it available under the name `bar` in your module
+### Fixed
+#### Preprocessor
+  * Multi-line import recognition has been fixed
+    * Fixed by saving the current line to the line cache if we were left expecting some tokens for the import. Once we get more input, try to parse it again
+    * The implementation used to fix this problem also implicitly means that the `done` method is now more important (although, until now, it was still always necessary)
 
 ## [0.5.1] - 2018-11-22
 ### Added

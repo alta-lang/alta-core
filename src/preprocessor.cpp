@@ -479,6 +479,12 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
     auto tokens = allTokens[k];
     auto untouchable = untouchableLines[k];
     auto lineStartIndex = lineStartIndexes[k];
+    auto saveForLater = [&]() {
+      // make sure we don't save the same chunk more than once
+      if (lineCache.length() < chunk.length() || lineCache.substr(lineCache.length() - chunk.length(), chunk.length()) != chunk) {
+        lineCache += chunk;
+      }
+    };
     if (untouchable == 2) {
       auto directive = tokens[0].substr(2);
       PreprocessorUtils::Index token(tokens, 0);
@@ -559,12 +565,22 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
       for (size_t i = lineStartIndex; i < flat.size(); i++) {
         PreprocessorUtils::Index tok(flat, i);
         if (*tok != "import") continue;
-        if (tok.hasNext() && tok.peek()[0] == '"' && tok.peek()[tok.peek().length() - 1] == '"') {
+        if (canSaveForLater && !tok.hasNext()) {
+          return saveForLater();
+        } else if (tok.hasNext() && tok.peek()[0] == '"' && tok.peek()[tok.peek().length() - 1] == '"') {
           tok.next();
           auto importRequest = tok;
-          if (!(tok.hasNext() && tok.peek() == "as")) continue;
+          if (canSaveForLater && !tok.hasNext()) {
+            return saveForLater();
+          } else if (tok.hasNext() && tok.peek() != "as") {
+            continue;
+          }
           tok.next();
-          if (!(tok.hasNext() && PreprocessorUtils::isIdentifier(tok.peek()))) continue;
+          if (canSaveForLater && !tok.hasNext()) {
+            return saveForLater();
+          } else if (tok.hasNext() && !PreprocessorUtils::isIdentifier(tok.peek())) {
+            continue;
+          }
           tok.next();
           importLocations.push_back(i);
           imports.push_back(*importRequest);
@@ -577,12 +593,17 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
         bool hasIt = true;
         while (tok.hasNext()) {
           if (tok.peek().substr(tok.peek().length() - 1) != ",") {
+            if (tok.peek() == "from" || tok.peek() == "}") {
+              break;
+            }
             if (!PreprocessorUtils::isIdentifier(tok.peek())) {
               hasIt = false;
               break;
             }
             tok.next();
-            if (tok.hasNext() && tok.peek() == "as") {
+            if (canSaveForLater && !tok.hasNext()) {
+              return saveForLater();
+            } else if (tok.hasNext() && tok.peek() == "as") {
               tok.next();
               auto aliasStr = tok.peek();
               bool next = false;
@@ -597,7 +618,9 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
               tok.next();
               if (next) continue;
             }
-            if (tok.hasNext() && tok.peek() == ",") {
+            if (canSaveForLater && !tok.hasNext()) {
+              return saveForLater();
+            } else if (tok.hasNext() && tok.peek() == ",") {
               tok.next(); // skip the next token (the comma)
               continue;
             }
@@ -612,9 +635,17 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
         if (tok.hasNext() && tok.peek() == "}") {
           tok.next();
         }
-        if (!(tok.hasNext() && tok.peek() == "from")) continue;
+        if (canSaveForLater && !tok.hasNext()) {
+          return saveForLater();
+        } else if (tok.hasNext() && tok.peek() != "from") {
+          continue;
+        }
         tok.next();
-        if (!(tok.hasNext() && tok.peek()[0] == '"' && tok.peek()[tok.peek().length() - 1] == '"')) continue;
+        if (canSaveForLater && !tok.hasNext()) {
+          return saveForLater();
+        } else if (tok.hasNext() && tok.peek()[0] != '"' && tok.peek()[tok.peek().length() - 1] != '"') {
+          continue;
+        }
         tok.next();
         importLocations.push_back(i);
         imports.push_back(tok->substr(1, tok->length() - 2));
@@ -682,6 +713,8 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
 };
 
 void AltaCore::Preprocessor::Preprocessor::done() {
+  canSaveForLater = false;
+  feed("");
   fileResults[filePath.toString()] += lineCache;
 };
 
