@@ -100,6 +100,7 @@ namespace AltaCore {
             // <special>
             RuleType::BooleanLiteral,
             RuleType::IntegralLiteral,
+            RuleType::String,
             RuleType::Accessor,
             RuleType::Fetch,
             // </special>
@@ -440,6 +441,10 @@ namespace AltaCore {
         if (!expect(TokenType::ClosingParenthesis)) return std::nullopt;
         
         return std::make_shared<AST::FunctionCallExpression>(std::dynamic_pointer_cast<AST::ExpressionNode>(target.item.value()), arguments);
+      } else if (rule == RuleType::String) {
+        auto raw = expect(TokenType::String);
+        if (!raw) return std::nullopt;
+        return std::make_shared<AST::StringLiteralNode>(Util::unescape(raw.token.raw.substr(1, raw.token.raw.length() - 2)));
       }
       return std::nullopt;
     };

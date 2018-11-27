@@ -22,5 +22,6 @@
 #include "ast/binary-operation.hpp"
 #include "ast/import-statement.hpp"
 #include "ast/function-call-expression.hpp"
+#include "ast/string-literal-node.hpp"
 
 #endif // ALTACORE_AST_HPP

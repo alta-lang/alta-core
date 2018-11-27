@@ -58,6 +58,7 @@ namespace AltaCore {
       Import,
       BooleanLiteral,
       FunctionCall,
+      String,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {

@@ -40,6 +40,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/binary-operation.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/import-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/function-call-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/string-literal-node.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

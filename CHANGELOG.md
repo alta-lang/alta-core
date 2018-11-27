@@ -4,7 +4,11 @@ All the changes for Alta's frontend/core functionality (parser, lexer, AST, DET,
 This project follows [semantic versioning](https://semver.org).
 
 ## [Unreleased]
-Nothing yet.
+### Added
+#### DET, AST, Palo (parser)
+  * String literal support
+    * Hey hey, we're a hop, skip, and a jump away from `printf`-ing :smile:
+      * All we need to do is add function declaration support
 
 ## [0.6.0] - 2018-11-27
 ### Added

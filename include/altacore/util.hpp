@@ -9,6 +9,7 @@ namespace AltaCore {
     bool isInFunction(AltaCore::DET::ScopeItem* item);
     std::weak_ptr<DET::Module> getModule(AltaCore::DET::Scope* scope);
     std::string unescape(std::string data);
+    uint8_t hexDigitToDecimal(const char singleDigit);
   };
 };
 

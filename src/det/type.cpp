@@ -45,6 +45,8 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     return call->$targetType->returnType;
   } else if (exprType == ExpressionType::Accessor) {
     throw std::runtime_error("accessors have multiple possible types. use `AltaCore::DET::Type::getUnderlyingTypes` instead");
+  } else if (exprType == ExpressionType::StringLiteralNode) {
+    return std::make_shared<Type>(NativeType::Byte, std::vector<uint8_t> { (uint8_t)Modifier::Constant | (uint8_t)Modifier::Pointer, (uint8_t)Modifier::Constant });
   }
 
   return nullptr;
