@@ -583,7 +583,7 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
           }
           tok.next();
           importLocations.push_back(i);
-          imports.push_back(*importRequest);
+          imports.push_back(importRequest->substr(1, importRequest->length() - 2));
           i = tok.i + 1;
           continue;
         }

@@ -9,6 +9,8 @@ bool AltaCore::Util::isInFunction(AltaCore::DET::ScopeItem* item) {
       return true;
     } else if (!scope->parent.expired()) {
       maybeScope = scope->parent;
+    } else if (!scope->parentNamespace.expired()) {
+      maybeScope = scope->parentNamespace.lock()->parentScope;
     } else {
       return false;
     }
@@ -33,6 +35,11 @@ std::weak_ptr<AltaCore::DET::Module> AltaCore::Util::getModule(AltaCore::DET::Sc
   }
   if (!scope->parent.expired()) {
     return getModule(scope->parent.lock().get());
+  }
+  if (auto ns = scope->parentNamespace.lock()) {
+    if (auto parent = ns->parentScope.lock()) {
+      return getModule(parent.get());
+    }
   }
   return std::weak_ptr<AltaCore::DET::Module>();
 };

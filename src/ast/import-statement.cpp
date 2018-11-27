@@ -24,8 +24,9 @@ void AltaCore::AST::ImportStatement::detail(std::shared_ptr<AltaCore::DET::Scope
   $parentModule->dependencies.push_back($importedModule);
   $importedModule->dependents.push_back($parentModule);
   if (isAliased) {
-    // TODO
-    throw std::runtime_error("can't do aliased imports yet");
+    auto ns = std::make_shared<DET::Namespace>(alias, $parentModule->scope);
+    ns->scope = $importedModule->exports;
+    $parentModule->scope->items.push_back(ns);
   } else {
     for (auto& [imp, alias]: imports) {
       auto items = $importedModule->exports->findAll(imp);

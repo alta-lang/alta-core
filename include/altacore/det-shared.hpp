@@ -12,6 +12,7 @@ namespace AltaCore {
       Type,
       Variable,
       Alias,
+      Namespace,
     };
     
     static const char* const NodeType_names[] = {
@@ -23,6 +24,7 @@ namespace AltaCore {
       "Type",
       "Variable",
       "Alias",
+      "Namespace",
     };
 
     enum class NativeType {
@@ -43,6 +45,7 @@ namespace AltaCore {
     class Function;
     class Scope;
     class ScopeItem;
+    class Namespace;
   };
 };
 

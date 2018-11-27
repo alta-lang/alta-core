@@ -4,8 +4,12 @@
 #include "node.hpp"
 #include "scope.hpp"
 #include <string>
+#include <vector>
 
 namespace AltaCore {
+  namespace AST {
+    class Node; // forward declaration
+  };
   namespace DET {
     class ScopeItem: public Node {
       public:
@@ -17,6 +21,8 @@ namespace AltaCore {
         std::string name;
 
         ScopeItem(std::string name, std::shared_ptr<Scope> parentScope = nullptr);
+
+        static std::vector<std::shared_ptr<ScopeItem>> getUnderlyingItems(std::shared_ptr<AST::Node> node);
     };
   };
 };

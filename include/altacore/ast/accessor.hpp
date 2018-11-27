@@ -13,10 +13,14 @@ namespace AltaCore {
         std::shared_ptr<AST::ExpressionNode> target;
         std::string query;
 
-        std::shared_ptr<DET::ScopeItem> $item;
+        std::vector<std::shared_ptr<DET::ScopeItem>> $items;
+        std::shared_ptr<DET::ScopeItem> $narrowedTo;
+
+        bool accessesNamespace = false;
 
         Accessor(std::shared_ptr<AST::ExpressionNode> target, std::string query);
 
+        void narrowTo(std::shared_ptr<DET::Type> type);
         virtual void detail(std::shared_ptr<DET::Scope> scope);
     };
   };

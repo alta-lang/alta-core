@@ -4,20 +4,34 @@ All the changes for Alta's frontend/core functionality (parser, lexer, AST, DET,
 This project follows [semantic versioning](https://semver.org).
 
 ## [Unreleased]
+Nothing yet.
+
+## [0.6.0] - 2018-11-27
 ### Added
 #### DET
-  * Aliases have been added
+  * Aliases have been implemented
     * Basically, these are needed in order to implement aliased cherry-pick imports
     * They're basically item pointers (or more like references, since they will be recursively followed until a non-`Alias` is found), and they're resolved during item lookup in `Scope`s
-  * Aliased cherry-pick imports have been added
+  * Namespaces have been implemented
+    * They've only been tested with alias imports, but they've been (theoretically) fully implemented and should work for custom namespace definitions, if they're ever added
+#### DET, AST, Palo (parser)
+  * Aliased cherry-pick import support has been added
     * Note: this is *not* the same as alias imports
     * Basically, allows you to import an item under a different name
       * e.g. `import foo as bar from "some-module.alta"` would import an item named `foo` from "some-module.alta" and make it available under the name `bar` in your module
+  * Alias import support has been added
+    * Allows you to import all of a module's exports as a namespace
+      * e.g. `import "some-module.alta" as someModule` would import a module called "some-module.alta" and put all of its exports into a namespace named `someModule`
+  * Accessors have been properly implemented
+    * They work just like you'd expect them to work: `foo.bar` would try to find a member named `bar` in the scope item named `foo`
 ### Fixed
 #### Preprocessor
   * Multi-line import recognition has been fixed
     * Fixed by saving the current line to the line cache if we were left expecting some tokens for the import. Once we get more input, try to parse it again
     * The implementation used to fix this problem also implicitly means that the `done` method is now more important (although, until now, it was still always necessary)
+  * Type compatiblity checking has been fixed
+    * We were erroneously comparing each of the host type's modifiers with the length of the guest type's modifier array
+    * i.e. Before: `ourModifiers[i] == theirModifiers.size()`; Now: `ourModifiers[i] == theirModifiers[i]` :+1:
 
 ## [0.5.1] - 2018-11-22
 ### Added

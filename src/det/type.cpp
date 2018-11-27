@@ -43,6 +43,8 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     auto call = dynamic_cast<AST::FunctionCallExpression*>(expression);
     if (call == nullptr) throw std::runtime_error("bro wut dah heck.");
     return call->$targetType->returnType;
+  } else if (exprType == ExpressionType::Accessor) {
+    throw std::runtime_error("accessors have multiple possible types. use `AltaCore::DET::Type::getUnderlyingTypes` instead");
   }
 
   return nullptr;
@@ -76,6 +78,14 @@ std::vector<std::shared_ptr<AltaCore::DET::Type>> AltaCore::DET::Type::getUnderl
     if (fetch == nullptr) throw std::runtime_error("NOPE");
     std::vector<std::shared_ptr<Type>> types;
     for (auto& item: fetch->$items) {
+      types.push_back(getUnderlyingType(item));
+    }
+    return types;
+  } else if (exprType == ExpressionType::Accessor) {
+    auto acc = dynamic_cast<AST::Accessor*>(expression);
+    if (acc == nullptr) throw std::runtime_error("expression invalidly identified as an AltaCore::AST::Accessor");
+    std::vector<std::shared_ptr<Type>> types;
+    for (auto& item: acc->$items) {
       types.push_back(getUnderlyingType(item));
     }
     return types;
@@ -234,7 +244,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
   // here, we care about *exact* compatability, and that includes all modifiers
   if (modifiers.size() != other.modifiers.size()) return false;
   for (size_t i = 0; i < modifiers.size(); i++) {
-    if (modifiers[i] != other.modifiers.size()) return false;
+    if (modifiers[i] != other.modifiers[i]) return false;
   }
 
   if (isFunction) {

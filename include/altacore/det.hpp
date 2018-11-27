@@ -10,5 +10,6 @@
 #include "det/function.hpp"
 #include "det/type.hpp"
 #include "det/alias.hpp"
+#include "det/namespace.hpp"
 
 #endif // ALTACORE_DET_HPP

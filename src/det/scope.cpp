@@ -2,6 +2,8 @@
 #include "../../include/altacore/det/function.hpp"
 #include "../../include/altacore/det/module.hpp"
 #include "../../include/altacore/det/alias.hpp"
+#include "../../include/altacore/det/namespace.hpp"
+#include "../../include/altacore/det/variable.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Scope::nodeType() {
   return NodeType::Scope;
@@ -35,8 +37,11 @@ AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Module> _parentModule
 AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Function> _parentFunction):
   parentFunction(_parentFunction)
   {};
+AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Namespace> _parentNamespace):
+  parentNamespace(_parentNamespace)
+  {};
 
-std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes) {
+std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes, bool searchParents) {
   std::vector<std::shared_ptr<ScopeItem>> results;
   std::vector<std::shared_ptr<Type>> funcTypes;
   std::shared_ptr<ScopeItem> first = nullptr;
@@ -88,9 +93,11 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
     parentScope = parent.lock();
   } else if (!parentFunction.expired() && !parentFunction.lock()->parentScope.expired()) {
     parentScope = parentFunction.lock()->parentScope.lock();
+  } else if (!parentNamespace.expired() && !parentNamespace.lock()->parentScope.expired()) {
+    parentScope = parentNamespace.lock()->parentScope.lock();
   }
 
-  if (parentScope != nullptr && (allFunctions || !first)) {
+  if (searchParents && parentScope != nullptr && (allFunctions || !first)) {
     // here, allFunctions being true means that either all the scope items found were functions
     // (in which case, we're free to search for overloads in parent scopes)
     // OR no items were found (which is fine, too, since we can also search parent scopes in that case)
@@ -123,7 +130,26 @@ void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::Type> type) {
     func->hoistedFunctionalTypes.push_back(type);
   } else if (auto scope = parent.lock()) {
     scope->hoist(type);
+  } else if (auto ns = parentNamespace.lock()) {
+    ns->hoistedFunctionalTypes.push_back(type);
   } else {
     throw std::runtime_error("failed to hoist type anywhere. no parent functions, modules, or scopes were found");
   }
+};
+
+std::shared_ptr<AltaCore::DET::Scope> AltaCore::DET::Scope::getMemberScope(std::shared_ptr<AltaCore::DET::ScopeItem> item) {
+  auto detType = item->nodeType();
+
+  if (detType == NodeType::Namespace) {
+    auto ns = std::dynamic_pointer_cast<Namespace>(item);
+    return ns->scope;
+  } else if (detType == NodeType::Function) {
+    auto func = std::dynamic_pointer_cast<Function>(item);
+    return func->scope;
+  } else if (detType == NodeType::Variable) {
+    auto var = std::dynamic_pointer_cast<Variable>(item);
+    return nullptr; // for now, since types can only be native, variables don't have their own scopes
+  }
+
+  return nullptr;
 };

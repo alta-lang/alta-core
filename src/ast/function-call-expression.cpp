@@ -1,6 +1,7 @@
 #include "../../include/altacore/ast/function-call-expression.hpp"
 #include "../../include/altacore/det/type.hpp"
 #include "../../include/altacore/ast/fetch.hpp"
+#include "../../include/altacore/ast/accessor.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::FunctionCallExpression::nodeType() {
   return NodeType::FunctionCallExpression;
@@ -42,6 +43,9 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
           if (arguments[i]->nodeType() == NodeType::Fetch) {
             auto fetch = std::dynamic_pointer_cast<AST::Fetch>(arguments[i]);
             fetch->narrowTo(type);
+          } else if (arguments[i]->nodeType() == NodeType::Accessor) {
+            auto acc = std::dynamic_pointer_cast<AST::Accessor>(arguments[i]);
+            acc->narrowTo(type);
           }
         }
       }
@@ -81,6 +85,9 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
     if (target->nodeType() == NodeType::Fetch) {
       auto fetch = std::dynamic_pointer_cast<AST::Fetch>(target);
       fetch->narrowTo(mostCompatibleType);
+    } else if (target->nodeType() == NodeType::Accessor) {
+      auto acc = std::dynamic_pointer_cast<AST::Accessor>(target);
+      acc->narrowTo(mostCompatibleType);
     }
   }
 
