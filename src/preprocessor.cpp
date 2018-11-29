@@ -45,7 +45,7 @@ namespace PreprocessorUtils {
         inString = !inString;
         results[results.size() - 1] += character;
       } else if (dontTouchStrings && character == '\\' && inString && i + 1 < input.size()) {
-        results[results.size() - 1] += character + results[i + 1];
+        results[results.size() - 1] += character + input[i + 1];
         i++;
       } else if (inString || !std::isspace(character, defaultLocale)) {
         results[results.size() - 1] += character;

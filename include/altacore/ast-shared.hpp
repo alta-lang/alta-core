@@ -29,6 +29,7 @@ namespace AltaCore {
       ImportStatement,
       FunctionCallExpression,
       StringLiteralNode,
+      FunctionDeclarationNode,
     };
 
     static const char* const NodeType_names[] = {
@@ -53,6 +54,7 @@ namespace AltaCore {
       "ImportStatement",
       "FunctionCallExpression",
       "StringLiteralNode",
+      "FunctionDeclarationNode",
     };
 
     enum class OperatorType {

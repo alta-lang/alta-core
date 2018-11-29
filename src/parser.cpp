@@ -70,6 +70,7 @@ namespace AltaCore {
       } else if (rule == RuleType::Statement) {
         auto exp = expect({
           RuleType::FunctionDefinition,
+          RuleType::FunctionDeclaration,
           RuleType::ReturnDirective,
           RuleType::Expression,
         });
@@ -445,6 +446,19 @@ namespace AltaCore {
         auto raw = expect(TokenType::String);
         if (!raw) return std::nullopt;
         return std::make_shared<AST::StringLiteralNode>(Util::unescape(raw.token.raw.substr(1, raw.token.raw.length() - 2)));
+      } else if (rule == RuleType::FunctionDeclaration) {
+        if (!expectKeyword("declare")) return std::nullopt;
+        auto modifiers = expectModifiers(ModifierTargetType::Function);
+        if (!expectKeyword("function")) return std::nullopt;
+        auto name = expect(TokenType::Identifier);
+        if (!name.valid) return std::nullopt;
+        if (!expect(TokenType::OpeningParenthesis).valid) return std::nullopt;
+        auto parameters = expectParameters();
+        if (!expect(TokenType::ClosingParenthesis).valid) return std::nullopt;
+        if (!expect(TokenType::Colon).valid) return std::nullopt;
+        auto returnType = expect(RuleType::Type);
+        if (!returnType.valid) return std::nullopt;
+        return std::make_shared<AST::FunctionDeclarationNode>(name.token.raw, parameters, std::dynamic_pointer_cast<AST::Type>(returnType.item.value()), modifiers);
       }
       return std::nullopt;
     };
