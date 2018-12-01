@@ -19,6 +19,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/modules.cpp"
   "${PROJECT_SOURCE_DIR}/src/util.cpp"
   "${PROJECT_SOURCE_DIR}/src/preprocessor.cpp"
+  "${PROJECT_SOURCE_DIR}/src/attributes.cpp"
 
   # AST nodes
   "${PROJECT_SOURCE_DIR}/src/ast/node.cpp"
@@ -42,7 +43,9 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/function-call-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/string-literal-node.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/function-declaration-node.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/attribute-node.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/literal-node.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/attribute-statement.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

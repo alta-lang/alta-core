@@ -69,6 +69,7 @@ namespace AltaCore {
         return std::make_shared<AST::RootNode>(statements);
       } else if (rule == RuleType::Statement) {
         auto exp = expect({
+          RuleType::GeneralAttribute,
           RuleType::FunctionDefinition,
           RuleType::FunctionDeclaration,
           RuleType::ReturnDirective,
@@ -459,6 +460,42 @@ namespace AltaCore {
         auto returnType = expect(RuleType::Type);
         if (!returnType.valid) return std::nullopt;
         return std::make_shared<AST::FunctionDeclarationNode>(name.token.raw, parameters, std::dynamic_pointer_cast<AST::Type>(returnType.item.value()), modifiers);
+      } else if (rule == RuleType::Attribute) {
+        if (!expect(TokenType::AtSign)) return std::nullopt;
+
+        std::vector<std::string> accessors;
+        auto idExp = expect(TokenType::Identifier);
+        while (idExp) {
+          accessors.push_back(idExp.token.raw);
+          if (!expect(TokenType::Dot)) break;
+          idExp = expect(TokenType::Identifier);
+        }
+        if (accessors.size() == 0) return std::nullopt;
+
+        std::vector<std::shared_ptr<AST::LiteralNode>> arguments;
+        if (expect(TokenType::OpeningParenthesis)) {
+          auto exp = expect(RuleType::AnyLiteral);
+          while (exp) {
+            arguments.push_back(std::dynamic_pointer_cast<AST::LiteralNode>(exp.item.value()));
+            if (!expect(TokenType::Comma)) break;
+            exp = expect(RuleType::AnyLiteral);
+          }
+          expect(TokenType::Comma); // optional trailing comma
+          if (!expect(TokenType::ClosingParenthesis)) return std::nullopt;
+        }
+
+        return std::make_shared<AST::AttributeNode>(accessors, arguments);
+      } else if (rule == RuleType::GeneralAttribute) {
+        if (!expect(TokenType::AtSign)) return std::nullopt;
+        auto attrExp = expect(RuleType::Attribute);
+        if (!attrExp) return std::nullopt;
+        return std::make_shared<AST::AttributeStatement>(std::dynamic_pointer_cast<AST::AttributeNode>(attrExp.item.value()));
+      } else if (rule == RuleType::AnyLiteral) {
+        return expect({
+          RuleType::IntegralLiteral,
+          RuleType::BooleanLiteral,
+          RuleType::String,
+        }).item;
       }
       return std::nullopt;
     };

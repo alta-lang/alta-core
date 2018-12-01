@@ -60,6 +60,9 @@ namespace AltaCore {
       FunctionCall,
       String,
       FunctionDeclaration,
+      Attribute,
+      GeneralAttribute,
+      AnyLiteral,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {
@@ -160,6 +163,7 @@ namespace AltaCore {
         std::vector<std::shared_ptr<AST::Parameter>> expectParameters();
         std::vector<std::string> expectModifiers(ModifierTargetType mtt);
         bool expectKeyword(std::string keyword);
+        std::vector<std::shared_ptr<AST::AttributeNode>> expectAttributes();
         // </helper-functions>
       protected:
         std::optional<std::shared_ptr<AST::Node>> runRule(RuleType rule);
