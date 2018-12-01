@@ -69,11 +69,16 @@ namespace AltaCore {
         return std::make_shared<AST::RootNode>(statements);
       } else if (rule == RuleType::Statement) {
         auto exp = expect({
-          RuleType::GeneralAttribute,
           RuleType::FunctionDefinition,
           RuleType::FunctionDeclaration,
           RuleType::ReturnDirective,
           RuleType::Expression,
+
+          // general attributes must come last because
+          // they're supposed to be able to interpreted as part of
+          // other statements that accept attributes if any such
+          // statement is present
+          RuleType::GeneralAttribute,
         });
         expect(TokenType::Semicolon); // optional
         if (!exp.valid) return std::nullopt;

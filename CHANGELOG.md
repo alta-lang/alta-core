@@ -3,6 +3,32 @@ All the changes for Alta's frontend/core functionality (parser, lexer, AST, DET,
 
 This project follows [semantic versioning](https://semver.org).
 
+## [0.8.0] - 2018-12-01
+### Added
+#### Attributes
+  * Brand new core component
+    * Welp. AltaCore is getting pretty big (in terms of the functionality it implements)
+  * Attributes can be registered per-file or globally
+  * They can have an optional callback that it suppossed to be run by the backend when compiling code
+  * They can also be narrowed to only apply to certain statement types
+    * By default, attributes are general, meaning they can apply to any statement or even to no statement at all
+  * Attribute callbacks can also take arguments, and these are allowed to be 3 different kinds of concrete values: string, integer, or boolean literals
+#### Palo (parser)
+  * General attribute parsing
+#### AST
+  * New nodes:
+    * `AttributeNode`
+    * `AttributeStatement` = Statement node for general attributes that aren't applied to any other nodes
+#### Util
+  * Added `escape` method for escaping special characters in string literals
+### Changed
+#### AST
+  * All literal value nodes now inherit from a common `LiteralNode` class
+    * So far, this includes `StringLiteralNode`s, `IntegerLiteralNode`s, and `BooleanLiteralNode`s
+#### Preprocessor
+  * Implemented substitution delimiter change
+    * Alta's preprocessor substition delimiters changed from `@foobar@` to `@[foobar]`
+
 ## [0.7.0] - 2018-11-28
 ### Added
 #### DET, AST, Palo (parser)
