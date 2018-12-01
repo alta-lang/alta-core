@@ -77,6 +77,39 @@ std::string AltaCore::Util::unescape(std::string data) {
   return result;
 };
 
+std::string AltaCore::Util::escape(std::string data) {
+  std::string result;
+
+  for (auto& ch: data) {
+    // all printable characters except \ and "
+    if (
+      ch >= ' ' &&
+      ch <= '~' &&
+      ch != '\\' &&
+      ch != '"'
+    ) {
+      result += ch;
+    } else {
+      result += '\\';
+      if (ch == '\\' || ch == '"') {
+        result += ch;
+      } else if (ch == '\t') {
+        result += 't';
+      } else if (ch == '\r') {
+        result += 'r';
+      } else if (ch == '\n') {
+        result += 'n';
+      } else {
+        result += 'x';
+        result += hexDigits[ch >> 4];  // upper half
+        result += hexDigits[ch & 0xf]; // lower half
+      }
+    }
+  }
+
+  return result;
+};
+
 uint8_t AltaCore::Util::hexDigitToDecimal(const char singleDigit) {
   if (singleDigit >= '0' && singleDigit <= '9') {
     return singleDigit - 0x30; // according to asciitable.com, '0' starts at 0x30
