@@ -106,32 +106,36 @@ namespace PreprocessorUtils {
   };
   std::vector<std::pair<size_t, size_t>> findSubstitutionDelimiters(std::string data) {
     std::vector<std::pair<size_t, size_t>> results;
-    auto first = data.find('@');
+    auto first = data.find("@[");
     if (first == std::string::npos) return {};
-    auto second = data.find('@', first + 1);
+    auto second = data.find("]", first + 2);
     if (second == std::string::npos) return {};
     auto stringLocations = findStrings(data);
     while (first != std::string::npos && second != std::string::npos) {
-      if (data.substr(first + 1, second - first).find(' ') != std::string::npos) {
-        // if there's a space, ignore the first one and search for a new second one
-        first = second;
-        second = data.find('@', first + 1);
+      if (data.substr(first + 2, second - first - 1).find(' ') != std::string::npos) {
+        // if there's a space, ignore the first one and search for a new first one
+        // (reset the second too, just in case)
+        first = data.find("@[", first + 2);
+        second = data.find(']', first + 2);
       } else {
         // check whether either is contained in a string
         bool cont = false;
         for (auto& [stringStart, stringEnd]: stringLocations) {
-          if ((stringStart < first && stringEnd > first)) {
-            // if the first delimiter is contained in a string,
-            // ignore it and try searching for a new second one
-            first = second;
-            second = data.find('@', first + 1);
-            cont = true;
-          }
-          if ((stringStart < second && stringEnd > second)) {
+          if (stringStart < second && stringEnd > second) {
             // if the second delimiter is contained in a string,
             // we can ignore them both
-            first = data.find('@', second + 1);
-            second = data.find('@', first + 1);
+            first = data.find("@[", second + 1);
+            second = data.find("]", first + 2);
+            cont = true;
+          }
+          if (stringStart < first && stringEnd > first) {
+            // if the first delimiter is contained in a string,
+            // ignore it and try searching for a new second one
+            //
+            // btw, here we've already determined that the second delimiter
+            // is not in a string
+            first = data.find("@[", first + 2);
+            second = data.find(']', first + 2);
             cont = true;
           }
           if (cont) {
@@ -143,8 +147,8 @@ namespace PreprocessorUtils {
         }
         // if both of the delimiter are ok, add them to the results
         results.emplace_back(first, second);
-        first = data.find('@', second + 1);
-        second = data.find('@', first + 1);
+        first = data.find("@[", second + 1);
+        second = data.find(']', first + 1);
       }
     }
     return results;
@@ -660,7 +664,9 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
         for (size_t j = 0; j < delimiters.size(); j++) {
           auto& [delimiterStart, delimiterEnd] = delimiters[j];
           if (delimiterEnd + lineStartIndex < importStart) {
-            auto& defName = line.substr(delimiterStart, delimiterEnd - delimiterStart + 1);
+            // [comment id: p.1]
+            // TODO
+            auto& defName = line.substr(delimiterStart + 1, delimiterEnd - delimiterStart - 2);
             target += line.substr(nextStart, delimiterStart - nextStart + 1);
             if (definitions.find(defName) != definitions.end()) {
               auto& val = definitions[defName];
@@ -687,7 +693,8 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
         fileReader(*this, pre, importRequest);
       }
       for (auto& [delimiterStart, delimiterEnd]: delimiters) {
-        auto& defName = line.substr(delimiterStart + 1, delimiterEnd - delimiterStart - 1);
+        // see comment p.1 above
+        auto& defName = line.substr(delimiterStart + 2, delimiterEnd - delimiterStart - 2);
         target += line.substr(nextStart, delimiterStart - nextStart);
         if (definitions.find(defName) != definitions.end()) {
           auto& val = definitions[defName];
