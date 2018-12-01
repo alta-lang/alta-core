@@ -1,12 +1,11 @@
 #ifndef ALTACORE_AST_STRING_LITERAL_NODE_HPP
 #define ALTACORE_AST_STRING_LITERAL_NODE_HPP
 
-#include "expression-node.hpp"
-#include <string>
+#include "literal-node.hpp"
 
 namespace AltaCore {
   namespace AST {
-    class StringLiteralNode: public ExpressionNode {
+    class StringLiteralNode: public LiteralNode {
       public:
         virtual const NodeType nodeType();
 

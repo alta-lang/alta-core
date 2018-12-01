@@ -5,5 +5,5 @@ const AltaCore::AST::NodeType AltaCore::AST::IntegerLiteralNode::nodeType() {
 };
 
 AltaCore::AST::IntegerLiteralNode::IntegerLiteralNode(std::string _raw):
-  raw(_raw)
+  LiteralNode(_raw)
   {};

@@ -24,5 +24,6 @@
 #include "ast/function-call-expression.hpp"
 #include "ast/string-literal-node.hpp"
 #include "ast/function-declaration-node.hpp"
+#include "ast/literal-node.hpp"
 
 #endif // ALTACORE_AST_HPP

@@ -5,5 +5,6 @@ const AltaCore::AST::NodeType AltaCore::AST::BooleanLiteralNode::nodeType() {
 };
 
 AltaCore::AST::BooleanLiteralNode::BooleanLiteralNode(bool _value):
+  LiteralNode(_value ? "true" : "false"),
   value(_value)
   {};

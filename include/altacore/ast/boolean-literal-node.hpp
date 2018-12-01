@@ -1,12 +1,11 @@
 #ifndef ALTACORE_AST_BOOLEAN_LITERAL_NODE_HPP
 #define ALTACORE_AST_BOOLEAN_LITERAL_NODE_HPP
 
-#include "expression-node.hpp"
-#include <string>
+#include "literal-node.hpp"
 
 namespace AltaCore {
   namespace AST {
-    class BooleanLiteralNode: public ExpressionNode {
+    class BooleanLiteralNode: public LiteralNode {
       public:
         virtual const NodeType nodeType();
 
