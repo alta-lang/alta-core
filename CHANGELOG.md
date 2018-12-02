@@ -75,9 +75,9 @@ This project follows [semantic versioning](https://semver.org).
 Oh boy, this one's a big one.
 ### Changed
 #### Module System
-  * The STL structure has been changed up a bit
-    * Previously, STL packages were expected to be created as single modules
-    * Now, STL packages are expected to be set up just like regular packages, each with their own folder, `package.alta.yaml`, and main module.
+  * The standard library structure has been changed up a bit
+    * Previously, stdlib packages were expected to be created as single modules
+    * Now, stdlib packages are expected to be set up just like regular packages, each with their own folder, `package.alta.yaml`, and main module.
 ### Added
 #### Waterwheel (lexer), Palo (parser), AST, DET
   * **Function calls** have been added (!)

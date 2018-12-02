@@ -4,7 +4,7 @@
 
 namespace AltaCore {
   namespace Modules {
-    Filesystem::Path stlPath;
+    Filesystem::Path standardLibraryPath;
     std::function<std::shared_ptr<AST::RootNode>(std::string importRequest, Filesystem::Path requestingModulePath)> parseModule = [](std::string importRequest, Filesystem::Path requestingModulePath) -> std::shared_ptr<AST::RootNode> {
       auto modPath = resolve(importRequest, requestingModulePath);
       std::ifstream file(modPath.toString());
@@ -107,15 +107,15 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
       relativeTo.pop();
     }
   } else {
-    // try stl first (it takes precedence)
-    auto stlResolved = importPath.absolutify(stlPath);
-    if (stlResolved.exists()) {
-      auto info = getInfo(stlResolved); // stlResolved should be a package path, not a module path
+    // try stdlib first (it takes precedence)
+    auto stdlibResolved = importPath.absolutify(standardLibraryPath);
+    if (stdlibResolved.exists()) {
+      auto info = getInfo(stdlibResolved); // stdlibResolved should be a package path, not a module path
       if (info.main) {
         return info.main;
       }
       // welp, this shouldn't ever happen. but just in case...
-      return stlResolved / "main.alta";
+      return stdlibResolved / "main.alta";
     } else {
       // otherwise, try finding the module in a package
       while (!relativeTo.isRoot()) {

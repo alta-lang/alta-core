@@ -35,7 +35,7 @@ namespace AltaCore {
       PackageInfo();
     };
 
-    extern Filesystem::Path stlPath;
+    extern Filesystem::Path standardLibraryPath;
     extern std::function<std::shared_ptr<AST::RootNode>(std::string importRequest, Filesystem::Path requestingModulePath)> parseModule;
     Filesystem::Path resolve(std::string importRequest, Filesystem::Path relativeTo);
     Filesystem::Path findInfo(Filesystem::Path moduleOrPackagePath);
