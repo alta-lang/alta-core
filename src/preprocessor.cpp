@@ -666,7 +666,7 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
           if (delimiterEnd + lineStartIndex < importStart) {
             // [comment id: p.1]
             // TODO
-            auto& defName = line.substr(delimiterStart + 1, delimiterEnd - delimiterStart - 2);
+            auto defName = line.substr(delimiterStart + 1, delimiterEnd - delimiterStart - 2);
             target += line.substr(nextStart, delimiterStart - nextStart + 1);
             if (definitions.find(defName) != definitions.end()) {
               auto& val = definitions[defName];
@@ -694,7 +694,7 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
       }
       for (auto& [delimiterStart, delimiterEnd]: delimiters) {
         // see comment p.1 above
-        auto& defName = line.substr(delimiterStart + 2, delimiterEnd - delimiterStart - 2);
+        auto defName = line.substr(delimiterStart + 2, delimiterEnd - delimiterStart - 2);
         target += line.substr(nextStart, delimiterStart - nextStart);
         if (definitions.find(defName) != definitions.end()) {
           auto& val = definitions[defName];
