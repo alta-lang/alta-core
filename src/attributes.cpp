@@ -81,7 +81,7 @@ bool AltaCore::Attributes::registerAttribute(std::vector<std::string> fullDomain
 
   return true;
 };
-std::optional<AltaCore::Attributes::Attribute> AltaCore::Attributes::findAttribute(std::vector<std::string> fullDomainPath, std::optional<AltaCore::AST::NodeType> appliesTo, std::string file) {
+ALTACORE_OPTIONAL<AltaCore::Attributes::Attribute> AltaCore::Attributes::findAttribute(std::vector<std::string> fullDomainPath, ALTACORE_OPTIONAL<AltaCore::AST::NodeType> appliesTo, std::string file) {
   if (fullDomainPath.size() == 0) return std::nullopt;
 
   std::vector<Attribute>* target = nullptr;

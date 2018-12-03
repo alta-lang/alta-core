@@ -50,7 +50,7 @@ namespace AltaCore {
     };
     // </helper-functions>
 
-    std::optional<std::shared_ptr<AST::Node>> Parser::runRule(RuleType rule) {
+    ALTACORE_OPTIONAL<std::shared_ptr<AST::Node>> Parser::runRule(RuleType rule) {
       if (rule == RuleType::Root) {
         // TODO: use custom `ParserError`s instead of throwing `std::runtime_error`s
         std::vector<std::shared_ptr<AST::StatementNode>> statements;

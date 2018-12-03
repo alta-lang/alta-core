@@ -1,12 +1,19 @@
 #ifndef ALTACORE_AST_ATTRIBUTE_NODE_HPP
 #define ALTACORE_AST_ATTRIBUTE_NODE_HPP
 
+#if defined(__has_include) && __has_include(<optional>)
+#include <optional>
+#define ALTACORE_OPTIONAL std::optional
+#else
+#include <experimental/optional>
+#define ALTACORE_OPTIONAL std::experimental::optional
+#endif
+
 #include "node.hpp"
 #include <vector>
 #include <string>
 #include "literal-node.hpp"
 #include "../attributes.hpp"
-#include <optional>
 
 namespace AltaCore {
   namespace AST {
@@ -19,7 +26,7 @@ namespace AltaCore {
 
         std::weak_ptr<DET::Module> $module;
         std::vector<Attributes::AttributeArgument> $arguments;
-        std::optional<Attributes::Attribute> $attribute = std::nullopt;
+        ALTACORE_OPTIONAL<Attributes::Attribute> $attribute = std::nullopt;
 
         AttributeNode(std::vector<std::string> accessors, std::vector<std::shared_ptr<LiteralNode>> arguments = {});
 

@@ -77,7 +77,7 @@ namespace AltaCore {
         Expression defined(std::vector<Expression> targets);
         // </builtin-macros>
 
-        std::optional<Expression> runRule(RuleType rule);
+        ALTACORE_OPTIONAL<Expression> runRule(RuleType rule);
       public:
         void parse();
 

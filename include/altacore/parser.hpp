@@ -1,9 +1,16 @@
 #ifndef ALTACORE_PARSER_HPP
 #define ALTACORE_PARSER_HPP
 
+#if defined(__has_include) && __has_include(<optional>)
+#include <optional>
+#define ALTACORE_OPTIONAL std::optional
+#else
+#include <experimental/optional>
+#define ALTACORE_OPTIONAL std::experimental::optional
+#endif
+
 #include <map>
 #include <vector>
-#include <optional>
 #include "lexer.hpp"
 #include "ast.hpp"
 
@@ -92,7 +99,7 @@ namespace AltaCore {
 
       bool valid = false;
       ExpectationType type;
-      std::optional<T> item = std::nullopt;
+      ALTACORE_OPTIONAL<T> item = std::nullopt;
       Token token;
 
       GenericExpectation():
@@ -137,11 +144,11 @@ namespace AltaCore {
         };
         Expectation expectAnyToken();
 
-        virtual std::optional<T> runRule(RT rule) {
+        virtual ALTACORE_OPTIONAL<T> runRule(RT rule) {
           return std::nullopt;
         };
       public:
-        std::optional<T> root;
+        ALTACORE_OPTIONAL<T> root;
 
         virtual void parse() {};
         void reset() {
@@ -166,7 +173,7 @@ namespace AltaCore {
         std::vector<std::shared_ptr<AST::AttributeNode>> expectAttributes();
         // </helper-functions>
       protected:
-        std::optional<std::shared_ptr<AST::Node>> runRule(RuleType rule);
+        ALTACORE_OPTIONAL<std::shared_ptr<AST::Node>> runRule(RuleType rule);
       public:
         void parse();
 

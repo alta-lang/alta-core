@@ -250,7 +250,7 @@ AltaCore::Preprocessor::Expression AltaCore::Preprocessor::ExpressionParser::def
   return true;
 };
 
-std::optional<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::ExpressionParser::runRule(AltaCore::Preprocessor::RuleType rule) {
+ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::ExpressionParser::runRule(AltaCore::Preprocessor::RuleType rule) {
   using TokenType = Lexer::TokenType;
   if (rule == RuleType::Expression) {
     // lowest to highest precedence
