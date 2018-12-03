@@ -283,7 +283,7 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
     rulesToIgnore.pop_back();
     if (!right) return ALTACORE_NULLOPT;
 
-    auto result = evaluateExpressions ? Expression(left.item.value() == right.item.value()) : Expression();
+    auto result = evaluateExpressions ? Expression(*left.item == *right.item) : Expression();
 
     while (expect(TokenType::Equality)) {
       rulesToIgnore.push_back(RuleType::Equality);
@@ -291,7 +291,7 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
       rulesToIgnore.pop_back();
       if (!right) break;
       if (evaluateExpressions) {
-        result = Expression(result == right.item.value());
+        result = Expression(result == *right.item);
       }
     }
 
@@ -308,7 +308,7 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
     } else {
       Expectation arg = expect(RuleType::Expression);
       while (arg) {
-        arguments.push_back(arg.item.value());
+        arguments.push_back(*arg.item);
         if (!expect(TokenType::Comma)) break;
         arg = expect(RuleType::Expression);
       }
@@ -357,7 +357,7 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
     rulesToIgnore.pop_back();
     if (!right) return ALTACORE_NULLOPT;
 
-    auto result = evaluateExpressions ? Expression(left.item.value() && right.item.value()) : Expression();
+    auto result = evaluateExpressions ? Expression(*left.item && *right.item) : Expression();
     if (!result) {
       evaluateExpressions = false;
     }
@@ -368,7 +368,7 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
       rulesToIgnore.pop_back();
       if (!right) break;
       if (evaluateExpressions) {
-        result = Expression(result && right.item.value());
+        result = Expression(result && *right.item);
         if (!result) {
           evaluateExpressions = false;
         }
@@ -390,7 +390,7 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
     rulesToIgnore.pop_back();
     if (!right) return ALTACORE_NULLOPT;
 
-    auto result = evaluateExpressions ? Expression(left.item.value() || right.item.value()) : Expression();
+    auto result = evaluateExpressions ? Expression(*left.item || *right.item) : Expression();
     if (result) {
       evaluateExpressions = false;
     }
@@ -401,7 +401,7 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
       rulesToIgnore.pop_back();
       if (!right) break;
       if (evaluateExpressions) {
-        result = Expression(result || right.item.value());
+        result = Expression(result || *right.item);
         if (result) {
           evaluateExpressions = false;
         }
@@ -433,7 +433,7 @@ AltaCore::Preprocessor::Expression AltaCore::Preprocessor::Preprocessor::evaluat
   ExpressionParser parser(lexer.tokens, definitions);
   parser.parse();
 
-  if (auto val = parser.root.value()) {
+  if (auto val = *parser.root) {
     return val;
   } else {
     return Expression(nullptr);

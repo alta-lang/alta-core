@@ -37,7 +37,7 @@ void AltaCore::AST::AttributeNode::detail(std::shared_ptr<AltaCore::DET::Scope> 
 
 void AltaCore::AST::AttributeNode::run(std::shared_ptr<AltaCore::AST::Node> target) {
   if ($attribute) {
-    auto attr = $attribute.value();
+    auto attr = *$attribute;
     if (attr.callback) {
       attr.callback(target ? target : $module.lock()->ast.lock(), $arguments);
     }
