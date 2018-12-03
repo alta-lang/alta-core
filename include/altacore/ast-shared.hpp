@@ -2,6 +2,7 @@
 #define ALTACORE_AST_SHARED_HPP
 
 #include <cinttypes>
+#include <memory>
 #include "shared.hpp"
 
 namespace AltaCore {

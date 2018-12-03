@@ -81,7 +81,7 @@ namespace AltaCore {
           RuleType::GeneralAttribute,
         });
         expect(TokenType::Semicolon); // optional
-        if (!exp.valid) return std::nullopt;
+        if (!exp.valid) return ALTACORE_NULLOPT;
         auto ret = std::dynamic_pointer_cast<AST::StatementNode>(exp.item.value());
         if (!exp.type.isToken && exp.type.rule == RuleType::Expression) {
           auto expr = std::dynamic_pointer_cast<AST::ExpressionNode>(exp.item.value());
@@ -92,8 +92,8 @@ namespace AltaCore {
       } else if (rule == RuleType::Expression) {
         if (expect(TokenType::OpeningParenthesis)) {
           auto expr = expect(RuleType::Expression);
-          if (!expr) return std::nullopt;
-          if (!expect(TokenType::ClosingParenthesis)) return std::nullopt;
+          if (!expr) return ALTACORE_NULLOPT;
+          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
           return expr.item;
         } else {
           // lowest to highest precedence
@@ -117,16 +117,16 @@ namespace AltaCore {
       } else if (rule == RuleType::FunctionDefinition) {
         auto modifiers = expectModifiers(ModifierTargetType::Function);
         auto $function = expect(TokenType::Identifier);
-        if (!($function.valid && $function.token.raw == "function")) return std::nullopt;
+        if (!($function.valid && $function.token.raw == "function")) return ALTACORE_NULLOPT;
         auto name = expect(TokenType::Identifier);
-        if (!name.valid) return std::nullopt;
-        if (!expect(TokenType::OpeningParenthesis).valid) return std::nullopt;
+        if (!name.valid) return ALTACORE_NULLOPT;
+        if (!expect(TokenType::OpeningParenthesis).valid) return ALTACORE_NULLOPT;
         auto parameters = expectParameters();
-        if (!expect(TokenType::ClosingParenthesis).valid) return std::nullopt;
-        if (!expect(TokenType::Colon).valid) return std::nullopt;
+        if (!expect(TokenType::ClosingParenthesis).valid) return ALTACORE_NULLOPT;
+        if (!expect(TokenType::Colon).valid) return ALTACORE_NULLOPT;
         auto returnType = expect(RuleType::Type);
-        if (!returnType.valid) return std::nullopt;
-        if (!expect(TokenType::OpeningBrace).valid) return std::nullopt;
+        if (!returnType.valid) return ALTACORE_NULLOPT;
+        if (!expect(TokenType::OpeningBrace).valid) return ALTACORE_NULLOPT;
         std::vector<std::shared_ptr<AST::StatementNode>> statements;
         Expectation stmt;
         while ((stmt = expect(RuleType::Statement)), stmt.valid) {
@@ -134,14 +134,14 @@ namespace AltaCore {
           if (statement == nullptr) throw std::runtime_error("uhm...");
           statements.push_back(statement);
         }
-        if (!expect(TokenType::ClosingBrace).valid) return std::nullopt;
+        if (!expect(TokenType::ClosingBrace).valid) return ALTACORE_NULLOPT;
         return std::make_shared<AST::FunctionDefinitionNode>(name.token.raw, parameters, std::dynamic_pointer_cast<AST::Type>(returnType.item.value()), modifiers, std::make_shared<AST::BlockNode>(statements));
       } else if (rule == RuleType::Parameter) {
         auto name = expect(TokenType::Identifier);
-        if (!name.valid) return std::nullopt;
-        if (!expect(TokenType::Colon).valid) return std::nullopt;
+        if (!name.valid) return ALTACORE_NULLOPT;
+        if (!expect(TokenType::Colon).valid) return ALTACORE_NULLOPT;
         auto type = expect(RuleType::Type);
-        if (!type.valid) return std::nullopt;
+        if (!type.valid) return ALTACORE_NULLOPT;
         auto actualType = std::dynamic_pointer_cast<AST::Type>(type.item.value());
         auto actualName = name.token.raw;
         return std::make_shared<AST::Parameter>(actualName, actualType);
@@ -178,36 +178,36 @@ namespace AltaCore {
             }
             expect(TokenType::Comma); // optional trailing comma
           }
-          if (!expect(TokenType::ClosingParenthesis)) return std::nullopt;
+          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
           if (expect(TokenType::Returns)) {
             if (args.size() < 1 && firstType) {
               args.push_back(std::dynamic_pointer_cast<AST::Type>(firstType.item.value()));
             }
             auto ret = expect(RuleType::Type);
-            if (!ret) return std::nullopt;
+            if (!ret) return ALTACORE_NULLOPT;
             return std::make_shared<AST::Type>(std::dynamic_pointer_cast<AST::Type>(ret.item.value()), args, modifierBitflags);
           } else if (args.size() > 0) {
             // somehow, we detected parameters, but there's no return indicator,
             // so this isn't a type
-            return std::nullopt;
+            return ALTACORE_NULLOPT;
           } else {
-            if (!firstType) return std::nullopt;
+            if (!firstType) return ALTACORE_NULLOPT;
             auto type = std::dynamic_pointer_cast<AST::Type>(firstType.item.value());
             type->modifiers.insert(type->modifiers.begin(), modifierBitflags.begin(), modifierBitflags.end());
             return type;
           }
         } else {
           auto name = expect(TokenType::Identifier);
-          if (!name.valid) return std::nullopt;
+          if (!name.valid) return ALTACORE_NULLOPT;
           return std::make_shared<AST::Type>(name.token.raw, modifierBitflags);
         }
       } else if (rule == RuleType::IntegralLiteral) {
         auto integer = expect(TokenType::Integer);
-        if (!integer.valid) return std::nullopt;
+        if (!integer.valid) return ALTACORE_NULLOPT;
         return std::make_shared<AST::IntegerLiteralNode>(integer.token.raw);
       } else if (rule == RuleType::ReturnDirective) {
         auto keyword = expect(TokenType::Identifier);
-        if (!(keyword.valid && keyword.token.raw == "return")) return std::nullopt;
+        if (!(keyword.valid && keyword.token.raw == "return")) return ALTACORE_NULLOPT;
         rulesToIgnore.push_back(RuleType::ReturnDirective);
         auto expr = expect(RuleType::Expression);
         rulesToIgnore.pop_back();
@@ -219,16 +219,16 @@ namespace AltaCore {
       } else if (rule == RuleType::VariableDefinition) {
         auto mods = expectModifiers(ModifierTargetType::Variable);
         auto keyword = expect(TokenType::Identifier);
-        if (!(keyword.valid && (keyword.token.raw == "let" || keyword.token.raw == "var"))) return std::nullopt;
+        if (!(keyword.valid && (keyword.token.raw == "let" || keyword.token.raw == "var"))) return ALTACORE_NULLOPT;
         auto name = expect(TokenType::Identifier);
-        if (!name.valid) return std::nullopt;
-        if (!expect(TokenType::Colon).valid) return std::nullopt;
+        if (!name.valid) return ALTACORE_NULLOPT;
+        if (!expect(TokenType::Colon).valid) return ALTACORE_NULLOPT;
         auto type = expect(RuleType::Type);
         auto eq = expect(TokenType::EqualSign);
         std::shared_ptr<AST::ExpressionNode> initExpr = nullptr;
         if (eq.valid) {
           auto expr = expect(RuleType::Expression);
-          if (!expr.valid) return std::nullopt;
+          if (!expr.valid) return ALTACORE_NULLOPT;
           initExpr = std::dynamic_pointer_cast<AST::ExpressionNode>(expr.item.value());
         }
         auto varDef = std::make_shared<AST::VariableDefinitionExpression>(name.token.raw, std::dynamic_pointer_cast<AST::Type>(type.item.value()), initExpr);
@@ -236,17 +236,17 @@ namespace AltaCore {
         return varDef;
       } else if (rule == RuleType::Fetch) {
         auto id = expect(TokenType::Identifier);
-        if (!id.valid) return std::nullopt;
+        if (!id.valid) return ALTACORE_NULLOPT;
         return std::make_shared<AST::Fetch>(id.token.raw);
       } else if (rule == RuleType::Accessor) {
         rulesToIgnore.push_back(RuleType::Accessor);
         auto exprExp = expect(RuleType::Expression);
         rulesToIgnore.pop_back();
-        if (!exprExp.valid) return std::nullopt;
+        if (!exprExp.valid) return ALTACORE_NULLOPT;
         auto dot = expect(TokenType::Dot);
-        if (!dot.valid) return std::nullopt;
+        if (!dot.valid) return ALTACORE_NULLOPT;
         auto queryExp = expect(TokenType::Identifier);
-        if (!queryExp.valid) return std::nullopt;
+        if (!queryExp.valid) return ALTACORE_NULLOPT;
         auto acc = std::make_shared<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(exprExp.item.value()), queryExp.token.raw);
         while (true) {
           dot = expect(TokenType::Dot);
@@ -261,10 +261,10 @@ namespace AltaCore {
         rulesToIgnore.push_back(RuleType::Assignment);
         auto targetExp = expect(RuleType::Expression);
         rulesToIgnore.pop_back();
-        if (!targetExp.valid) return std::nullopt;
-        if (!expect(TokenType::EqualSign).valid) return std::nullopt;
+        if (!targetExp.valid) return ALTACORE_NULLOPT;
+        if (!expect(TokenType::EqualSign).valid) return ALTACORE_NULLOPT;
         auto valueExp = expect(RuleType::Expression);
-        if (!valueExp.valid) return std::nullopt;
+        if (!valueExp.valid) return ALTACORE_NULLOPT;
         return std::make_shared<AST::AssignmentExpression>(std::dynamic_pointer_cast<AST::ExpressionNode>(targetExp.item.value()), std::dynamic_pointer_cast<AST::ExpressionNode>(valueExp.item.value()));
       } else if (rule == RuleType::AdditionOrSubtraction) {
         // TODO: move the MDAS (as in, PEMDAS) logic into a reusable function
@@ -273,13 +273,13 @@ namespace AltaCore {
         rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
         auto leftExp = expect(RuleType::Expression);
         rulesToIgnore.pop_back();
-        if (!leftExp.valid) return std::nullopt;
+        if (!leftExp.valid) return ALTACORE_NULLOPT;
 
         auto opExp = expect({
           TokenType::PlusSign,
           TokenType::MinusSign,
         });
-        if (!opExp.valid) return std::nullopt;
+        if (!opExp.valid) return ALTACORE_NULLOPT;
         auto op = AST::OperatorType::Addition;
         if (opExp.token.type == TokenType::MinusSign) {
           op = AST::OperatorType::Subtraction;
@@ -288,7 +288,7 @@ namespace AltaCore {
         rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
         auto rightExp = expect(RuleType::Expression);
         rulesToIgnore.pop_back();
-        if (!rightExp.valid) return std::nullopt;
+        if (!rightExp.valid) return ALTACORE_NULLOPT;
 
         auto binOp = std::make_shared<AST::BinaryOperation>(op, std::dynamic_pointer_cast<AST::ExpressionNode>(leftExp.item.value()), std::dynamic_pointer_cast<AST::ExpressionNode>(rightExp.item.value()));
 
@@ -312,13 +312,13 @@ namespace AltaCore {
         rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
         auto leftExp = expect(RuleType::Expression);
         rulesToIgnore.pop_back();
-        if (!leftExp.valid) return std::nullopt;
+        if (!leftExp.valid) return ALTACORE_NULLOPT;
 
         auto opExp = expect({
           TokenType::Asterisk,
           TokenType::ForwardSlash,
         });
-        if (!opExp.valid) return std::nullopt;
+        if (!opExp.valid) return ALTACORE_NULLOPT;
         auto op = AST::OperatorType::Multiplication;
         if (opExp.token.type == TokenType::ForwardSlash) {
           op = AST::OperatorType::Division;
@@ -327,7 +327,7 @@ namespace AltaCore {
         rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
         auto rightExp = expect(RuleType::Expression);
         rulesToIgnore.pop_back();
-        if (!rightExp.valid) return std::nullopt;
+        if (!rightExp.valid) return ALTACORE_NULLOPT;
 
         auto binOp = std::make_shared<AST::BinaryOperation>(op, std::dynamic_pointer_cast<AST::ExpressionNode>(leftExp.item.value()), std::dynamic_pointer_cast<AST::ExpressionNode>(rightExp.item.value()));
 
@@ -352,10 +352,10 @@ namespace AltaCore {
           RuleType::Import,
         });
         expect(TokenType::Semicolon); // optional
-        if (!exp.valid) return std::nullopt;
+        if (!exp.valid) return ALTACORE_NULLOPT;
         return std::dynamic_pointer_cast<AST::StatementNode>(exp.item.value());
       } else if (rule == RuleType::Import) {
-        if (!expectKeyword("import")) return std::nullopt;
+        if (!expectKeyword("import")) return ALTACORE_NULLOPT;
         bool isAlias = false;
         std::string modName;
         std::vector<std::pair<std::string, std::string>> imports;
@@ -374,18 +374,18 @@ namespace AltaCore {
             importExp = expect(TokenType::Identifier);
           }
           expect(TokenType::Comma); // optional trailing comma
-          if (!expect(TokenType::ClosingBrace)) return std::nullopt;
-          if (!expectKeyword("from")) return std::nullopt;
+          if (!expect(TokenType::ClosingBrace)) return ALTACORE_NULLOPT;
+          if (!expectKeyword("from")) return ALTACORE_NULLOPT;
           auto mod = expect(TokenType::String);
-          if (!mod) return std::nullopt;
+          if (!mod) return ALTACORE_NULLOPT;
           modName = mod.token.raw.substr(1, mod.token.raw.length() - 2);
         } else {
           if (auto mod = expect(TokenType::String)) {
             isAlias = true;
             modName = mod.token.raw.substr(1, mod.token.raw.length() - 2);
-            if (!expectKeyword("as")) return std::nullopt;
+            if (!expectKeyword("as")) return ALTACORE_NULLOPT;
             auto aliasExp = expect(TokenType::Identifier);
-            if (!aliasExp) return std::nullopt;
+            if (!aliasExp) return ALTACORE_NULLOPT;
             alias = aliasExp.token.raw;
           } else {
             Expectation importExp = expect(TokenType::Identifier);
@@ -405,14 +405,14 @@ namespace AltaCore {
               if (!expect(TokenType::Comma)) break;
               importExp = expect(TokenType::Identifier);
             }
-            if (imports.size() == 0) return std::nullopt; // braced cherry-pick imports can have 0, but not freestyle cherry-pick imports
+            if (imports.size() == 0) return ALTACORE_NULLOPT; // braced cherry-pick imports can have 0, but not freestyle cherry-pick imports
             expect(TokenType::Comma); // optional trailing comma
             if (!from) {
               // we probably already got it in the while loop, but just in case, check for it here
-              if (!expectKeyword("from")) return std::nullopt;
+              if (!expectKeyword("from")) return ALTACORE_NULLOPT;
             }
             auto module = expect(TokenType::String);
-            if (!module) return std::nullopt;
+            if (!module) return ALTACORE_NULLOPT;
             modName = module.token.raw.substr(1, module.token.raw.length() - 2);
           }
         }
@@ -432,9 +432,9 @@ namespace AltaCore {
         rulesToIgnore.push_back(RuleType::FunctionCall);
         auto target = expect(RuleType::Expression);
         rulesToIgnore.pop_back();
-        if (!target) return std::nullopt;
+        if (!target) return ALTACORE_NULLOPT;
 
-        if (!expect(TokenType::OpeningParenthesis)) return std::nullopt;
+        if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
 
         std::vector<std::shared_ptr<AST::ExpressionNode>> arguments;
         auto arg = expect(RuleType::Expression);
@@ -445,28 +445,28 @@ namespace AltaCore {
         }
         expect(TokenType::Comma); // optional trailing comma
 
-        if (!expect(TokenType::ClosingParenthesis)) return std::nullopt;
+        if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
         
         return std::make_shared<AST::FunctionCallExpression>(std::dynamic_pointer_cast<AST::ExpressionNode>(target.item.value()), arguments);
       } else if (rule == RuleType::String) {
         auto raw = expect(TokenType::String);
-        if (!raw) return std::nullopt;
+        if (!raw) return ALTACORE_NULLOPT;
         return std::make_shared<AST::StringLiteralNode>(Util::unescape(raw.token.raw.substr(1, raw.token.raw.length() - 2)));
       } else if (rule == RuleType::FunctionDeclaration) {
-        if (!expectKeyword("declare")) return std::nullopt;
+        if (!expectKeyword("declare")) return ALTACORE_NULLOPT;
         auto modifiers = expectModifiers(ModifierTargetType::Function);
-        if (!expectKeyword("function")) return std::nullopt;
+        if (!expectKeyword("function")) return ALTACORE_NULLOPT;
         auto name = expect(TokenType::Identifier);
-        if (!name.valid) return std::nullopt;
-        if (!expect(TokenType::OpeningParenthesis).valid) return std::nullopt;
+        if (!name.valid) return ALTACORE_NULLOPT;
+        if (!expect(TokenType::OpeningParenthesis).valid) return ALTACORE_NULLOPT;
         auto parameters = expectParameters();
-        if (!expect(TokenType::ClosingParenthesis).valid) return std::nullopt;
-        if (!expect(TokenType::Colon).valid) return std::nullopt;
+        if (!expect(TokenType::ClosingParenthesis).valid) return ALTACORE_NULLOPT;
+        if (!expect(TokenType::Colon).valid) return ALTACORE_NULLOPT;
         auto returnType = expect(RuleType::Type);
-        if (!returnType.valid) return std::nullopt;
+        if (!returnType.valid) return ALTACORE_NULLOPT;
         return std::make_shared<AST::FunctionDeclarationNode>(name.token.raw, parameters, std::dynamic_pointer_cast<AST::Type>(returnType.item.value()), modifiers);
       } else if (rule == RuleType::Attribute) {
-        if (!expect(TokenType::AtSign)) return std::nullopt;
+        if (!expect(TokenType::AtSign)) return ALTACORE_NULLOPT;
 
         std::vector<std::string> accessors;
         auto idExp = expect(TokenType::Identifier);
@@ -475,7 +475,7 @@ namespace AltaCore {
           if (!expect(TokenType::Dot)) break;
           idExp = expect(TokenType::Identifier);
         }
-        if (accessors.size() == 0) return std::nullopt;
+        if (accessors.size() == 0) return ALTACORE_NULLOPT;
 
         std::vector<std::shared_ptr<AST::LiteralNode>> arguments;
         if (expect(TokenType::OpeningParenthesis)) {
@@ -486,14 +486,14 @@ namespace AltaCore {
             exp = expect(RuleType::AnyLiteral);
           }
           expect(TokenType::Comma); // optional trailing comma
-          if (!expect(TokenType::ClosingParenthesis)) return std::nullopt;
+          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
         }
 
         return std::make_shared<AST::AttributeNode>(accessors, arguments);
       } else if (rule == RuleType::GeneralAttribute) {
-        if (!expect(TokenType::AtSign)) return std::nullopt;
+        if (!expect(TokenType::AtSign)) return ALTACORE_NULLOPT;
         auto attrExp = expect(RuleType::Attribute);
-        if (!attrExp) return std::nullopt;
+        if (!attrExp) return ALTACORE_NULLOPT;
         return std::make_shared<AST::AttributeStatement>(std::dynamic_pointer_cast<AST::AttributeNode>(attrExp.item.value()));
       } else if (rule == RuleType::AnyLiteral) {
         return expect({
@@ -502,7 +502,7 @@ namespace AltaCore {
           RuleType::String,
         }).item;
       }
-      return std::nullopt;
+      return ALTACORE_NULLOPT;
     };
     void Parser::parse() {
       Expectation exp = expect(RuleType::Root);

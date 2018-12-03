@@ -4,9 +4,11 @@
 #if defined(__has_include) && __has_include(<optional>)
 #include <optional>
 #define ALTACORE_OPTIONAL std::optional
+#define ALTACORE_NULLOPT std::nullopt
 #else
 #include <experimental/optional>
 #define ALTACORE_OPTIONAL std::experimental::optional
+#define ALTACORE_NULLOPT std::experimental::nullopt
 #endif
 
 #include <vector>
@@ -52,7 +54,7 @@ namespace AltaCore {
     extern std::map<std::string, std::vector<Attribute>> registeredFileAttributes;
 
     bool registerAttribute(std::vector<std::string> fullDomainPath, std::vector<AST::NodeType> appliesTo = {}, std::function<void(std::shared_ptr<AST::Node>, std::vector<AttributeArgument>)> callback = nullptr, std::string file = "");
-    ALTACORE_OPTIONAL<Attribute> findAttribute(std::vector<std::string> fullDomainPath, ALTACORE_OPTIONAL<AST::NodeType> appliesTo = std::nullopt, std::string file = "");
+    ALTACORE_OPTIONAL<Attribute> findAttribute(std::vector<std::string> fullDomainPath, ALTACORE_OPTIONAL<AST::NodeType> appliesTo = ALTACORE_NULLOPT, std::string file = "");
   };
 };
 

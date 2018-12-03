@@ -4,9 +4,11 @@
 #if defined(__has_include) && __has_include(<optional>)
 #include <optional>
 #define ALTACORE_OPTIONAL std::optional
+#define ALTACORE_NULLOPT std::nullopt
 #else
 #include <experimental/optional>
 #define ALTACORE_OPTIONAL std::experimental::optional
+#define ALTACORE_NULLOPT std::experimental::nullopt
 #endif
 
 #include <map>
@@ -99,7 +101,7 @@ namespace AltaCore {
 
       bool valid = false;
       ExpectationType type;
-      ALTACORE_OPTIONAL<T> item = std::nullopt;
+      ALTACORE_OPTIONAL<T> item = ALTACORE_NULLOPT;
       Token token;
 
       GenericExpectation():
@@ -145,7 +147,7 @@ namespace AltaCore {
         Expectation expectAnyToken();
 
         virtual ALTACORE_OPTIONAL<T> runRule(RT rule) {
-          return std::nullopt;
+          return ALTACORE_NULLOPT;
         };
       public:
         ALTACORE_OPTIONAL<T> root;

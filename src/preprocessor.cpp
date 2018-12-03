@@ -268,20 +268,20 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
       RuleType::Retrieval,
       RuleType::String,
     });
-    if (!exp) return std::nullopt;
+    if (!exp) return ALTACORE_NULLOPT;
     return exp.item;
   } else if (rule == RuleType::Equality) {
     rulesToIgnore.push_back(RuleType::Equality);
     auto left = expect(RuleType::Expression);
     rulesToIgnore.pop_back();
-    if (!left) return std::nullopt;
+    if (!left) return ALTACORE_NULLOPT;
     
-    if (!expect(TokenType::Equality)) return std::nullopt;
+    if (!expect(TokenType::Equality)) return ALTACORE_NULLOPT;
 
     rulesToIgnore.push_back(RuleType::Equality);
     auto right = expect(RuleType::Expression);
     rulesToIgnore.pop_back();
-    if (!right) return std::nullopt;
+    if (!right) return ALTACORE_NULLOPT;
 
     auto result = evaluateExpressions ? Expression(left.item.value() == right.item.value()) : Expression();
 
@@ -298,8 +298,8 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
     return result;
   } else if (rule == RuleType::MacroCall) {
     auto target = expect(TokenType::Identifier);
-    if (!target) return std::nullopt;
-    if (!expect(TokenType::OpeningParenthesis)) return std::nullopt;
+    if (!target) return ALTACORE_NULLOPT;
+    if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
     std::vector<Expression> arguments;
     bool closed = false;
     if (expect(TokenType::ClosingParenthesis)) {
@@ -314,7 +314,7 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
       }
       expect(TokenType::Comma); // optional trailing comma
     }
-    if (!closed && !expect(TokenType::ClosingParenthesis)) return std::nullopt;
+    if (!closed && !expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
     if (!evaluateExpressions) return Expression();
     if (target.token.raw == "defined") {
       return defined(arguments);
@@ -323,7 +323,7 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
     }
   } else if (rule == RuleType::Retrieval) {
     auto target = expect(TokenType::Identifier);
-    if (!target) return std::nullopt;
+    if (!target) return ALTACORE_NULLOPT;
     if (!evaluateExpressions) return Expression();
     if (definitions.find(target.token.raw) == definitions.end()) {
       return Expression();
@@ -332,12 +332,12 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
     }
   } else if (rule == RuleType::String) {
     auto str = expect(TokenType::String);
-    if (!str) return std::nullopt;
+    if (!str) return ALTACORE_NULLOPT;
     if (!evaluateExpressions) return Expression();
     return Expression(AltaCore::Util::unescape(str.token.raw.substr(1, str.token.raw.length() - 2)));
   } else if (rule == RuleType::BooleanLiteral) {
     auto id = expect(TokenType::Identifier);
-    if (!id) return std::nullopt;
+    if (!id) return ALTACORE_NULLOPT;
     if (!evaluateExpressions) return Expression();
     if (id.token.raw == "true") {
       return Expression(true);
@@ -348,14 +348,14 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
     rulesToIgnore.push_back(RuleType::And);
     auto left = expect(RuleType::Expression);
     rulesToIgnore.pop_back();
-    if (!left) return std::nullopt;
+    if (!left) return ALTACORE_NULLOPT;
 
-    if (!expect(TokenType::And)) return std::nullopt;
+    if (!expect(TokenType::And)) return ALTACORE_NULLOPT;
 
     rulesToIgnore.push_back(RuleType::And);
     auto right = expect(RuleType::Expression);
     rulesToIgnore.pop_back();
-    if (!right) return std::nullopt;
+    if (!right) return ALTACORE_NULLOPT;
 
     auto result = evaluateExpressions ? Expression(left.item.value() && right.item.value()) : Expression();
     if (!result) {
@@ -381,14 +381,14 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
     rulesToIgnore.push_back(RuleType::Or);
     auto left = expect(RuleType::Expression);
     rulesToIgnore.pop_back();
-    if (!left) return std::nullopt;
+    if (!left) return ALTACORE_NULLOPT;
 
-    if (!expect(TokenType::Or)) return std::nullopt;
+    if (!expect(TokenType::Or)) return ALTACORE_NULLOPT;
 
     rulesToIgnore.push_back(RuleType::Or);
     auto right = expect(RuleType::Expression);
     rulesToIgnore.pop_back();
-    if (!right) return std::nullopt;
+    if (!right) return ALTACORE_NULLOPT;
 
     auto result = evaluateExpressions ? Expression(left.item.value() || right.item.value()) : Expression();
     if (result) {
@@ -411,13 +411,13 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
     evaluateExpressions = true;
     return result;
   } else if (rule == RuleType::Wrapped) {
-    if (!expect(TokenType::OpeningParenthesis)) return std::nullopt;
+    if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
     auto exp = expect(RuleType::Expression);
-    if (!exp) return std::nullopt;
-    if (!expect(TokenType::ClosingParenthesis)) return std::nullopt;
+    if (!exp) return ALTACORE_NULLOPT;
+    if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
     return exp.item;
   }
-  return std::nullopt;
+  return ALTACORE_NULLOPT;
 };
 
 void AltaCore::Preprocessor::ExpressionParser::parse() {

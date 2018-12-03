@@ -82,7 +82,7 @@ bool AltaCore::Attributes::registerAttribute(std::vector<std::string> fullDomain
   return true;
 };
 ALTACORE_OPTIONAL<AltaCore::Attributes::Attribute> AltaCore::Attributes::findAttribute(std::vector<std::string> fullDomainPath, ALTACORE_OPTIONAL<AltaCore::AST::NodeType> appliesTo, std::string file) {
-  if (fullDomainPath.size() == 0) return std::nullopt;
+  if (fullDomainPath.size() == 0) return ALTACORE_NULLOPT;
 
   std::vector<Attribute>* target = nullptr;
 
@@ -97,20 +97,20 @@ ALTACORE_OPTIONAL<AltaCore::Attributes::Attribute> AltaCore::Attributes::findAtt
 
     for (auto& attr: *target) {
       if (attr.name == fullDomainPath[i]) {
-        if (!attr.isDomain) return std::nullopt;
+        if (!attr.isDomain) return ALTACORE_NULLOPT;
         found = true;
         target = &attr.children;
         break;
       }
     }
 
-    if (!found) return std::nullopt;
+    if (!found) return ALTACORE_NULLOPT;
   }
 
   auto& last = fullDomainPath[fullDomainPath.size() - 1];
   for (auto& attr: *target) {
     if (attr.name == last) {
-      if (attr.isDomain) return std::nullopt;
+      if (attr.isDomain) return ALTACORE_NULLOPT;
       if (appliesTo && !attr.checkIfAppliesTo(*appliesTo)) {
         continue;
       }
@@ -122,5 +122,5 @@ ALTACORE_OPTIONAL<AltaCore::Attributes::Attribute> AltaCore::Attributes::findAtt
     return findAttribute(fullDomainPath, appliesTo);
   }
 
-  return std::nullopt;
+  return ALTACORE_NULLOPT;
 };

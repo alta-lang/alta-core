@@ -4,9 +4,11 @@
 #if defined(__has_include) && __has_include(<optional>)
 #include <optional>
 #define ALTACORE_OPTIONAL std::optional
+#define ALTACORE_NULLOPT std::nullopt
 #else
 #include <experimental/optional>
 #define ALTACORE_OPTIONAL std::experimental::optional
+#define ALTACORE_NULLOPT std::experimental::nullopt
 #endif
 
 #include "node.hpp"
@@ -26,7 +28,7 @@ namespace AltaCore {
 
         std::weak_ptr<DET::Module> $module;
         std::vector<Attributes::AttributeArgument> $arguments;
-        ALTACORE_OPTIONAL<Attributes::Attribute> $attribute = std::nullopt;
+        ALTACORE_OPTIONAL<Attributes::Attribute> $attribute = ALTACORE_NULLOPT;
 
         AttributeNode(std::vector<std::string> accessors, std::vector<std::shared_ptr<LiteralNode>> arguments = {});
 
