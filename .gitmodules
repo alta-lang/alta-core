@@ -4,3 +4,6 @@
 [submodule "deps/semver.c"]
 	path = deps/semver.c
 	url = https://github.com/h2non/semver.c.git
+[submodule "deps/optional"]
+	path = deps/optional
+	url = https://github.com/TartanLlama/optional.git

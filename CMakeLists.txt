@@ -2,9 +2,12 @@ cmake_minimum_required(VERSION 3.10)
 
 project(altacore)
 
-set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "disable yaml tests")
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "Disable yaml-cpp tests")
+set(OPTIONAL_ENABLE_DOCS OFF CACHE BOOL "Disable Optional docs")
+set(OPTIONAL_ENABLE_TESTS OFF CACHE BOOL "Disable Optional tests")
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/deps/yaml-cpp")
+add_subdirectory("${PROJECT_SOURCE_DIR}/deps/optional")
 
 include("${PROJECT_SOURCE_DIR}/deps/CMakeLists-semver.c.cmake")
 
@@ -63,4 +66,4 @@ target_include_directories(altacore PUBLIC "${PROJECT_SOURCE_DIR}/include")
 target_compile_definitions(altacore PUBLIC ALTACORE_LOCAL_SEMVER)
 
 target_link_libraries(altacore PRIVATE yaml-cpp)
-target_link_libraries(altacore PUBLIC semver_c)
+target_link_libraries(altacore PUBLIC semver_c optional)

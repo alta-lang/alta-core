@@ -6,9 +6,9 @@
 #define ALTACORE_OPTIONAL std::optional
 #define ALTACORE_NULLOPT std::nullopt
 #else
-#include <experimental/optional>
-#define ALTACORE_OPTIONAL std::experimental::optional
-#define ALTACORE_NULLOPT std::experimental::nullopt
+#include <optional.hpp>
+#define ALTACORE_OPTIONAL tl::optional
+#define ALTACORE_NULLOPT tl::nullopt
 #endif
 
 #include "node.hpp"
