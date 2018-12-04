@@ -11,10 +11,6 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/deps/optional")
 
 include("${PROJECT_SOURCE_DIR}/deps/CMakeLists-semver.c.cmake")
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED on)
-set(CMAKE_CXX_EXTENSIONS off)
-
 add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/lexer.cpp"
   "${PROJECT_SOURCE_DIR}/src/parser.cpp"
@@ -67,3 +63,13 @@ target_compile_definitions(altacore PUBLIC ALTACORE_LOCAL_SEMVER)
 
 target_link_libraries(altacore PRIVATE yaml-cpp)
 target_link_libraries(altacore PUBLIC semver_c optional)
+
+set_target_properties(altacore
+  PROPERTIES
+  CXX_STANDARD 17
+  CXX_STANDARD_REQUIRED on
+  CXX_EXTENSIONS off
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
