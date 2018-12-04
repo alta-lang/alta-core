@@ -3,6 +3,17 @@ All the changes for Alta's frontend/core functionality (parser, lexer, AST, DET,
 
 This project follows [semantic versioning](https://semver.org).
 
+## [0.9.0] - 2018-12-03
+### Changed
+  * Standard library renamed from "STL" to "stdlib"
+    * Because I learned that "STL" actually stands for "standard template library"
+  * Build artificats are now put into their own folders in the build directory: `bin` for executables and `lib` for libraries
+### Fixed
+  * macOS builds have been fixed
+    * Via conditional inclusion of a polyfill for `std::optional`: [TartanLlama/optional](https://github.com/TartanLlama/optional/)
+  * Linux builds have been fixed
+    * By removing attempts to initialize reference variables with temporary values in `src/preprocessor.cpp`
+
 ## [0.8.0] - 2018-12-01
 ### Added
 #### Attributes
