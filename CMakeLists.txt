@@ -75,19 +75,9 @@ set_target_properties(altacore
 )
 
 # install files
-if (WIN32)
-  install(TARGETS altacore
-    RUNTIME DESTINATION .
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-  )
-else()
-  install(TARGETS altacore
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-  )
-endif()
+install(TARGETS altacore
+  ARCHIVE DESTINATION lib
+)
 
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/"
   DESTINATION include
