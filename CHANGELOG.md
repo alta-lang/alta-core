@@ -3,6 +3,11 @@ All the changes for Alta's frontend/core functionality (parser, lexer, AST, DET,
 
 This project follows [semantic versioning](https://semver.org).
 
+## [Unreleased]
+### Added
+#### Palo (parser), DET, AST
+  * Add support for named parameters
+
 ## [0.9.0] - 2018-12-03
 ### Changed
   * Standard library renamed from "STL" to "stdlib"

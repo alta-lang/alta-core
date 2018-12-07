@@ -436,11 +436,26 @@ namespace AltaCore {
 
         if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
 
-        std::vector<std::shared_ptr<AST::ExpressionNode>> arguments;
+        std::vector<std::pair<std::string, std::shared_ptr<AST::ExpressionNode>>> arguments;
+        auto state = currentState;
+        auto name = expect(TokenType::Identifier);
+        if (name && !expect(TokenType::Colon)) {
+          name = Expectation(); // constructs an invalid expectation
+          currentState = state;
+        }
         auto arg = expect(RuleType::Expression);
         while (arg) {
-          arguments.push_back(std::dynamic_pointer_cast<AST::ExpressionNode>(*arg.item));
+          arguments.push_back({
+            (name) ? name.token.raw : "",
+            std::dynamic_pointer_cast<AST::ExpressionNode>(*arg.item)
+          });
           if (!expect(TokenType::Comma)) break;
+          state = currentState;
+          name = expect(TokenType::Identifier);
+          if (name && !expect(TokenType::Colon)) {
+            name = Expectation();
+            currentState = state;
+          }
           arg = expect(RuleType::Expression);
         }
         expect(TokenType::Comma); // optional trailing comma

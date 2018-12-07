@@ -17,11 +17,11 @@ AltaCore::AST::Type::Type(std::shared_ptr<AltaCore::AST::Type> _returnType, std:
 
 void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
   if (isFunction) {
-    std::vector<std::shared_ptr<DET::Type>> detParams;
+    std::vector<std::pair<std::string, std::shared_ptr<DET::Type>>> detParams;
     returnType->detail(scope);
     for (auto& param: parameters) {
       param->detail(scope);
-      detParams.push_back(param->$type);
+      detParams.push_back({ "", param->$type });
     }
     $type = std::make_shared<DET::Type>(returnType->$type, detParams, modifiers);
     scope->hoist($type);

@@ -28,7 +28,7 @@ namespace AltaCore {
         bool isFunction = false;
         NativeType nativeTypeName = NativeType::Integer;
         std::shared_ptr<Type> returnType;
-        std::vector<std::shared_ptr<Type>> parameters;
+        std::vector<std::pair<std::string, std::shared_ptr<Type>>> parameters;
 
         const size_t indirectionLevel() const;
         const size_t referenceLevel() const;
@@ -65,7 +65,7 @@ namespace AltaCore {
         bool isCompatibleWith(const Type& other);
 
         Type(NativeType nativeTypeName, std::vector<uint8_t> modifiers = {});
-        Type(std::shared_ptr<Type> returnType, std::vector<std::shared_ptr<Type>> parameters, std::vector<uint8_t> modifiers = {});
+        Type(std::shared_ptr<Type> returnType, std::vector<std::pair<std::string, std::shared_ptr<Type>>> parameters, std::vector<uint8_t> modifiers = {});
 
         // operator for `isCompatiableWith`
         bool operator %(const Type& other);

@@ -12,11 +12,12 @@ namespace AltaCore {
         virtual const NodeType nodeType();
 
         std::shared_ptr<ExpressionNode> target;
-        std::vector<std::shared_ptr<ExpressionNode>> arguments;
+        std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments;
 
         std::shared_ptr<DET::Type> $targetType;
+        std::vector<std::shared_ptr<ExpressionNode>> $adjustedArguments;
 
-        FunctionCallExpression(std::shared_ptr<ExpressionNode> target, std::vector<std::shared_ptr<ExpressionNode>> arguments);
+        FunctionCallExpression(std::shared_ptr<ExpressionNode> target, std::vector< std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments);
         
         virtual void detail(std::shared_ptr<DET::Scope> scope);
     };

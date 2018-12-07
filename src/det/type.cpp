@@ -58,9 +58,9 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
 
   if (itemType == ItemType::Function) {
     auto func = std::dynamic_pointer_cast<Function>(item);
-    std::vector<std::shared_ptr<Type>> params;
+    std::vector<std::pair<std::string, std::shared_ptr<Type>>> params;
     for (auto& [name, type]: func->parameters) {
-      params.push_back(type);
+      params.push_back(std::make_pair(name, type));
     }
     return std::make_shared<Type>(func->returnType, params);
   } else if (itemType == ItemType::Variable) {
@@ -201,7 +201,7 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
     compat += retCompat;
     if (parameters.size() != other.parameters.size()) return 0;
     for (size_t i = 0; i < parameters.size(); i++) {
-      auto paramCompat = parameters[i]->compatiblity(*other.parameters[i]);
+      auto paramCompat = parameters[i].second->compatiblity(*other.parameters[i].second);
       if (paramCompat == 0) return 0;
       compat += paramCompat;
     }
@@ -252,7 +252,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
   if (isFunction) {
     if (!returnType->isExactlyCompatibleWith(*other.returnType)) return false;
     for (size_t i = 0; i < parameters.size(); i++) {
-      if (!parameters[i]->isExactlyCompatibleWith(*other.parameters[i])) return false;
+      if (!parameters[i].second->isExactlyCompatibleWith(*other.parameters[i].second)) return false;
     }
   } else {
     if (nativeTypeName != other.nativeTypeName) return false;
@@ -268,7 +268,7 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
     if (!returnType->isCompatibleWith(*other.returnType)) return false;
     if (parameters.size() != other.parameters.size()) return false;
     for (size_t i = 0; i < parameters.size(); i++) {
-      if (!parameters[i]->isCompatibleWith(*other.parameters[i])) return false;
+      if (!parameters[i].second->isCompatibleWith(*other.parameters[i].second)) return false;
     }
   } else {
     // only check for void
@@ -284,7 +284,7 @@ AltaCore::DET::Type::Type(AltaCore::DET::NativeType _nativeTypeName, std::vector
   nativeTypeName(_nativeTypeName),
   modifiers(_modifiers)
   {};
-AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std::vector<std::shared_ptr<AltaCore::DET::Type>> _parameters, std::vector<uint8_t> _modifiers):
+AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std::vector<std::pair<std::string, std::shared_ptr<AltaCore::DET::Type>>> _parameters, std::vector<uint8_t> _modifiers):
   isNative(true),
   isFunction(true),
   returnType(_returnType),
