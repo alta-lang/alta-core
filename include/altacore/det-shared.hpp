@@ -31,12 +31,14 @@ namespace AltaCore {
       Integer,
       Byte,
       Bool,
+      Void,
     };
 
     static const char* const NativeType_names[] = {
       "Integer",
       "Byte",
       "Bool",
+      "Void",
     };
 
 

@@ -34,6 +34,8 @@ void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
       nt = DET::NativeType::Byte;
     } else if (name == "bool") {
       nt = DET::NativeType::Bool;
+    } else if (name == "void") {
+      nt = DET::NativeType::Void;
     } else {
       throw std::runtime_error("non-native types aren't currently supported");
     }
