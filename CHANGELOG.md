@@ -7,6 +7,11 @@ This project follows [semantic versioning](https://semver.org).
 ### Added
 #### Palo (parser), DET, AST
   * Add support for named parameters
+#### Module System
+  * Add support for package targets
+### Fixed
+#### [Internal] Filesystem
+  * Invalid filesystem `Path`s do not exist
 
 ## [0.9.0] - 2018-12-03
 ### Changed

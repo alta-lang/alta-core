@@ -81,6 +81,46 @@ AltaCore::Modules::PackageInfo AltaCore::Modules::getInfo(AltaCore::Filesystem::
     auto str = yamlRoot["version"].as<std::string>();
     semver_parse(str.c_str(), &info.version);
   }
+  if (yamlRoot["type"]) {
+    auto out = yamlRoot["type"].as<std::string>();
+    if (Util::stringsAreEqualCaseInsensitive(out, "executable") || Util::stringsAreEqualCaseInsensitive(out, "exe")) {
+      info.outputBinary = OutputBinaryType::Exectuable;
+    } else if (Util::stringsAreEqualCaseInsensitive(out, "library") || Util::stringsAreEqualCaseInsensitive(out, "lib")) {
+      info.outputBinary = OutputBinaryType::Library;
+    } else {
+      throw InvalidPackageInformationError();
+    }
+  }
+  if (yamlRoot["targets"]) {
+    auto targets = yamlRoot["targets"];
+    if (!targets.IsSequence()) {
+      throw InvalidPackageInformationError();
+    }
+    for (size_t i = 0; i < targets.size(); i++) {
+      auto target = targets[i];
+      if (!target["main"]) {
+        throw InvalidPackageInformationError();
+      }
+      TargetInfo targetInfo;
+      targetInfo.main = Filesystem::Path(target["main"].as<std::string>()).absolutify(info.root);
+      if (target["name"]) {
+        targetInfo.name = target["name"].as<std::string>();
+      } else {
+        targetInfo.name = targetInfo.main.filename();
+      }
+      if (target["type"]) {
+        auto type = target["type"].as<std::string>();
+        if (Util::stringsAreEqualCaseInsensitive(type, "executable") || Util::stringsAreEqualCaseInsensitive(type, "exe")) {
+          targetInfo.type = OutputBinaryType::Exectuable;
+        } else if (Util::stringsAreEqualCaseInsensitive(type, "library") || Util::stringsAreEqualCaseInsensitive(type, "lib")) {
+          targetInfo.type = OutputBinaryType::Library;
+        } else {
+          throw InvalidPackageInformationError();
+        }
+      }
+      info.targets.push_back(targetInfo);
+    }
+  }
   return info;
 };
 
@@ -105,6 +145,18 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
         return modFilePath;
       }
       relativeTo.pop();
+    }
+  } else if (importPath.components.size() > 1 && (importPath.components[0] == "." || importPath.components[0] == "..")) {
+    // resolve locally
+    if (!relativeTo.isDirectory()) {
+      relativeTo = relativeTo.dirname();
+    }
+    auto truePath = importPath.absolutify(relativeTo);
+    if (truePath.exists()) {
+      auto info = getInfo(truePath);
+      if (info.main.isValid()) {
+        return info.main;
+      }
     }
   } else {
     // try stdlib first (it takes precedence)

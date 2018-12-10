@@ -24,13 +24,26 @@ namespace AltaCore {
     class InvalidPackageInformationError: public ModuleError {};
     class PackageInformationNotFoundError: public ModuleError {};
 
-    extern const semver_t versionZero;
+    enum class OutputBinaryType {
+      Library,
+      Exectuable,
+    };
+
+    struct TargetInfo {
+      std::string name;
+      Filesystem::Path main;
+      OutputBinaryType type = OutputBinaryType::Library;
+    };
 
     struct PackageInfo {
       std::string name;
       semver_t version;
       Filesystem::Path root;
       Filesystem::Path main;
+      OutputBinaryType outputBinary = OutputBinaryType::Library;
+      std::vector<TargetInfo> targets;
+
+      bool isEntryPackage = false;
 
       PackageInfo();
     };

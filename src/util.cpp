@@ -1,6 +1,7 @@
 #include "../include/altacore/util.hpp"
+#include <cctype>
 
-bool AltaCore::Util::isInFunction(AltaCore::DET::ScopeItem* item) {
+bool AltaCore::Util::isInFunction(const AltaCore::DET::ScopeItem* item) {
   auto maybeScope = item->parentScope;
   
   while (!maybeScope.expired()) {
@@ -44,7 +45,7 @@ std::weak_ptr<AltaCore::DET::Module> AltaCore::Util::getModule(AltaCore::DET::Sc
   return std::weak_ptr<AltaCore::DET::Module>();
 };
 
-std::string AltaCore::Util::unescape(std::string data) {
+std::string AltaCore::Util::unescape(const std::string& data) {
   std::string result;
 
   for (size_t i = 0; i < data.length(); i++) {
@@ -77,7 +78,7 @@ std::string AltaCore::Util::unescape(std::string data) {
   return result;
 };
 
-std::string AltaCore::Util::escape(std::string data) {
+std::string AltaCore::Util::escape(const std::string& data) {
   std::string result;
 
   for (auto& ch: data) {
@@ -120,4 +121,14 @@ uint8_t AltaCore::Util::hexDigitToDecimal(const char singleDigit) {
   } else {
     throw std::runtime_error(std::string("invalid hex digit: ") + singleDigit);
   }
+};
+
+bool AltaCore::Util::stringsAreEqualCaseInsensitive(const std::string& lhs, const std::string& rhs) {
+  if (lhs.size() != rhs.size()) return false;
+  for (size_t i = 0; i < lhs.size(); i++) {
+    if (std::tolower(lhs[i]) != std::tolower(rhs[i])) {
+      return false;
+    }
+  }
+  return true;
 };

@@ -287,6 +287,8 @@ bool AltaCore::Filesystem::Path::hasComponents() {
   return components.size() > 0;
 };
 bool AltaCore::Filesystem::Path::exists() {
+  if (!isValid()) return false;
+
   // sure, Windows has regular ol' `stat`, too,
   // but Windows c++ api documentation recommends
   // `_stat` instead. it's fully compatible with

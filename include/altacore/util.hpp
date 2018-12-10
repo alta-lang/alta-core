@@ -8,11 +8,12 @@ namespace AltaCore {
   namespace Util {
     static const char* const hexDigits = "0123456789abcdef";
     
-    bool isInFunction(AltaCore::DET::ScopeItem* item);
+    bool isInFunction(const AltaCore::DET::ScopeItem* item);
     std::weak_ptr<DET::Module> getModule(AltaCore::DET::Scope* scope);
-    std::string unescape(std::string data);
-    std::string escape(std::string data);
+    std::string unescape(const std::string& data);
+    std::string escape(const std::string& data);
     uint8_t hexDigitToDecimal(const char singleDigit);
+    bool stringsAreEqualCaseInsensitive(const std::string& lhs, const std::string& rhs);
   };
 };
 
