@@ -1,6 +1,7 @@
 #include "../include/altacore/fs.hpp"
 #include <memory>
 #include <functional>
+#include <fstream>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
@@ -64,6 +65,73 @@ std::string AltaCore::Filesystem::cwd() {
   char tmp[MAXPATHLEN];
   return (getcwd(tmp, MAXPATHLEN) ? std::string(tmp) : std::string());
 #endif
+};
+
+void AltaCore::Filesystem::copyFile(AltaCore::Filesystem::Path source, AltaCore::Filesystem::Path destination) {
+  std::ifstream sourceStream(source.toString(), std::ios::binary);
+  std::ofstream destinationStream(destination.toString(), std::ios::binary);
+
+  // thank you, Martin York! see https://stackoverflow.com/a/10195497
+  destinationStream << sourceStream.rdbuf();
+};
+
+std::vector<AltaCore::Filesystem::Path> AltaCore::Filesystem::getDirectoryListing(AltaCore::Filesystem::Path directory, bool recursive) {
+  std::vector<Path> results;
+
+#ifdef WIN32
+  // https://docs.microsoft.com/en-us/windows/desktop/fileio/listing-the-files-in-a-directory
+  WIN32_FIND_DATAW directoryFindData;
+  HANDLE findHandle;
+
+  auto dirStr = directory.toString();
+  std::wstring dirWStr(dirStr.size(), L' ');
+  std::copy(dirStr.begin(), dirStr.end(), dirWStr.begin());
+  dirWStr += L"\\*";
+
+  findHandle = FindFirstFileW(dirWStr.c_str(), &directoryFindData);
+
+  if (findHandle == INVALID_HANDLE_VALUE) {
+    throw std::runtime_error("invalid copy handle");
+  }
+
+  do {
+    std::wstring wideFileName(directoryFindData.cFileName);
+    if (wideFileName != L"." && wideFileName != L"..") {
+      std::string narrowFileName(wideFileName.size(), ' ');
+      std::copy(wideFileName.begin(), wideFileName.end(), narrowFileName.begin());
+      results.push_back(Path(narrowFileName).absolutify(directory));
+    }
+  } while (FindNextFileW(findHandle, &directoryFindData) != 0);
+
+  FindClose(findHandle);
+#else
+
+#endif
+
+  if (recursive) {
+    for (auto& result: results) {
+      if (result.isDirectory()) {
+        auto arr = getDirectoryListing(result, true);
+        results.insert(results.end(), arr.begin(), arr.end());
+      }
+    }
+  }
+
+  return results;
+};
+
+void AltaCore::Filesystem::copyDirectory(AltaCore::Filesystem::Path source, AltaCore::Filesystem::Path destination) {
+  auto files = getDirectoryListing(source, true);
+  mkdirp(destination);
+  for (auto& file: files) {
+    auto relPath = file.relativeTo(source);
+    if (file.isDirectory()) {
+      mkdirp(destination / relPath);
+    } else {
+      mkdirp(file.dirname());
+      copyFile(file, destination / relPath);
+    }
+  }
 };
 
 AltaCore::Filesystem::Path::Path() {};
@@ -151,7 +219,7 @@ void AltaCore::Filesystem::Path::absolutifyInPlace(AltaCore::Filesystem::Path re
   components = relativeTo.components;
 };
 
-AltaCore::Filesystem::Path AltaCore::Filesystem::Path::normalize() {
+AltaCore::Filesystem::Path AltaCore::Filesystem::Path::normalize() const {
   auto newPath = Path(*this);
   newPath.components.clear();
   for (auto& component: components) {
@@ -168,17 +236,17 @@ AltaCore::Filesystem::Path AltaCore::Filesystem::Path::normalize() {
   return newPath;
 };
 
-AltaCore::Filesystem::Path AltaCore::Filesystem::Path::absolutify(AltaCore::Filesystem::Path relativeTo) {
+AltaCore::Filesystem::Path AltaCore::Filesystem::Path::absolutify(AltaCore::Filesystem::Path relativeTo) const {
   // btw, we're free to modify `relativeTo` directly, since it's passed in by value
   auto newPath = Path(*this);
   newPath.absolutifyInPlace(relativeTo);
   return newPath;
 };
-AltaCore::Filesystem::Path AltaCore::Filesystem::Path::absolutify(std::string relativeTo) {
+AltaCore::Filesystem::Path AltaCore::Filesystem::Path::absolutify(std::string relativeTo) const {
   return absolutify(Path(relativeTo));
 };
 
-AltaCore::Filesystem::Path AltaCore::Filesystem::Path::relativeTo(AltaCore::Filesystem::Path other) {
+AltaCore::Filesystem::Path AltaCore::Filesystem::Path::relativeTo(AltaCore::Filesystem::Path other) const {
   auto newPath = absolutify();
   other = other.absolutify();
   while (newPath.components.size() > 0 && other.components.size() > 0 && newPath.components[0] == other.components[0]) {
@@ -196,7 +264,7 @@ AltaCore::Filesystem::Path AltaCore::Filesystem::Path::relativeTo(AltaCore::File
   return newPath;
 };
 
-std::string AltaCore::Filesystem::Path::toString(std::string separator) {
+std::string AltaCore::Filesystem::Path::toString(std::string separator) const {
   std::string result;
 
   if (hasRoot) {
@@ -216,18 +284,18 @@ std::string AltaCore::Filesystem::Path::toString(std::string separator) {
 
   return result;
 };
-std::string AltaCore::Filesystem::Path::toString(char separator) {
+std::string AltaCore::Filesystem::Path::toString(char separator) const {
   return toString(std::string(1, separator));
 };
 
-std::string AltaCore::Filesystem::Path::basename() {
+std::string AltaCore::Filesystem::Path::basename() const {
   if (!hasComponents()) return "";
   auto size = components.size();
   if (size < 1) return "";
   return components[size - 1];
 };
 
-std::string AltaCore::Filesystem::Path::filename() {
+std::string AltaCore::Filesystem::Path::filename() const {
   if (!hasComponents()) return "";
   auto base = basename();
   auto pos = base.find_last_of('.');
@@ -235,20 +303,20 @@ std::string AltaCore::Filesystem::Path::filename() {
   return base.substr(0, pos);
 };
 
-AltaCore::Filesystem::Path AltaCore::Filesystem::Path::dirname() {
+AltaCore::Filesystem::Path AltaCore::Filesystem::Path::dirname() const {
   if (!hasComponents()) return Path();
   auto newPath = Path(*this);
   newPath.components.pop_back();
   return newPath;
 };
 
-std::string AltaCore::Filesystem::Path::extname() {
+std::string AltaCore::Filesystem::Path::extname() const {
   if (!hasComponents()) return "";
   auto base = basename();
   return base.substr(base.find_last_of('.') + 1); // doesn't include the '.'
 };
 
-AltaCore::Filesystem::Path AltaCore::Filesystem::Path::uproot() {
+AltaCore::Filesystem::Path AltaCore::Filesystem::Path::uproot() const {
   auto newPath = Path(*this);
   newPath.hasRoot = false;
   newPath.root = "";
@@ -274,19 +342,19 @@ std::string AltaCore::Filesystem::Path::shift() {
   return component;
 };
 
-bool AltaCore::Filesystem::Path::isValid() {
+bool AltaCore::Filesystem::Path::isValid() const {
   return (hasRoot || components.size() > 0);
 };
-bool AltaCore::Filesystem::Path::isEmpty() {
+bool AltaCore::Filesystem::Path::isEmpty() const {
   return !isValid();
 };
-bool AltaCore::Filesystem::Path::isRoot() {
+bool AltaCore::Filesystem::Path::isRoot() const {
   return (hasRoot && components.size() == 0);
 };
-bool AltaCore::Filesystem::Path::hasComponents() {
+bool AltaCore::Filesystem::Path::hasComponents() const {
   return components.size() > 0;
 };
-bool AltaCore::Filesystem::Path::exists() {
+bool AltaCore::Filesystem::Path::exists() const {
   if (!isValid()) return false;
 
   // sure, Windows has regular ol' `stat`, too,
@@ -306,7 +374,7 @@ bool AltaCore::Filesystem::Path::exists() {
   statStruct buf;
   return (statFunc(cstrPath, &buf) == 0);
 };
-bool AltaCore::Filesystem::Path::isDirectory() {
+bool AltaCore::Filesystem::Path::isDirectory() const {
   // `Path().exists` for the rationale for using `_stat` instead of `stat` on Windows
 #if defined(_WIN32) || defined(_WIN64)
   const auto statFunc = _stat;
@@ -322,11 +390,11 @@ bool AltaCore::Filesystem::Path::isDirectory() {
   if (statFunc(cstrPath, &buf) != 0) return false;
   return buf.st_mode & S_IFDIR;
 };
-bool AltaCore::Filesystem::Path::isAbsolute() {
+bool AltaCore::Filesystem::Path::isAbsolute() const {
   return hasRoot;
 };
 
-bool AltaCore::Filesystem::Path::hasParentDirectory(const AltaCore::Filesystem::Path& other) {
+bool AltaCore::Filesystem::Path::hasParentDirectory(const AltaCore::Filesystem::Path& other) const {
   if (hasRoot != other.hasRoot) return false;
   if (root != other.root) return false;
   if (other.components.size() > components.size()) return false;
@@ -336,15 +404,15 @@ bool AltaCore::Filesystem::Path::hasParentDirectory(const AltaCore::Filesystem::
   return true;
 };
 
-AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator /(const AltaCore::Filesystem::Path& rhs) {
+AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator /(const AltaCore::Filesystem::Path& rhs) const {
   auto newPath = Path(*this);
   newPath.components.insert(newPath.components.end(), rhs.components.begin(), rhs.components.end());
   return newPath;
 };
-AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator /(const std::string& rhs) {
+AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator /(const std::string& rhs) const {
   return *this / Path(rhs);
 };
-AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator +(const std::string& rhs) {
+AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator +(const std::string& rhs) const {
   auto newPath = Path(*this);
   if (!newPath.hasComponents()) {
     newPath.components.push_back(rhs);
@@ -354,7 +422,7 @@ AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator +(const std::str
   }
   return newPath;
 };
-bool AltaCore::Filesystem::Path::operator ==(const AltaCore::Filesystem::Path& rhs) {
+bool AltaCore::Filesystem::Path::operator ==(const AltaCore::Filesystem::Path& rhs) const {
   if (hasRoot != rhs.hasRoot) return false;
   if (root != rhs.root) return false;
   if (components.size() != rhs.components.size()) return false;
@@ -363,6 +431,6 @@ bool AltaCore::Filesystem::Path::operator ==(const AltaCore::Filesystem::Path& r
   }
   return true;
 };
-AltaCore::Filesystem::Path::operator bool() {
+AltaCore::Filesystem::Path::operator bool() const {
   return isValid();
 };
