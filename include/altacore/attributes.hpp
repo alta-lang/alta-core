@@ -40,6 +40,7 @@ namespace AltaCore {
         bool isDomain;
         bool isGeneral;
         std::string name;
+        std::string id;
         std::vector<Attribute> children; // only available on attribute domains
         std::vector<AST::NodeType> appliesTo;
 
@@ -55,6 +56,10 @@ namespace AltaCore {
 
     bool registerAttribute(std::vector<std::string> fullDomainPath, std::vector<AST::NodeType> appliesTo = {}, std::function<void(std::shared_ptr<AST::Node>, std::vector<AttributeArgument>)> callback = nullptr, std::string file = "");
     ALTACORE_OPTIONAL<Attribute> findAttribute(std::vector<std::string> fullDomainPath, ALTACORE_OPTIONAL<AST::NodeType> appliesTo = ALTACORE_NULLOPT, std::string file = "");
+
+    void clearGlobalAttributes();
+    void clearFileAttributes(std::string file);
+    void clearAllAttributes();
   };
 };
 

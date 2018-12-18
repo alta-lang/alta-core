@@ -79,6 +79,16 @@ bool AltaCore::Attributes::registerAttribute(std::vector<std::string> fullDomain
   }
   target->emplace_back(last, appliesTo, callback, false);
 
+  bool isFirst = true;
+  for (auto& item: fullDomainPath) {
+    if (isFirst) {
+      isFirst = false;
+    } else {
+      target->back().id += '.';
+    }
+    target->back().id += item;
+  }
+
   return true;
 };
 ALTACORE_OPTIONAL<AltaCore::Attributes::Attribute> AltaCore::Attributes::findAttribute(std::vector<std::string> fullDomainPath, ALTACORE_OPTIONAL<AltaCore::AST::NodeType> appliesTo, std::string file) {
@@ -123,4 +133,17 @@ ALTACORE_OPTIONAL<AltaCore::Attributes::Attribute> AltaCore::Attributes::findAtt
   }
 
   return ALTACORE_NULLOPT;
+};
+
+void AltaCore::Attributes::clearGlobalAttributes() {
+  registeredGlobalAttributes.clear();
+};
+void AltaCore::Attributes::clearFileAttributes(std::string file) {
+  if (registeredFileAttributes.find(file) != registeredFileAttributes.end()) {
+    registeredFileAttributes[file].clear();
+  }
+};
+void AltaCore::Attributes::clearAllAttributes() {
+  registeredGlobalAttributes.clear();
+  registeredFileAttributes.clear();
 };
