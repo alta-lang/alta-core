@@ -21,18 +21,18 @@ AltaCore::AST::FunctionDefinitionNode::FunctionDefinitionNode(
   {};
 
 void AltaCore::AST::FunctionDefinitionNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>>> params;
+  std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
 
   for (auto& param: parameters) {
-    param->detail(scope);
-    params.push_back(std::make_tuple(param->name, param->type->$type));
+    param->detail(scope, false);
+    params.push_back(std::make_tuple(param->name, param->type->$type, param->isVariable, param->id));
   }
 
-  returnType->detail(scope);
+  returnType->detail(scope, false);
 
   $function = DET::Function::create(scope, name, params, returnType->$type);
   scope->items.push_back($function);
-
+  
   $function->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
   $function->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
 

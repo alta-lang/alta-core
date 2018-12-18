@@ -4,6 +4,8 @@
 #include "expression-node.hpp"
 #include "../det/scope-item.hpp"
 #include "../det/type.hpp"
+#include <variant>
+#include <unordered_map>
 
 namespace AltaCore {
   namespace AST {
@@ -11,13 +13,15 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
-        std::shared_ptr<ExpressionNode> target;
+        std::shared_ptr<ExpressionNode> target = nullptr;
         std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments;
 
-        std::shared_ptr<DET::Type> $targetType;
-        std::vector<std::shared_ptr<ExpressionNode>> $adjustedArguments;
+        std::shared_ptr<DET::Type> $targetType = nullptr;
+        std::unordered_map<size_t, size_t> $argumentMap;
+        std::vector<std::variant<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>> $adjustedArguments;
 
-        FunctionCallExpression(std::shared_ptr<ExpressionNode> target, std::vector< std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments);
+        FunctionCallExpression() {};
+        FunctionCallExpression(std::shared_ptr<ExpressionNode> target, std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments = {});
         
         virtual void detail(std::shared_ptr<DET::Scope> scope);
     };

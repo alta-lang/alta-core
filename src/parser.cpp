@@ -4,6 +4,36 @@
 
 namespace AltaCore {
   namespace Parser {
+    // <rule-state-structures>
+    struct FunctionCallState {
+      std::vector<RuleType> ignores;
+      std::shared_ptr<AST::FunctionCallExpression> call = nullptr;
+
+      FunctionCallState(decltype(ignores) _ignores, decltype(call) _call):
+        ignores(_ignores),
+        call(_call)
+        {};
+    };
+    template<typename S> struct ConditionStatementState {
+      S state;
+      std::shared_ptr<AST::ConditionalStatement> cond = nullptr;
+
+      ConditionStatementState(S _state, decltype(cond) _cond):
+        state(_state),
+        cond(_cond)
+        {};
+    };
+    struct VerbalConditionalState {
+      std::shared_ptr<AST::ConditionalExpression> cond = nullptr;
+      bool isRepeat = false;
+
+      VerbalConditionalState(decltype(cond) _cond, bool _isRepeat = false):
+        cond(_cond),
+        isRepeat(_isRepeat)
+        {};
+    };
+    // </rule-state-structures>
+
     // <helper-functions>
     std::vector<std::shared_ptr<AST::Parameter>> Parser::expectParameters() {
       std::vector<std::shared_ptr<AST::Parameter>> parameters;
@@ -50,38 +80,65 @@ namespace AltaCore {
     };
     // </helper-functions>
 
-    ALTACORE_OPTIONAL<std::shared_ptr<AST::Node>> Parser::runRule(RuleType rule) {
+    Parser::Parser(std::vector<Token> _tokens):
+      GenericParser(_tokens)
+      {};
+
+    Parser::RuleReturn Parser::runRule(RuleType rule, RuleState& state, std::vector<Expectation>& exps) {
       if (rule == RuleType::Root) {
         // TODO: use custom `ParserError`s instead of throwing `std::runtime_error`s
-        std::vector<std::shared_ptr<AST::StatementNode>> statements;
-        Expectation exp;
-        while ((exp = expect({
+
+        std::initializer_list<ExpectationType> stmtType = {
           RuleType::ModuleOnlyStatement,
           RuleType::Statement,
-        })), exp.valid) {
+        };
+
+        // logic for the initial call
+        if (state.iteration == 0) {
+          return std::move(stmtType);
+        }
+
+        // basically a while loop that continues as long statements are available
+        if (exps.back()) {
+          return std::move(stmtType);
+        }
+
+        exps.pop_back(); // remove the last (implicitly invalid) expectation
+
+        std::vector<std::shared_ptr<AST::StatementNode>> statements;
+        for (auto& exp: exps) {
           auto stmt = std::dynamic_pointer_cast<AST::StatementNode>(*exp.item);
           if (stmt == nullptr) throw std::runtime_error("AST node given was not of the expected type");
           statements.push_back(stmt);
         }
+
         if (currentState.currentPosition < tokens.size()) {
-          throw std::runtime_error("Oof."); // TODO: better error message. i'm just lazy right now
+          throw std::runtime_error("input not completely parsed; assuming failure");
         }
         return std::make_shared<AST::RootNode>(statements);
       } else if (rule == RuleType::Statement) {
-        auto exp = expect({
-          RuleType::FunctionDefinition,
-          RuleType::FunctionDeclaration,
-          RuleType::ReturnDirective,
-          RuleType::Expression,
+        if (state.iteration == 0) {
+          return std::initializer_list<ExpectationType> {
+            RuleType::FunctionDefinition,
+            RuleType::FunctionDeclaration,
+            RuleType::ReturnDirective,
+            RuleType::ConditionalStatement,
+            RuleType::Block,
+            RuleType::Expression,
 
-          // general attributes must come last because
-          // they're supposed to be able to interpreted as part of
-          // other statements that accept attributes if any such
-          // statement is present
-          RuleType::GeneralAttribute,
-        });
+            // general attributes must come last because
+            // they're supposed to be able to interpreted as part of
+            // other statements that accept attributes if any such
+            // statement is present
+            RuleType::GeneralAttribute,
+          };
+        }
+
+        if (!exps[0]) return ALTACORE_NULLOPT;
+
         expect(TokenType::Semicolon); // optional
-        if (!exp.valid) return ALTACORE_NULLOPT;
+
+        auto& exp = exps[0];
         auto ret = std::dynamic_pointer_cast<AST::StatementNode>(*exp.item);
         if (!exp.type.isToken && exp.type.rule == RuleType::Expression) {
           auto expr = std::dynamic_pointer_cast<AST::ExpressionNode>(*exp.item);
@@ -90,270 +147,513 @@ namespace AltaCore {
         }
         return ret;
       } else if (rule == RuleType::Expression) {
-        if (expect(TokenType::OpeningParenthesis)) {
-          auto expr = expect(RuleType::Expression);
-          if (!expr) return ALTACORE_NULLOPT;
-          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
-          return expr.item;
-        } else {
-          // lowest to highest precedence
-          auto exp = expect({
-            RuleType::VariableDefinition,
-            RuleType::Assignment,
-            RuleType::AdditionOrSubtraction,
-            RuleType::MultiplicationOrDivision,
-            RuleType::FunctionCall,
+        if (state.iteration == 0) {
+          if (expect(TokenType::OpeningParenthesis)) {
+            state.internalValue = rulesToIgnore;
+            rulesToIgnore.clear();
+            return RuleType::Expression;
+          } else {
+            // precendence here is least to most
+            // i.e. VariableDefinition has the least precedence,
+            //      FunctionCall has the most precedence
+            return std::initializer_list<ExpectationType> {
+              RuleType::VariableDefinition,
+              RuleType::Assignment,
+              RuleType::VerbalConditionalExpression,
+              RuleType::PunctualConditonalExpression,
+              RuleType::AdditionOrSubtraction,
+              RuleType::MultiplicationOrDivision,
+              RuleType::FunctionCall,
 
-            // <special>
-            RuleType::BooleanLiteral,
-            RuleType::IntegralLiteral,
-            RuleType::String,
-            RuleType::Accessor,
-            RuleType::Fetch,
-            // </special>
-          });
-          return exp.item;
+              // <special>
+              RuleType::BooleanLiteral,
+              RuleType::IntegralLiteral,
+              RuleType::String,
+              RuleType::Accessor,
+              RuleType::Fetch,
+              // </special>
+            };
+          }
         }
+
+        if (state.internalValue.has_value()) {
+          // continuation of wrapped expression check above
+          rulesToIgnore = std::any_cast<decltype(rulesToIgnore)>(state.internalValue);
+          if (!exps[0]) return ALTACORE_NULLOPT;
+          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+          return exps[0].item;
+        }
+
+        return exps[0].item;
       } else if (rule == RuleType::FunctionDefinition) {
-        auto modifiers = expectModifiers(ModifierTargetType::Function);
-        auto $function = expect(TokenType::Identifier);
-        if (!($function.valid && $function.token.raw == "function")) return ALTACORE_NULLOPT;
-        auto name = expect(TokenType::Identifier);
-        if (!name.valid) return ALTACORE_NULLOPT;
-        if (!expect(TokenType::OpeningParenthesis).valid) return ALTACORE_NULLOPT;
-        auto parameters = expectParameters();
-        if (!expect(TokenType::ClosingParenthesis).valid) return ALTACORE_NULLOPT;
-        if (!expect(TokenType::Colon).valid) return ALTACORE_NULLOPT;
-        auto returnType = expect(RuleType::Type);
-        if (!returnType.valid) return ALTACORE_NULLOPT;
-        if (!expect(TokenType::OpeningBrace).valid) return ALTACORE_NULLOPT;
-        std::vector<std::shared_ptr<AST::StatementNode>> statements;
-        Expectation stmt;
-        while ((stmt = expect(RuleType::Statement)), stmt.valid) {
-          auto statement = std::dynamic_pointer_cast<AST::StatementNode>(*stmt.item);
-          if (statement == nullptr) throw std::runtime_error("uhm...");
-          statements.push_back(statement);
-        }
-        if (!expect(TokenType::ClosingBrace).valid) return ALTACORE_NULLOPT;
-        return std::make_shared<AST::FunctionDefinitionNode>(name.token.raw, parameters, std::dynamic_pointer_cast<AST::Type>(*returnType.item), modifiers, std::make_shared<AST::BlockNode>(statements));
-      } else if (rule == RuleType::Parameter) {
-        auto name = expect(TokenType::Identifier);
-        if (!name.valid) return ALTACORE_NULLOPT;
-        if (!expect(TokenType::Colon).valid) return ALTACORE_NULLOPT;
-        auto type = expect(RuleType::Type);
-        if (!type.valid) return ALTACORE_NULLOPT;
-        auto actualType = std::dynamic_pointer_cast<AST::Type>(*type.item);
-        auto actualName = name.token.raw;
-        return std::make_shared<AST::Parameter>(actualName, actualType);
-      } else if (rule == RuleType::Type) {
-        auto modifiers = expectModifiers(ModifierTargetType::Type);
-        std::vector<uint8_t> modifierBitflags;
-        modifierBitflags.push_back(0);
-        for (auto& modifier: modifiers) {
-          auto& bitFlag = modifierBitflags.back();
-          if (modifier == "ptr") {
-            bitFlag |= (uint8_t)AST::TypeModifierFlag::Pointer;
-            modifierBitflags.push_back(0);
-          } else if (modifier == "const") {
-            bitFlag |= (uint8_t)AST::TypeModifierFlag::Constant;
-          } else if (modifier == "ref") {
-            bitFlag |= (uint8_t)AST::TypeModifierFlag::Reference;
-            modifierBitflags.push_back(0);
-          }
-        }
-        if (modifierBitflags.back() == 0) {
-          modifierBitflags.pop_back();
-        }
+        if (state.internalIndex == 0) {
+          auto funcDef = std::make_shared<AST::FunctionDefinitionNode>();
+          funcDef->modifiers = expectModifiers(ModifierTargetType::Function);
 
-        if (expect(TokenType::OpeningParenthesis)) {
-          std::vector<std::shared_ptr<AST::Type>> args;
-          auto firstType = expect(RuleType::Type);
-          if (expect(TokenType::Comma)) {
-            args.push_back(std::dynamic_pointer_cast<AST::Type>(*firstType.item));
-            auto next = expect(RuleType::Type);
-            while (next) {
-              args.push_back(std::dynamic_pointer_cast<AST::Type>(*next.item));
-              if (!expect(TokenType::Comma)) break;
-              next = expect(RuleType::Type);
+          if (!expectKeyword("function")) return ALTACORE_NULLOPT;
+
+          auto name = expect(TokenType::Identifier);
+          if (!name) return ALTACORE_NULLOPT;
+          funcDef->name = name.token.raw;
+
+          if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
+
+          state.internalValue = std::move(funcDef);
+          state.internalIndex = 1;
+          return RuleType::Parameter;
+        } else if (state.internalIndex == 1) {
+          auto funcDef = std::any_cast<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
+
+          if (exps.back()) {
+            std::shared_ptr<AST::Parameter> parameter = std::dynamic_pointer_cast<AST::Parameter>(*exps.back().item);
+            if (parameter == nullptr) throw std::runtime_error("oh no.");
+            funcDef->parameters.push_back(parameter);
+
+            exps.pop_back();
+
+            if (expect(TokenType::Comma)) {
+              return RuleType::Parameter;
             }
-            expect(TokenType::Comma); // optional trailing comma
           }
+
+          exps.clear(); // we don't need those parameter expecatations anymore
+
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
-          if (expect(TokenType::Returns)) {
-            if (args.size() < 1 && firstType) {
-              args.push_back(std::dynamic_pointer_cast<AST::Type>(*firstType.item));
+          if (!expect(TokenType::Colon)) return ALTACORE_NULLOPT;
+
+          state.internalIndex = 2;
+          return RuleType::Type;
+        } else if (state.internalIndex == 2) {
+          auto funcDef = std::any_cast<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
+
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          funcDef->returnType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+          state.internalIndex = 3;
+          return RuleType::Block;
+        } else {
+          auto funcDef = std::any_cast<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
+
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          funcDef->body = std::dynamic_pointer_cast<AST::BlockNode>(*exps.back().item);
+
+          return std::move(funcDef);
+        }
+      } else if (rule == RuleType::Parameter) {
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          return RuleType::Attribute;
+        } else if (state.internalIndex == 1) {
+          if (exps.back()) {
+            return RuleType::Attribute;
+          }
+
+          exps.pop_back(); // remove the last (implicitly invalid) expectation
+
+          auto param = std::make_shared<AST::Parameter>();
+
+          for (auto& exp: exps) {
+            param->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+          }
+
+          auto name = expect(TokenType::Identifier);
+          if (!name) return ALTACORE_NULLOPT;
+          param->name = name.token.raw;
+
+          if (!expect(TokenType::Colon)) return ALTACORE_NULLOPT;
+
+          state.internalValue = std::move(param);
+          state.internalIndex = 2;
+
+          typesToIgnore.insert("any");
+          return RuleType::Type;
+        } else {
+          typesToIgnore.erase("any");
+
+          bool isAny = false;
+          if (!exps.back()) {
+            if (expectKeyword("any")) {
+              isAny = true;
+            } else {
+              return ALTACORE_NULLOPT;
             }
-            auto ret = expect(RuleType::Type);
-            if (!ret) return ALTACORE_NULLOPT;
-            return std::make_shared<AST::Type>(std::dynamic_pointer_cast<AST::Type>(*ret.item), args, modifierBitflags);
-          } else if (args.size() > 0) {
+          }
+
+          auto param = std::any_cast<std::shared_ptr<AST::Parameter>>(state.internalValue);
+
+          if (isAny) {
+            param->type = std::make_shared<AST::Type>();
+            param->type->isAny = true;
+          } else {
+            param->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+          }
+
+          auto savedState = currentState;
+          if (expect(TokenType::Dot) && expect(TokenType::Dot) && expect(TokenType::Dot)) {
+            param->isVariable = true;
+          } else {
+            currentState = savedState;
+          }
+
+          return std::move(param);
+        }
+      } else if (rule == RuleType::Type) {
+        if (state.internalIndex == 0) {
+          auto type = std::make_shared<AST::Type>();
+
+          auto modifiers = expectModifiers(ModifierTargetType::Type);
+          type->modifiers.push_back(0);
+          for (auto& modifier: modifiers) {
+            auto& bitFlag = type->modifiers.back();
+            if (modifier == "ptr") {
+              bitFlag |= (uint8_t)AST::TypeModifierFlag::Pointer;
+              type->modifiers.push_back(0);
+            } else if (modifier == "const") {
+              bitFlag |= (uint8_t)AST::TypeModifierFlag::Constant;
+            } else if (modifier == "ref") {
+              bitFlag |= (uint8_t)AST::TypeModifierFlag::Reference;
+              type->modifiers.push_back(0);
+            }
+          }
+          if (type->modifiers.back() == 0) {
+            type->modifiers.pop_back();
+          }
+
+          if (!expect(TokenType::OpeningParenthesis)) {
+            auto name = expect(TokenType::Identifier);
+            if (!name) return ALTACORE_NULLOPT;
+            if (typesToIgnore.find(name.token.raw) != typesToIgnore.end()) return ALTACORE_NULLOPT;
+            type->name = name.token.raw;
+            return std::move(type);
+          }
+
+          state.internalValue = std::move(type);
+          state.internalIndex = 1;
+
+          return RuleType::Type;
+        } else if (state.internalIndex == 1) {
+          auto type = std::any_cast<std::shared_ptr<AST::Type>>(state.internalValue);
+
+          if (exps.back()) {
+            type->parameters.push_back({
+              std::dynamic_pointer_cast<AST::Type>(*exps.back().item),
+              false,
+              "",
+            });
+
+            if (expect(TokenType::Comma)) {
+              exps.pop_back();
+
+              return RuleType::Type;
+            }
+          }
+
+          exps.pop_back();
+
+          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+
+          if (expect(TokenType::Returns)) {
+            // if we continue, we're parsing a function pointer type
+            type->isFunction = true;
+
+            state.internalIndex = 2;
+            return RuleType::Type;
+          } else if (type->parameters.size() > 1) {
             // somehow, we detected parameters, but there's no return indicator,
             // so this isn't a type
             return ALTACORE_NULLOPT;
           } else {
-            if (!firstType) return ALTACORE_NULLOPT;
-            auto type = std::dynamic_pointer_cast<AST::Type>(*firstType.item);
-            type->modifiers.insert(type->modifiers.begin(), modifierBitflags.begin(), modifierBitflags.end());
-            return type;
+            auto otherType = std::get<0>(type->parameters[0]);
+            otherType->modifiers.insert(otherType->modifiers.begin(), type->modifiers.begin(), type->modifiers.end());
+            return otherType;
           }
         } else {
-          auto name = expect(TokenType::Identifier);
-          if (!name.valid) return ALTACORE_NULLOPT;
-          return std::make_shared<AST::Type>(name.token.raw, modifierBitflags);
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          auto type = std::any_cast<std::shared_ptr<AST::Type>>(state.internalValue);
+
+          type->returnType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+          return type;
         }
       } else if (rule == RuleType::IntegralLiteral) {
         auto integer = expect(TokenType::Integer);
-        if (!integer.valid) return ALTACORE_NULLOPT;
+        if (!integer) return ALTACORE_NULLOPT;
         return std::make_shared<AST::IntegerLiteralNode>(integer.token.raw);
       } else if (rule == RuleType::ReturnDirective) {
-        auto keyword = expect(TokenType::Identifier);
-        if (!(keyword.valid && keyword.token.raw == "return")) return ALTACORE_NULLOPT;
-        rulesToIgnore.push_back(RuleType::ReturnDirective);
-        auto expr = expect(RuleType::Expression);
-        rulesToIgnore.pop_back();
-        std::shared_ptr<AST::ExpressionNode> exprNode = nullptr;
-        if (expr.valid) {
-          exprNode = std::dynamic_pointer_cast<AST::ExpressionNode>(*expr.item);
+        if (state.internalIndex == 0) {
+          if (!expectKeyword("return")) return ALTACORE_NULLOPT;
+          state.internalIndex = 1;
+          return RuleType::Expression;
+        } else {
+          std::shared_ptr<AST::ExpressionNode> expr = nullptr;
+          if (exps.back()) {
+            expr = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+          }
+          return std::make_shared<AST::ReturnDirectiveNode>(expr);
         }
-        return std::make_shared<AST::ReturnDirectiveNode>(exprNode);
+      } else if (rule == RuleType::Block) {
+        if (state.internalIndex == 0) {
+          if (!expect(TokenType::OpeningBrace)) return ALTACORE_NULLOPT;
+
+          state.internalIndex = 1;
+          state.internalValue = std::make_shared<AST::BlockNode>();
+
+          return RuleType::Statement;
+        } else {
+          auto block = std::any_cast<std::shared_ptr<AST::BlockNode>>(state.internalValue);
+
+          if (exps.back()) {
+            block->statements.push_back(std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item));
+
+            exps.pop_back();
+            return RuleType::Statement;
+          }
+
+          if (!expect(TokenType::ClosingBrace)) return ALTACORE_NULLOPT;
+          return block;
+        }
       } else if (rule == RuleType::VariableDefinition) {
-        auto mods = expectModifiers(ModifierTargetType::Variable);
-        auto keyword = expect(TokenType::Identifier);
-        if (!(keyword.valid && (keyword.token.raw == "let" || keyword.token.raw == "var"))) return ALTACORE_NULLOPT;
-        auto name = expect(TokenType::Identifier);
-        if (!name.valid) return ALTACORE_NULLOPT;
-        if (!expect(TokenType::Colon).valid) return ALTACORE_NULLOPT;
-        auto type = expect(RuleType::Type);
-        auto eq = expect(TokenType::EqualSign);
-        std::shared_ptr<AST::ExpressionNode> initExpr = nullptr;
-        if (eq.valid) {
-          auto expr = expect(RuleType::Expression);
-          if (!expr.valid) return ALTACORE_NULLOPT;
-          initExpr = std::dynamic_pointer_cast<AST::ExpressionNode>(*expr.item);
+        if (state.internalIndex == 0) {
+          auto varDef = std::make_shared<AST::VariableDefinitionExpression>();
+
+          varDef->modifiers = expectModifiers(ModifierTargetType::Variable);
+
+          if (!expectKeyword("let") && !expectKeyword("var")) return ALTACORE_NULLOPT;
+
+          auto name = expect(TokenType::Identifier);
+          if (!name) return ALTACORE_NULLOPT;
+          varDef->name = name.token.raw;
+
+          if (!expect(TokenType::Colon)) return ALTACORE_NULLOPT;
+
+          state.internalValue = std::move(varDef);
+          state.internalIndex = 1;
+          return RuleType::Type;
+        } else if (state.internalIndex == 1) {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          auto varDef = std::any_cast<std::shared_ptr<AST::VariableDefinitionExpression>>(state.internalValue);
+          varDef->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+          if (expect(TokenType::EqualSign)) {
+            state.internalIndex = 2;
+            return RuleType::Expression;
+          } else {
+            return varDef;
+          }
+        } else {
+          // we're expecting a value to initialize the variable
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          auto varDef = std::any_cast<std::shared_ptr<AST::VariableDefinitionExpression>>(state.internalValue);
+          varDef->initializationExpression = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          return varDef;
         }
-        auto varDef = std::make_shared<AST::VariableDefinitionExpression>(name.token.raw, std::dynamic_pointer_cast<AST::Type>(*type.item), initExpr);
-        varDef->modifiers = mods;
-        return varDef;
       } else if (rule == RuleType::Fetch) {
         auto id = expect(TokenType::Identifier);
-        if (!id.valid) return ALTACORE_NULLOPT;
+        if (!id) return ALTACORE_NULLOPT;
         return std::make_shared<AST::Fetch>(id.token.raw);
       } else if (rule == RuleType::Accessor) {
-        rulesToIgnore.push_back(RuleType::Accessor);
-        auto exprExp = expect(RuleType::Expression);
-        rulesToIgnore.pop_back();
-        if (!exprExp.valid) return ALTACORE_NULLOPT;
-        auto dot = expect(TokenType::Dot);
-        if (!dot.valid) return ALTACORE_NULLOPT;
-        auto queryExp = expect(TokenType::Identifier);
-        if (!queryExp.valid) return ALTACORE_NULLOPT;
-        auto acc = std::make_shared<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(*exprExp.item), queryExp.token.raw);
-        while (true) {
-          dot = expect(TokenType::Dot);
-          if (!dot.valid) break;
-          queryExp = expect(TokenType::Identifier);
-          if (!queryExp.valid) break;
-          auto tmp = acc;
-          acc = std::make_shared<AST::Accessor>(acc, queryExp.token.raw);
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          rulesToIgnore.push_back(RuleType::Accessor);
+          return RuleType::Expression;
+        } else {
+          rulesToIgnore.pop_back();
+
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          if (!expect(TokenType::Dot)) return ALTACORE_NULLOPT;
+
+          auto query = expect(TokenType::Identifier);
+          if (!query) return ALTACORE_NULLOPT;
+
+          auto acc = std::make_shared<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item), query.token.raw);
+
+          auto state = currentState;
+          while (expect(TokenType::Dot)) {
+            query = expect(TokenType::Identifier);
+            if (!query) {
+              currentState = state;
+              break;
+            }
+            acc = std::make_shared<AST::Accessor>(acc, query.token.raw);
+            state = currentState;
+          }
+
+          return acc;
         }
-        return acc;
       } else if (rule == RuleType::Assignment) {
-        rulesToIgnore.push_back(RuleType::Assignment);
-        auto targetExp = expect(RuleType::Expression);
-        rulesToIgnore.pop_back();
-        if (!targetExp.valid) return ALTACORE_NULLOPT;
-        if (!expect(TokenType::EqualSign).valid) return ALTACORE_NULLOPT;
-        auto valueExp = expect(RuleType::Expression);
-        if (!valueExp.valid) return ALTACORE_NULLOPT;
-        return std::make_shared<AST::AssignmentExpression>(std::dynamic_pointer_cast<AST::ExpressionNode>(*targetExp.item), std::dynamic_pointer_cast<AST::ExpressionNode>(*valueExp.item));
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          rulesToIgnore.push_back(RuleType::Assignment);
+          return RuleType::Expression;
+        } else if (state.internalIndex == 1) {
+          rulesToIgnore.pop_back();
+
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          if (!expect(TokenType::EqualSign)) return ALTACORE_NULLOPT;
+
+          state.internalValue = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+          state.internalIndex = 2;
+
+          return RuleType::Expression;
+        } else {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          auto lhs = std::any_cast<std::shared_ptr<AST::ExpressionNode>>(state.internalValue);
+
+          return std::make_shared<AST::AssignmentExpression>(lhs, std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item));
+        }
       } else if (rule == RuleType::AdditionOrSubtraction) {
         // TODO: move the MDAS (as in, PEMDAS) logic into a reusable function
         //       for now, the code here and in MultiplicationOrDivision has been copy-pasted
         //       and edited where necessary (and that's not very DRY)
-        rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
-        auto leftExp = expect(RuleType::Expression);
-        rulesToIgnore.pop_back();
-        if (!leftExp.valid) return ALTACORE_NULLOPT;
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
+          return RuleType::Expression;
+        } else if (state.internalIndex == 1) {
+          rulesToIgnore.pop_back();
+          if (!exps.back()) return ALTACORE_NULLOPT;
 
-        auto opExp = expect({
-          TokenType::PlusSign,
-          TokenType::MinusSign,
-        });
-        if (!opExp.valid) return ALTACORE_NULLOPT;
-        auto op = AST::OperatorType::Addition;
-        if (opExp.token.type == TokenType::MinusSign) {
-          op = AST::OperatorType::Subtraction;
-        }
+          auto binOp = std::make_shared<AST::BinaryOperation>();
+          binOp->left = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
-        rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
-        auto rightExp = expect(RuleType::Expression);
-        rulesToIgnore.pop_back();
-        if (!rightExp.valid) return ALTACORE_NULLOPT;
+          auto opExp = expect({
+            TokenType::PlusSign,
+            TokenType::MinusSign,
+            });
+          if (!opExp) return ALTACORE_NULLOPT;
 
-        auto binOp = std::make_shared<AST::BinaryOperation>(op, std::dynamic_pointer_cast<AST::ExpressionNode>(*leftExp.item), std::dynamic_pointer_cast<AST::ExpressionNode>(*rightExp.item));
-
-        while ((opExp = expect({ TokenType::PlusSign, TokenType::MinusSign })), opExp.valid) {
-          if (opExp.token.type == TokenType::PlusSign) {
-            op = AST::OperatorType::Addition;
-          } else {
+          auto op = AST::OperatorType::Addition;
+          if (opExp.token.type == TokenType::MinusSign) {
             op = AST::OperatorType::Subtraction;
           }
+          binOp->type = op;
+
+          state.internalValue = std::make_pair(currentState, std::move(binOp));
+          state.internalIndex = 2;
 
           rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
-          rightExp = expect(RuleType::Expression);
+          return RuleType::Expression;
+        } else {
+          auto [savedState, binOp] = std::any_cast<std::pair<decltype(currentState), std::shared_ptr<AST::BinaryOperation>>>(state.internalValue);
+
           rulesToIgnore.pop_back();
-          if (!rightExp.valid) break;
-
-          binOp = std::make_shared<AST::BinaryOperation>(op, std::dynamic_pointer_cast<AST::ExpressionNode>(binOp), std::dynamic_pointer_cast<AST::ExpressionNode>(*rightExp.item));
-        }
-
-        return binOp;
-      } else if (rule == RuleType::MultiplicationOrDivision) {
-        rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
-        auto leftExp = expect(RuleType::Expression);
-        rulesToIgnore.pop_back();
-        if (!leftExp.valid) return ALTACORE_NULLOPT;
-
-        auto opExp = expect({
-          TokenType::Asterisk,
-          TokenType::ForwardSlash,
-        });
-        if (!opExp.valid) return ALTACORE_NULLOPT;
-        auto op = AST::OperatorType::Multiplication;
-        if (opExp.token.type == TokenType::ForwardSlash) {
-          op = AST::OperatorType::Division;
-        }
-
-        rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
-        auto rightExp = expect(RuleType::Expression);
-        rulesToIgnore.pop_back();
-        if (!rightExp.valid) return ALTACORE_NULLOPT;
-
-        auto binOp = std::make_shared<AST::BinaryOperation>(op, std::dynamic_pointer_cast<AST::ExpressionNode>(*leftExp.item), std::dynamic_pointer_cast<AST::ExpressionNode>(*rightExp.item));
-
-        while ((opExp = expect({ TokenType::Asterisk, TokenType::ForwardSlash })), opExp.valid) {
-          if (opExp.token.type == TokenType::Asterisk) {
-            op = AST::OperatorType::Multiplication;
-          } else {
-            op = AST::OperatorType::Division;
+          if (!exps.back()) {
+            if (state.internalIndex == 2) {
+              return ALTACORE_NULLOPT;
+            } else {
+              currentState = savedState;
+              return binOp->left;
+            }
           }
 
-          rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
-          rightExp = expect(RuleType::Expression);
-          rulesToIgnore.pop_back();
-          if (!rightExp.valid) break;
+          binOp->right = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
-          binOp = std::make_shared<AST::BinaryOperation>(op, std::dynamic_pointer_cast<AST::ExpressionNode>(binOp), std::dynamic_pointer_cast<AST::ExpressionNode>(*rightExp.item));
+          Expectation opExp = expect({
+            TokenType::PlusSign,
+            TokenType::MinusSign,
+          });
+
+          if (opExp) {
+            auto savedState = currentState;
+            auto op = AST::OperatorType::Addition;
+            if (opExp.token.type == TokenType::MinusSign) {
+              op = AST::OperatorType::Subtraction;
+            }
+
+            auto otherBinOp = std::make_shared<AST::BinaryOperation>();
+            otherBinOp->left = binOp;
+            otherBinOp->type = op;
+
+            state.internalValue = std::make_pair(savedState, std::move(otherBinOp));
+            state.internalIndex = 3;
+            rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
+            return RuleType::Expression;
+          } else {
+            return binOp;
+          }
         }
+      } else if (rule == RuleType::MultiplicationOrDivision) {
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
+          return RuleType::Expression;
+        } else if (state.internalIndex == 1) {
+          rulesToIgnore.pop_back();
+          if (!exps.back()) return ALTACORE_NULLOPT;
 
-        return binOp;
+          auto binOp = std::make_shared<AST::BinaryOperation>();
+          binOp->left = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          auto opExp = expect({
+            TokenType::Asterisk,
+            TokenType::ForwardSlash,
+            });
+          if (!opExp) return ALTACORE_NULLOPT;
+
+          auto op = AST::OperatorType::Multiplication;
+          if (opExp.token.type == TokenType::ForwardSlash) {
+            op = AST::OperatorType::Division;
+          }
+          binOp->type = op;
+
+          state.internalValue = std::make_pair(currentState, std::move(binOp));
+          state.internalIndex = 2;
+
+          rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
+          return RuleType::Expression;
+        } else {
+          auto [savedState, binOp] = std::any_cast<std::pair<decltype(currentState), std::shared_ptr<AST::BinaryOperation>>>(state.internalValue);
+
+          rulesToIgnore.pop_back();
+          if (!exps.back()) {
+            if (state.internalIndex == 2) {
+              return ALTACORE_NULLOPT;
+            } else {
+              currentState = savedState;
+              return binOp->left;
+            }
+          }
+
+          binOp->right = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          Expectation opExp = expect({
+            TokenType::Asterisk,
+            TokenType::ForwardSlash,
+          });
+
+          if (opExp) {
+            auto savedState = currentState;
+            auto op = AST::OperatorType::Multiplication;
+            if (opExp.token.type == TokenType::ForwardSlash) {
+              op = AST::OperatorType::Division;
+            }
+
+            auto otherBinOp = std::make_shared<AST::BinaryOperation>();
+            otherBinOp->left = binOp;
+            otherBinOp->type = op;
+
+            state.internalValue = std::make_pair(savedState, std::move(otherBinOp));
+            state.internalIndex = 3;
+            rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
+            return RuleType::Expression;
+          } else {
+            return binOp;
+          }
+        }
       } else if (rule == RuleType::ModuleOnlyStatement) {
-        auto exp = expect({
-          RuleType::Import,
-        });
-        expect(TokenType::Semicolon); // optional
-        if (!exp.valid) return ALTACORE_NULLOPT;
-        return std::dynamic_pointer_cast<AST::StatementNode>(*exp.item);
+        if (state.iteration == 0) {
+          return std::initializer_list<ExpectationType> {
+            RuleType::Import,
+          };
+        } else {
+          expect(TokenType::Semicolon); // optional
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          return exps.back().item;
+        }
       } else if (rule == RuleType::Import) {
         if (!expectKeyword("import")) return ALTACORE_NULLOPT;
         bool isAlias = false;
@@ -429,96 +729,388 @@ namespace AltaCore {
           return std::make_shared<AST::BooleanLiteralNode>(false);
         }
       } else if (rule == RuleType::FunctionCall) {
-        rulesToIgnore.push_back(RuleType::FunctionCall);
-        auto target = expect(RuleType::Expression);
-        rulesToIgnore.pop_back();
-        if (!target) return ALTACORE_NULLOPT;
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          rulesToIgnore.push_back(RuleType::FunctionCall);
+          return RuleType::Expression;
+        } else if (state.internalIndex == 1) {
+          rulesToIgnore.pop_back();
+          if (!exps.back()) return ALTACORE_NULLOPT;
 
-        if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
+          if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
 
-        std::vector<std::pair<std::string, std::shared_ptr<AST::ExpressionNode>>> arguments;
-        auto state = currentState;
-        auto name = expect(TokenType::Identifier);
-        if (name && !expect(TokenType::Colon)) {
-          name = Expectation(); // constructs an invalid expectation
-          currentState = state;
-        }
-        auto arg = expect(RuleType::Expression);
-        while (arg) {
-          arguments.push_back({
-            (name) ? name.token.raw : "",
-            std::dynamic_pointer_cast<AST::ExpressionNode>(*arg.item)
-          });
-          if (!expect(TokenType::Comma)) break;
-          state = currentState;
-          name = expect(TokenType::Identifier);
+          auto funcCall = std::make_shared<AST::FunctionCallExpression>();
+          funcCall->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          auto tmpState = currentState;
+          auto name = expect(TokenType::Identifier);
           if (name && !expect(TokenType::Colon)) {
-            name = Expectation();
-            currentState = state;
+            name = Expectation(); // constructs an invalid expectation
+            currentState = tmpState;
           }
-          arg = expect(RuleType::Expression);
-        }
-        expect(TokenType::Comma); // optional trailing comma
+          funcCall->arguments.push_back({
+            (name) ? name.token.raw : "",
+            nullptr,
+          });
 
-        if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
-        
-        return std::make_shared<AST::FunctionCallExpression>(std::dynamic_pointer_cast<AST::ExpressionNode>(*target.item), arguments);
+          state.internalValue = FunctionCallState(rulesToIgnore, std::move(funcCall));
+          state.internalIndex = 2;
+
+          rulesToIgnore.clear();
+          return RuleType::Expression;
+        } else if (state.internalIndex == 2) {
+          auto& callState = std::any_cast<FunctionCallState>(state.internalValue);
+
+          //rulesToIgnore = callState.ignores;
+          if (exps.back()) {
+            callState.call->arguments.back().second = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            if (expect(TokenType::Comma)) {
+              auto tmpState = currentState;
+              auto name = expect(TokenType::Identifier);
+              if (name && !expect(TokenType::Colon)) {
+                name = Expectation(); // constructs an invalid expectation
+                currentState = tmpState;
+              }
+
+              callState.call->arguments.push_back({
+                (name) ? name.token.raw : "",
+                nullptr,
+              });
+
+              //state.internalValue = FunctionCallState(rulesToIgnore, callState.call);
+              //rulesToIgnore.clear();
+              return RuleType::Expression;
+            }
+          } else {
+            callState.call->arguments.pop_back();
+          }
+
+          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+
+
+          if (expect(TokenType::OpeningParenthesis)) {
+            auto newCall = std::make_shared<AST::FunctionCallExpression>(callState.call);
+
+            auto tmpState = currentState;
+            auto name = expect(TokenType::Identifier);
+            if (name && !expect(TokenType::Colon)) {
+              name = Expectation(); // constructs an invalid expectation
+              currentState = tmpState;
+            }
+            newCall->arguments.push_back({
+              (name) ? name.token.raw : "",
+              nullptr,
+            });
+            state.internalValue = FunctionCallState(callState.ignores, newCall);
+            rulesToIgnore.clear();
+            return RuleType::Expression;
+          }
+
+          rulesToIgnore = callState.ignores;
+
+          return callState.call;
+        }
       } else if (rule == RuleType::String) {
         auto raw = expect(TokenType::String);
         if (!raw) return ALTACORE_NULLOPT;
         return std::make_shared<AST::StringLiteralNode>(Util::unescape(raw.token.raw.substr(1, raw.token.raw.length() - 2)));
       } else if (rule == RuleType::FunctionDeclaration) {
-        if (!expectKeyword("declare")) return ALTACORE_NULLOPT;
-        auto modifiers = expectModifiers(ModifierTargetType::Function);
-        if (!expectKeyword("function")) return ALTACORE_NULLOPT;
-        auto name = expect(TokenType::Identifier);
-        if (!name.valid) return ALTACORE_NULLOPT;
-        if (!expect(TokenType::OpeningParenthesis).valid) return ALTACORE_NULLOPT;
-        auto parameters = expectParameters();
-        if (!expect(TokenType::ClosingParenthesis).valid) return ALTACORE_NULLOPT;
-        if (!expect(TokenType::Colon).valid) return ALTACORE_NULLOPT;
-        auto returnType = expect(RuleType::Type);
-        if (!returnType.valid) return ALTACORE_NULLOPT;
-        return std::make_shared<AST::FunctionDeclarationNode>(name.token.raw, parameters, std::dynamic_pointer_cast<AST::Type>(*returnType.item), modifiers);
-      } else if (rule == RuleType::Attribute) {
-        if (!expect(TokenType::AtSign)) return ALTACORE_NULLOPT;
+        if (state.internalIndex == 0) {
+          if (!expectKeyword("declare")) return ALTACORE_NULLOPT;
 
-        std::vector<std::string> accessors;
-        auto idExp = expect(TokenType::Identifier);
-        while (idExp) {
-          accessors.push_back(idExp.token.raw);
-          if (!expect(TokenType::Dot)) break;
-          idExp = expect(TokenType::Identifier);
-        }
-        if (accessors.size() == 0) return ALTACORE_NULLOPT;
+          auto funcDecl = std::make_shared<AST::FunctionDeclarationNode>();
+          funcDecl->modifiers = expectModifiers(ModifierTargetType::Function);
 
-        std::vector<std::shared_ptr<AST::LiteralNode>> arguments;
-        if (expect(TokenType::OpeningParenthesis)) {
-          auto exp = expect(RuleType::AnyLiteral);
-          while (exp) {
-            arguments.push_back(std::dynamic_pointer_cast<AST::LiteralNode>(*exp.item));
-            if (!expect(TokenType::Comma)) break;
-            exp = expect(RuleType::AnyLiteral);
+          if (!expectKeyword("function")) return ALTACORE_NULLOPT;
+
+          auto name = expect(TokenType::Identifier);
+          if (!name) return ALTACORE_NULLOPT;
+          funcDecl->name = name.token.raw;
+
+          if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
+
+          state.internalValue = std::move(funcDecl);
+          state.internalIndex = 1;
+          return RuleType::Parameter;
+        } else if (state.internalIndex == 1) {
+          auto funcDecl = std::any_cast<std::shared_ptr<AST::FunctionDeclarationNode>>(state.internalValue);
+
+          if (exps.back()) {
+            std::shared_ptr<AST::Parameter> parameter = std::dynamic_pointer_cast<AST::Parameter>(*exps.back().item);
+            if (parameter == nullptr) throw std::runtime_error("oh no.");
+            funcDecl->parameters.push_back(parameter);
+
+            exps.pop_back();
+
+            if (expect(TokenType::Comma)) {
+              return RuleType::Parameter;
+            }
           }
-          expect(TokenType::Comma); // optional trailing comma
-          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
-        }
 
-        return std::make_shared<AST::AttributeNode>(accessors, arguments);
+          exps.clear(); // we don't need those parameter expecatations anymore
+
+          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+          if (!expect(TokenType::Colon)) return ALTACORE_NULLOPT;
+
+          state.internalIndex = 2;
+          return RuleType::Type;
+        } else {
+          auto funcDecl = std::any_cast<std::shared_ptr<AST::FunctionDeclarationNode>>(state.internalValue);
+
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          funcDecl->returnType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+          return std::move(funcDecl);
+        }
+      } else if (rule == RuleType::Attribute) {
+        if (state.internalIndex == 0) {
+          if (!expect(TokenType::AtSign)) return ALTACORE_NULLOPT;
+
+          auto attr = std::make_shared<AST::AttributeNode>();
+
+          auto idExp = expect(TokenType::Identifier);
+          while (idExp) {
+            attr->accessors.push_back(idExp.token.raw);
+            if (!expect(TokenType::Dot)) break;
+            idExp = expect(TokenType::Identifier);
+          }
+          if (attr->accessors.size() == 0) return ALTACORE_NULLOPT;
+
+          if (expect(TokenType::OpeningParenthesis)) {
+            state.internalIndex = 1;
+            state.internalValue = std::move(attr);
+
+            return RuleType::AnyLiteral;
+          } else {
+            return std::move(attr);
+          }
+        } else {
+          auto attr = std::any_cast<std::shared_ptr<AST::AttributeNode>>(state.internalValue);
+
+          if (exps.back()) {
+            attr->arguments.push_back(std::dynamic_pointer_cast<AST::LiteralNode>(*exps.back().item));
+
+            if (expect(TokenType::Comma)) {
+              return RuleType::AnyLiteral;
+            }
+          }
+
+          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+
+          return attr;
+        }
       } else if (rule == RuleType::GeneralAttribute) {
-        if (!expect(TokenType::AtSign)) return ALTACORE_NULLOPT;
-        auto attrExp = expect(RuleType::Attribute);
-        if (!attrExp) return ALTACORE_NULLOPT;
-        return std::make_shared<AST::AttributeStatement>(std::dynamic_pointer_cast<AST::AttributeNode>(*attrExp.item));
+        if (state.internalIndex == 0) {
+          if (!expect(TokenType::AtSign)) return ALTACORE_NULLOPT;
+          state.internalIndex = 1;
+          return RuleType::Attribute;
+        } else {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          return std::make_shared<AST::AttributeStatement>(std::dynamic_pointer_cast<AST::AttributeNode>(*exps.back().item));
+        }
       } else if (rule == RuleType::AnyLiteral) {
-        return expect({
-          RuleType::IntegralLiteral,
-          RuleType::BooleanLiteral,
-          RuleType::String,
-        }).item;
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          return std::initializer_list<ExpectationType> {
+            RuleType::IntegralLiteral,
+            RuleType::BooleanLiteral,
+            RuleType::String,
+          };
+        } else {
+          return exps.back().item;
+        }
+      } else if (rule == RuleType::ConditionalStatement) {
+        if (state.internalIndex == 0) {
+          if (!expectKeyword("if")) return ALTACORE_NULLOPT;
+
+          state.internalIndex = 1;
+
+          return RuleType::Expression;
+        } else if (state.internalIndex == 1) {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          auto cond = std::make_shared<AST::ConditionalStatement>();
+          cond->primaryTest = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          state.internalValue = ConditionStatementState(currentState, std::move(cond));
+          state.internalIndex = 2;
+
+          return RuleType::Statement;
+        } else if (state.internalIndex == 2) {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          auto intern = std::any_cast<ConditionStatementState<decltype(currentState)>>(state.internalValue);
+
+          intern.cond->primaryResult = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
+
+          intern.state = currentState;
+          if (expectKeyword("else")) {
+            if (expectKeyword("if")) {
+              state.internalIndex = 3;
+              return RuleType::Expression;
+            } else {
+              state.internalIndex = 5;
+              return RuleType::Statement;
+            }
+          }
+
+          return intern.cond;
+        } else if (state.internalIndex == 3) {
+          auto intern = std::any_cast<ConditionStatementState<decltype(currentState)>>(state.internalValue);
+
+          if (!exps.back()) {
+            currentState = intern.state;
+            return intern.cond;
+          }
+
+          intern.cond->alternatives.push_back({
+            std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item),
+            nullptr,
+          });
+
+          state.internalIndex = 4;
+
+          return RuleType::Statement;
+        } else if (state.internalIndex == 4) {
+          auto intern = std::any_cast<ConditionStatementState<decltype(currentState)>>(state.internalValue);
+
+          if (!exps.back()) {
+            currentState = intern.state;
+            intern.cond->alternatives.pop_back();
+            return intern.cond;
+          }
+
+          intern.cond->alternatives.back().second = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
+
+          state.internalValue = ConditionStatementState(currentState, intern.cond);
+          if (expectKeyword("else")) {
+            if (expectKeyword("if")) {
+              state.internalIndex = 3;
+              return RuleType::Expression;
+            } else {
+              state.internalIndex = 5;
+              return RuleType::Statement;
+            }
+          }
+
+          return intern.cond;
+        } else if (state.internalIndex == 5) {
+          auto intern = std::any_cast<ConditionStatementState<decltype(currentState)>>(state.internalValue);
+
+          if (!exps.back()) {
+            currentState = intern.state;
+            return intern.cond;
+          }
+
+          intern.cond->finalResult = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
+
+          return intern.cond;
+        }
+      } else if (rule == RuleType::VerbalConditionalExpression) {
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          rulesToIgnore.push_back(RuleType::VerbalConditionalExpression);
+          return RuleType::Expression;
+        } else if (state.internalIndex == 1) {
+          rulesToIgnore.pop_back();
+
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          if (!expectKeyword("if")) return ALTACORE_NULLOPT;
+
+          auto cond = std::make_shared<AST::ConditionalExpression>();
+          cond->primaryResult = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          state.internalValue = VerbalConditionalState(std::move(cond));
+          state.internalIndex = 2;
+
+          return RuleType::Expression;
+        } else if (state.internalIndex == 2) {
+          auto ruleState = std::any_cast<VerbalConditionalState>(state.internalValue);
+
+          if (!exps.back()) {
+            if (!ruleState.isRepeat) return ALTACORE_NULLOPT;
+            return ruleState.cond->primaryResult;
+          }
+
+          if (!expectKeyword("else")) {
+            if (!ruleState.isRepeat) return ALTACORE_NULLOPT;
+            return ruleState.cond->primaryResult;
+          }
+
+          ruleState.cond->test = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          state.internalIndex = 3;
+
+          rulesToIgnore.push_back(RuleType::VerbalConditionalExpression);
+          return RuleType::Expression;
+        } else if (state.internalIndex == 3) {
+          rulesToIgnore.pop_back();
+
+          auto ruleState = std::any_cast<VerbalConditionalState>(state.internalValue);
+
+          if (!exps.back()) {
+            if (!ruleState.isRepeat) return ALTACORE_NULLOPT;
+            return ruleState.cond->primaryResult;
+          }
+
+          ruleState.cond->secondaryResult = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          if (expectKeyword("if")) {
+            auto newCond = std::make_shared<AST::ConditionalExpression>();
+            newCond->primaryResult = ruleState.cond;
+
+            state.internalValue = VerbalConditionalState(std::move(newCond), true);
+            state.internalIndex = 2;
+
+            return RuleType::Expression;
+          }
+
+          return ruleState.cond;
+        }
+      } else if (rule == RuleType::PunctualConditonalExpression) {
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          rulesToIgnore.push_back(RuleType::PunctualConditonalExpression);
+          return RuleType::Expression;
+        } else if (state.internalIndex == 1) {
+          rulesToIgnore.pop_back();
+
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          if (!expect(TokenType::QuestionMark)) return ALTACORE_NULLOPT;
+
+          auto cond = std::make_shared<AST::ConditionalExpression>();
+          cond->test = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          state.internalIndex = 2;
+          state.internalValue = std::move(cond);
+
+          return RuleType::Expression;
+        } else if (state.internalIndex == 2) {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          if (!expect(TokenType::Colon)) return ALTACORE_NULLOPT;
+
+          auto cond = std::any_cast<std::shared_ptr<AST::ConditionalExpression>>(state.internalValue);
+          cond->primaryResult = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          state.internalIndex = 3;
+
+          return RuleType::Expression;
+        } else if (state.internalIndex == 3) {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          auto cond = std::any_cast<std::shared_ptr<AST::ConditionalExpression>>(state.internalValue);
+          cond->secondaryResult = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          return cond;
+        }
       }
+
       return ALTACORE_NULLOPT;
     };
+
     void Parser::parse() {
       Expectation exp = expect(RuleType::Root);
       if (!exp.valid) return;

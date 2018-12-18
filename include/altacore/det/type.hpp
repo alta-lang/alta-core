@@ -8,13 +8,15 @@
 
 namespace AltaCore {
   namespace DET {
-    class Type: public Node, public std::enable_shared_from_this<Type> {
+    class Type: public Node {
       private:
         bool commonCompatiblity(const Type& other);
       public:
         virtual const NodeType nodeType();
         virtual std::shared_ptr<Node> clone();
         virtual std::shared_ptr<Node> deepClone();
+
+        std::shared_ptr<Type> copy() const;
 
         // why is this a static method and not a constructor?
         // because it can return `nullptr` if it doesn't find an
@@ -24,11 +26,12 @@ namespace AltaCore {
         static std::shared_ptr<Type> getUnderlyingType(std::shared_ptr<ScopeItem> item);
         static std::vector<std::shared_ptr<Type>> getUnderlyingTypes(AST::ExpressionNode* expression);
 
+        bool isAny = false;
         bool isNative = true;
         bool isFunction = false;
-        NativeType nativeTypeName = NativeType::Integer;
-        std::shared_ptr<Type> returnType;
-        std::vector<std::pair<std::string, std::shared_ptr<Type>>> parameters;
+        NativeType nativeTypeName = NativeType::Void;
+        std::shared_ptr<Type> returnType = nullptr;
+        std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters;
 
         const size_t indirectionLevel() const;
         const size_t referenceLevel() const;
@@ -64,8 +67,11 @@ namespace AltaCore {
         bool isExactlyCompatibleWith(const Type& other);
         bool isCompatibleWith(const Type& other);
 
+        Type():
+          isAny(true)
+          {};
         Type(NativeType nativeTypeName, std::vector<uint8_t> modifiers = {});
-        Type(std::shared_ptr<Type> returnType, std::vector<std::pair<std::string, std::shared_ptr<Type>>> parameters, std::vector<uint8_t> modifiers = {});
+        Type(std::shared_ptr<Type> returnType, std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters, std::vector<uint8_t> modifiers = {});
 
         // operator for `isCompatiableWith`
         bool operator %(const Type& other);

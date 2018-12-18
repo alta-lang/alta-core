@@ -10,6 +10,10 @@ namespace AltaCore {
       public:
         virtual ~Node() = default;
 
+        std::string id;
+
+        Node();
+
         virtual const NodeType nodeType();
 
         virtual void detail(std::shared_ptr<DET::Scope> scope);

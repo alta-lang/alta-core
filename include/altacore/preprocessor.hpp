@@ -77,14 +77,19 @@ namespace AltaCore {
         Expression defined(std::vector<Expression> targets);
         // </builtin-macros>
 
-        ALTACORE_OPTIONAL<Expression> runRule(RuleType rule);
+        /*
+        std::unordered_map<RuleType, Rule> internalRuleTable;
+
+        virtual std::unordered_map<RuleType, Rule>& ruleTable() {
+          return internalRuleTable;
+        };
+        */
+
+        virtual RuleReturn runRule(RuleType, Parser::RuleState&, std::vector<Expectation>&);
       public:
         void parse();
 
-        ExpressionParser(std::vector<Lexer::Token> _tokens, std::map<std::string, Expression>& defs):
-          GenericParser(_tokens),
-          definitions(defs)
-          {};
+        ExpressionParser(std::vector<Lexer::Token> tokens, std::map<std::string, Expression>& definitions);
     };
     class Preprocessor;
     void defaultFileReader(Preprocessor& orig, Preprocessor& newPre, std::string importRequest);

@@ -11,8 +11,13 @@
 #define ALTACORE_NULLOPT tl::nullopt
 #endif
 
-#include <map>
+#include <any>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
+#include <functional>
+#include <variant>
+#include <unordered_set>
 #include "lexer.hpp"
 #include "ast.hpp"
 
@@ -72,6 +77,10 @@ namespace AltaCore {
       Attribute,
       GeneralAttribute,
       AnyLiteral,
+      ConditionalStatement,
+      VerbalConditionalExpression,
+      PunctualConditonalExpression,
+      Block,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {
@@ -117,28 +126,48 @@ namespace AltaCore {
         type(_type),
         token(_token)
         {};
-      
+
       explicit operator bool() const {
         return valid;
       };
     };
 
-    class State {
+    template<typename RT> class GenericState {
       public:
         size_t currentPosition = 0;
+        std::vector<RT> rulesToIgnore;
+
+        bool operator ==(const GenericState<RT>& rhs) const;
+    };
+
+    class RuleState {
+      public:
+        size_t iteration = 0;
+        size_t internalIndex = 0;
+        std::any internalValue;
     };
 
     template<typename RT, typename TT, class T> class GenericParser {
       public:
         using Expectation = GenericExpectation<RT, TT, T>;
         using ExpectationType = GenericExpectationType<RT, TT>;
+        using State = GenericState<RT>;
+        using RuleReturn = std::variant<ExpectationType, std::initializer_list<ExpectationType>, ALTACORE_OPTIONAL<T>>;
+        //using Rule = std::function<RuleReturn(RuleState&, std::vector<Expectation>&)>;
       private:
-        std::map<RT, size_t> loopCache;
-        std::map<size_t, std::vector<RT>> failed;
+        std::unordered_map<RT, State> loopCache;
+        std::unordered_map<size_t, std::unordered_set<RT>> failed;
+        //std::unordered_map<RT, Rule> defaultRuleTable;
       protected:
         std::vector<Token> tokens;
-        std::vector<RT> rulesToIgnore;
         State currentState;
+        std::vector<RT>& rulesToIgnore = currentState.rulesToIgnore;
+        
+        /*
+        virtual std::unordered_map<RT, Rule>& ruleTable() {
+          return defaultRuleTable;
+        };
+        */
 
         Expectation expect(std::initializer_list<ExpectationType> expectations);
         Expectation expect(ExpectationType expectation) {
@@ -146,7 +175,7 @@ namespace AltaCore {
         };
         Expectation expectAnyToken();
 
-        virtual ALTACORE_OPTIONAL<T> runRule(RT rule) {
+        virtual RuleReturn runRule(RT, RuleState&, std::vector<Expectation>&) {
           return ALTACORE_NULLOPT;
         };
       public:
@@ -174,18 +203,18 @@ namespace AltaCore {
         bool expectKeyword(std::string keyword);
         std::vector<std::shared_ptr<AST::AttributeNode>> expectAttributes();
         // </helper-functions>
+
+        std::unordered_set<std::string> typesToIgnore;
       protected:
-        ALTACORE_OPTIONAL<std::shared_ptr<AST::Node>> runRule(RuleType rule);
+        virtual RuleReturn runRule(RuleType, RuleState&, std::vector<Expectation>&);
       public:
         void parse();
 
-        Parser(std::vector<Token> _tokens):
-          GenericParser(_tokens)
-          {};
+        Parser(std::vector<Token> tokens);
     };
   };
 };
 
-#include "generic-parser.tpp" // include the GenericParser implementation
+#include "generic-parser.hpp" // include the GenericParser implementation
 
 #endif // ALTACORE_PARSER_HPP

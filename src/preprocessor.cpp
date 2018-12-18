@@ -250,6 +250,410 @@ AltaCore::Preprocessor::Expression AltaCore::Preprocessor::ExpressionParser::def
   return true;
 };
 
+AltaCore::Preprocessor::ExpressionParser::ExpressionParser(std::vector<Lexer::Token> _tokens, std::map<std::string, Expression>& _definitions):
+  GenericParser(_tokens),
+  definitions(_definitions)
+{
+  /*
+  internalRuleTable = {
+    { RuleType::Expression, [&](Parser::RuleState& state, std::vector<Expectation>& exps) -> RuleReturn {
+      if (state.iteration == 0) {
+        return std::initializer_list<ExpectationType> {
+          RuleType::Wrapped,
+          RuleType::Or,
+          RuleType::And,
+          RuleType::Equality,
+          RuleType::MacroCall,
+          RuleType::BooleanLiteral,
+          RuleType::Retrieval,
+          RuleType::String,
+        };
+      }
+      if (!exps[0]) return ALTACORE_NULLOPT;
+      return exps[0].item;
+    }},
+    { RuleType::Equality, [&](Parser::RuleState& state, std::vector<Expectation>& exps) -> RuleReturn {
+      if (state.internalIndex == 0) {
+        rulesToIgnore.push_back(RuleType::Equality);
+        state.internalIndex = 1;
+        return RuleType::Expression;
+      } else if (state.internalIndex == 1) {
+        rulesToIgnore.pop_back();
+
+        if (!exps.back()) return ALTACORE_NULLOPT;
+
+        if (!expect(Lexer::TokenType::Equality)) return ALTACORE_NULLOPT;
+
+        rulesToIgnore.push_back(RuleType::Equality);
+        state.internalIndex = 2;
+        return RuleType::Expression;
+      } else {
+        rulesToIgnore.pop_back();
+
+        if (!exps.back()) return ALTACORE_NULLOPT;
+
+        auto& left = (exps.size() == 1) ? std::any_cast<Expression>(state.internalValue) : *exps.front().item;
+        auto result = evaluateExpressions ? Expression(left == *exps.back().item) : Expression();
+
+        exps.clear();
+
+        if (expect(Lexer::TokenType::Equality)) {
+          state.internalValue = std::move(result);
+          rulesToIgnore.push_back(RuleType::Equality);
+          return RuleType::Expression;
+        }
+
+        return result;
+      }
+    }},
+    { RuleType::String, [&](Parser::RuleState& state, std::vector<Expectation>& exps) -> RuleReturn {
+      auto str = expect(Lexer::TokenType::String);
+      if (!str) return ALTACORE_NULLOPT;
+      if (!evaluateExpressions) return Expression();
+      return Expression(AltaCore::Util::unescape(str.token.raw.substr(1, str.token.raw.length() - 2)));
+    }},
+    { RuleType::Retrieval, [&](Parser::RuleState& state, std::vector<Expectation>& exps) -> RuleReturn {
+      auto target = expect(Lexer::TokenType::Identifier);
+      if (!target) return ALTACORE_NULLOPT;
+      if (!evaluateExpressions) return Expression();
+      if (definitions.find(target.token.raw) == definitions.end()) {
+        return Expression();
+      } else {
+        return definitions[target.token.raw];
+      }
+    }},
+    { RuleType::MacroCall, [&](Parser::RuleState& state, std::vector<Expectation>& exps) -> RuleReturn {
+      if (state.internalIndex == 0) {
+        auto target = expect(Lexer::TokenType::Identifier);
+        if (!target) return ALTACORE_NULLOPT;
+        if (!expect(Lexer::TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
+        state.internalIndex = 1;
+        state.internalValue = std::make_tuple(rulesToIgnore, target.token.raw, std::vector<Expression>());
+        rulesToIgnore.clear();
+        return RuleType::Expression;
+      } else {
+        auto& [ignores, target, args] = std::any_cast<std::tuple<decltype(rulesToIgnore), std::string, std::vector<Expression>>>(state.internalValue);
+        rulesToIgnore = ignores;
+
+        if (exps.back()) {
+          args.push_back(*exps.back().item);
+          if (expect(Lexer::TokenType::Comma)) {
+            ignores = rulesToIgnore;
+            return RuleType::Expression;
+          }
+        }
+
+        if (!expect(Lexer::TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+
+        if (!evaluateExpressions) return Expression();
+
+        if (target == "defined") {
+          return defined(args);
+        } else {
+          throw std::runtime_error("only builtin macros are currently supported");
+        }
+      }
+    }},
+    { RuleType::BooleanLiteral, [&](Parser::RuleState& state, std::vector<Expectation>& exps) -> RuleReturn {
+      auto id = expect(Lexer::TokenType::Identifier);
+      if (!id) return ALTACORE_NULLOPT;
+      if (!evaluateExpressions) return Expression();
+      if (id.token.raw == "true") {
+        return Expression(true);
+      } else if (id.token.raw == "false") {
+        return Expression(false);
+      } else {
+        return ALTACORE_NULLOPT;
+      }
+    }},
+    { RuleType::And, [&](Parser::RuleState& state, std::vector<Expectation>& exps) -> RuleReturn {
+      if (state.internalIndex == 0) {
+        rulesToIgnore.push_back(RuleType::And);
+        state.internalIndex = 1;
+        return RuleType::Expression;
+      } else if (state.internalIndex == 1) {
+        rulesToIgnore.pop_back();
+
+        if (!exps.back()) return ALTACORE_NULLOPT;
+
+        if (!expect(Lexer::TokenType::And)) return ALTACORE_NULLOPT;
+
+        rulesToIgnore.push_back(RuleType::And);
+        state.internalIndex = 2;
+        return RuleType::Expression;
+      } else {
+        rulesToIgnore.pop_back();
+
+        if (!exps.back()) return ALTACORE_NULLOPT;
+
+        auto& left = (exps.size() == 1) ? std::any_cast<Expression>(state.internalValue) : *exps.front().item;
+        auto result = evaluateExpressions ? Expression(left && *exps.back().item) : Expression();
+        if (!result) {
+          evaluateExpressions = false;
+        }
+
+        exps.clear();
+
+        if (expect(Lexer::TokenType::And)) {
+          state.internalValue = std::move(result);
+          rulesToIgnore.push_back(RuleType::And);
+          return RuleType::Expression;
+        }
+
+        return result;
+      }
+    }},
+    { RuleType::Or, [&](Parser::RuleState& state, std::vector<Expectation>& exps) -> RuleReturn {
+      if (state.internalIndex == 0) {
+        rulesToIgnore.push_back(RuleType::Or);
+        state.internalIndex = 1;
+        return RuleType::Expression;
+      } else if (state.internalIndex == 1) {
+        rulesToIgnore.pop_back();
+
+        if (!exps.back()) return ALTACORE_NULLOPT;
+
+        if (!expect(Lexer::TokenType::Or)) return ALTACORE_NULLOPT;
+
+        rulesToIgnore.push_back(RuleType::Or);
+        state.internalIndex = 2;
+        return RuleType::Expression;
+      } else {
+        rulesToIgnore.pop_back();
+
+        if (!exps.back()) return ALTACORE_NULLOPT;
+
+        auto& left = (exps.size() == 1) ? std::any_cast<Expression>(state.internalValue) : *exps.front().item;
+        auto result = evaluateExpressions ? Expression(left || *exps.back().item) : Expression();
+        if (result) {
+          evaluateExpressions = false;
+        }
+
+        exps.clear();
+
+        if (expect(Lexer::TokenType::Or)) {
+          state.internalValue = std::move(result);
+          rulesToIgnore.push_back(RuleType::Or);
+          return RuleType::Expression;
+        }
+
+        return result;
+      }
+    }},
+    { RuleType::Wrapped, [&](Parser::RuleState& state, std::vector<Expectation>& exps) -> RuleReturn {
+      if (state.internalIndex == 0) {
+        if (!expect(Lexer::TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
+        state.internalIndex = 1;
+        state.internalValue = rulesToIgnore;
+        rulesToIgnore.clear();
+        return RuleType::Expression;
+      } else {
+        rulesToIgnore = std::any_cast<decltype(rulesToIgnore)>(state.internalValue);
+        if (!exps.back()) return ALTACORE_NULLOPT;
+        if (!expect(Lexer::TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+        return exps.back().item;
+      }
+    }},
+  };
+  */
+};
+
+AltaCore::Preprocessor::ExpressionParser::RuleReturn AltaCore::Preprocessor::ExpressionParser::runRule(RuleType rule, Parser::RuleState& state, std::vector<Expectation>& exps) {
+  if (rule == RuleType::Expression) {
+    if (state.iteration == 0) {
+      return std::initializer_list<ExpectationType> {
+        RuleType::Wrapped,
+          RuleType::Or,
+          RuleType::And,
+          RuleType::Equality,
+          RuleType::MacroCall,
+          RuleType::BooleanLiteral,
+          RuleType::Retrieval,
+          RuleType::String,
+      };
+    }
+    if (!exps[0]) return ALTACORE_NULLOPT;
+    return exps[0].item;
+  } else if (rule == RuleType::Equality) {
+    if (state.internalIndex == 0) {
+      rulesToIgnore.push_back(RuleType::Equality);
+      state.internalIndex = 1;
+      return RuleType::Expression;
+    } else if (state.internalIndex == 1) {
+      rulesToIgnore.pop_back();
+
+      if (!exps.back()) return ALTACORE_NULLOPT;
+
+      if (!expect(Lexer::TokenType::Equality)) return ALTACORE_NULLOPT;
+
+      rulesToIgnore.push_back(RuleType::Equality);
+      state.internalIndex = 2;
+      return RuleType::Expression;
+    } else {
+      rulesToIgnore.pop_back();
+
+      if (!exps.back()) return ALTACORE_NULLOPT;
+
+      auto& left = (exps.size() == 1) ? std::any_cast<Expression>(state.internalValue) : *exps.front().item;
+      auto result = evaluateExpressions ? Expression(left == *exps.back().item) : Expression();
+
+      exps.clear();
+
+      if (expect(Lexer::TokenType::Equality)) {
+        state.internalValue = std::move(result);
+        rulesToIgnore.push_back(RuleType::Equality);
+        return RuleType::Expression;
+      }
+
+      return result;
+    }
+  } else if (rule == RuleType::MacroCall) {
+    if (state.internalIndex == 0) {
+      auto target = expect(Lexer::TokenType::Identifier);
+      if (!target) return ALTACORE_NULLOPT;
+      if (!expect(Lexer::TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
+      state.internalIndex = 1;
+      state.internalValue = std::make_tuple(rulesToIgnore, target.token.raw, std::vector<Expression>());
+      rulesToIgnore.clear();
+      return RuleType::Expression;
+    } else {
+      auto& [ignores, target, args] = std::any_cast<std::tuple<decltype(rulesToIgnore), std::string, std::vector<Expression>>>(state.internalValue);
+      rulesToIgnore = ignores;
+
+      if (exps.back()) {
+        args.push_back(*exps.back().item);
+        if (expect(Lexer::TokenType::Comma)) {
+          ignores = rulesToIgnore;
+          return RuleType::Expression;
+        }
+      }
+
+      if (!expect(Lexer::TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+
+      if (!evaluateExpressions) return Expression();
+
+      if (target == "defined") {
+        return defined(args);
+      } else {
+        throw std::runtime_error("only builtin macros are currently supported");
+      }
+    }
+  } else if (rule == RuleType::Retrieval) {
+    auto target = expect(Lexer::TokenType::Identifier);
+    if (!target) return ALTACORE_NULLOPT;
+    if (!evaluateExpressions) return Expression();
+    if (definitions.find(target.token.raw) == definitions.end()) {
+      return Expression();
+    } else {
+      return definitions[target.token.raw];
+    }
+  } else if (rule == RuleType::String) {
+    auto str = expect(Lexer::TokenType::String);
+    if (!str) return ALTACORE_NULLOPT;
+    if (!evaluateExpressions) return Expression();
+    return Expression(AltaCore::Util::unescape(str.token.raw.substr(1, str.token.raw.length() - 2)));
+  } else if (rule == RuleType::BooleanLiteral) {
+    auto id = expect(Lexer::TokenType::Identifier);
+    if (!id) return ALTACORE_NULLOPT;
+    if (!evaluateExpressions) return Expression();
+    if (id.token.raw == "true") {
+      return Expression(true);
+    } else if (id.token.raw == "false") {
+      return Expression(false);
+    } else {
+      return ALTACORE_NULLOPT;
+    }
+  } else if (rule == RuleType::And) {
+    if (state.internalIndex == 0) {
+      rulesToIgnore.push_back(RuleType::And);
+      state.internalIndex = 1;
+      return RuleType::Expression;
+    } else if (state.internalIndex == 1) {
+      rulesToIgnore.pop_back();
+
+      if (!exps.back()) return ALTACORE_NULLOPT;
+
+      if (!expect(Lexer::TokenType::And)) return ALTACORE_NULLOPT;
+
+      rulesToIgnore.push_back(RuleType::And);
+      state.internalIndex = 2;
+      return RuleType::Expression;
+    } else {
+      rulesToIgnore.pop_back();
+
+      if (!exps.back()) return ALTACORE_NULLOPT;
+
+      auto& left = (exps.size() == 1) ? std::any_cast<Expression>(state.internalValue) : *exps.front().item;
+      auto result = evaluateExpressions ? Expression(left && *exps.back().item) : Expression();
+      if (!result) {
+        evaluateExpressions = false;
+      }
+
+      exps.clear();
+
+      if (expect(Lexer::TokenType::And)) {
+        state.internalValue = std::move(result);
+        rulesToIgnore.push_back(RuleType::And);
+        return RuleType::Expression;
+      }
+
+      return result;
+    }
+  } else if (rule == RuleType::Or) {
+    if (state.internalIndex == 0) {
+      rulesToIgnore.push_back(RuleType::Or);
+      state.internalIndex = 1;
+      return RuleType::Expression;
+    } else if (state.internalIndex == 1) {
+      rulesToIgnore.pop_back();
+
+      if (!exps.back()) return ALTACORE_NULLOPT;
+
+      if (!expect(Lexer::TokenType::Or)) return ALTACORE_NULLOPT;
+
+      rulesToIgnore.push_back(RuleType::Or);
+      state.internalIndex = 2;
+      return RuleType::Expression;
+    } else {
+      rulesToIgnore.pop_back();
+
+      if (!exps.back()) return ALTACORE_NULLOPT;
+
+      auto& left = (exps.size() == 1) ? std::any_cast<Expression>(state.internalValue) : *exps.front().item;
+      auto result = evaluateExpressions ? Expression(left || *exps.back().item) : Expression();
+      if (result) {
+        evaluateExpressions = false;
+      }
+
+      exps.clear();
+
+      if (expect(Lexer::TokenType::Or)) {
+        state.internalValue = std::move(result);
+        rulesToIgnore.push_back(RuleType::Or);
+        return RuleType::Expression;
+      }
+
+      return result;
+    }
+  } else if (rule == RuleType::Wrapped) {
+    if (state.internalIndex == 0) {
+      if (!expect(Lexer::TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
+      state.internalIndex = 1;
+      state.internalValue = rulesToIgnore;
+      rulesToIgnore.clear();
+      return RuleType::Expression;
+    } else {
+      rulesToIgnore = std::any_cast<decltype(rulesToIgnore)>(state.internalValue);
+      if (!exps.back()) return ALTACORE_NULLOPT;
+      if (!expect(Lexer::TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+      return exps.back().item;
+    }
+  }
+
+  return ALTACORE_NULLOPT;
+};
+
+/*
 ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::ExpressionParser::runRule(AltaCore::Preprocessor::RuleType rule) {
   using TokenType = Lexer::TokenType;
   if (rule == RuleType::Expression) {
@@ -419,6 +823,7 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
   }
   return ALTACORE_NULLOPT;
 };
+*/
 
 void AltaCore::Preprocessor::ExpressionParser::parse() {
   Expectation exp = expect(RuleType::Expression);

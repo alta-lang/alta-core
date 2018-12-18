@@ -2,6 +2,7 @@
 #define ALTACORE_AST_TYPE_HPP
 
 #include "node.hpp"
+#include "attribute-node.hpp"
 #include "../det/scope.hpp"
 #include "../det/type.hpp"
 #include <vector>
@@ -13,9 +14,10 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
+        bool isAny = false;
         bool isFunction = false;
-        std::shared_ptr<Type> returnType;
-        std::vector<std::shared_ptr<Type>> parameters;
+        std::shared_ptr<Type> returnType = nullptr;
+        std::vector<std::tuple<std::shared_ptr<Type>, bool, std::string>> parameters;
         std::string name;
         /**
          * identifies the proper association of modifiers with each other
@@ -25,12 +27,13 @@ namespace AltaCore {
          */
         std::vector<uint8_t> modifiers;
 
-        std::shared_ptr<DET::Type> $type;
+        std::shared_ptr<DET::Type> $type = nullptr;
 
+        Type() {};
         Type(std::string name, std::vector<uint8_t> modifiers);
-        Type(std::shared_ptr<Type> returnType, std::vector<std::shared_ptr<Type>> parameters, std::vector<uint8_t> modifiers);
+        Type(std::shared_ptr<Type> returnType, std::vector<std::tuple<std::shared_ptr<Type>, bool, std::string>> parameters, std::vector<uint8_t> modifiers);
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        virtual void detail(std::shared_ptr<DET::Scope> scope, bool hoist = true);
     };
   };
 };

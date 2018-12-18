@@ -46,6 +46,8 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/attribute-node.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/literal-node.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/attribute-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/conditional-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/conditional-statement.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

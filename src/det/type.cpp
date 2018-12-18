@@ -14,6 +14,10 @@ std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Type::deepClone() {
   return clone();
 };
 
+std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::copy() const {
+  return std::make_shared<Type>(*this);
+};
+
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(AltaCore::AST::ExpressionNode* expression) {
   using ExpressionType = AST::NodeType;
   using Modifier = AST::TypeModifierFlag;
@@ -32,7 +36,11 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     if (assign == nullptr) throw std::runtime_error("nuh-uh.");
     return getUnderlyingType(assign->target.get());
   } else if (exprType == ExpressionType::Fetch) {
-    throw std::runtime_error("fetches have multiple possible types. use `AltaCore::DET::Type::getUnderlyingTypes` instead");
+    auto fetch = dynamic_cast<AST::Fetch*>(expression);
+    if (!fetch->$narrowedTo) {
+      throw std::runtime_error("the given fetch has not been narrowed. either narrow it or use `AltaCore::DET::Type::getUnderlyingTypes` instead");
+    }
+    return getUnderlyingType(fetch->$narrowedTo);
   } else if (exprType == ExpressionType::BooleanLiteralNode) {
     return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (exprType == ExpressionType::BinaryOperation) {
@@ -44,9 +52,17 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     if (call == nullptr) throw std::runtime_error("bro wut dah heck.");
     return call->$targetType->returnType;
   } else if (exprType == ExpressionType::Accessor) {
-    throw std::runtime_error("accessors have multiple possible types. use `AltaCore::DET::Type::getUnderlyingTypes` instead");
+    auto acc = dynamic_cast<AST::Accessor*>(expression);
+    if (!acc->$narrowedTo) {
+      throw std::runtime_error("the given accessor has not been narrowed. either narrow it or use `AltaCore::DET::Type::getUnderlyingTypes` instead");
+    }
+    return getUnderlyingType(acc->$narrowedTo);
   } else if (exprType == ExpressionType::StringLiteralNode) {
     return std::make_shared<Type>(NativeType::Byte, std::vector<uint8_t> { (uint8_t)Modifier::Constant | (uint8_t)Modifier::Pointer, (uint8_t)Modifier::Constant });
+  } else if (exprType == ExpressionType::ConditionalExpression) {
+    auto cond = dynamic_cast<AST::ConditionalExpression*>(expression);
+    if (cond == nullptr) throw std::runtime_error("nope");
+    return getUnderlyingType(cond->primaryResult.get());
   }
 
   return nullptr;
@@ -58,9 +74,9 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
 
   if (itemType == ItemType::Function) {
     auto func = std::dynamic_pointer_cast<Function>(item);
-    std::vector<std::pair<std::string, std::shared_ptr<Type>>> params;
-    for (auto& [name, type]: func->parameters) {
-      params.push_back(std::make_pair(name, type));
+    std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> params;
+    for (auto& [name, type, isVariable, id]: func->parameters) {
+      params.push_back(std::make_tuple(name, type, isVariable, id));
     }
     return std::make_shared<Type>(func->returnType, params);
   } else if (itemType == ItemType::Variable) {
@@ -91,6 +107,10 @@ std::vector<std::shared_ptr<AltaCore::DET::Type>> AltaCore::DET::Type::getUnderl
       types.push_back(getUnderlyingType(item));
     }
     return types;
+  } else if (exprType == ExpressionType::ConditionalExpression) {
+    auto cond = dynamic_cast<AST::ConditionalExpression*>(expression);
+    if (cond == nullptr) throw std::runtime_error("nope");
+    return getUnderlyingTypes(cond->primaryResult.get()); // for now; TODO: get a union of both results' types
   }
 
   auto type = getUnderlyingType(expression);
@@ -99,44 +119,49 @@ std::vector<std::shared_ptr<AltaCore::DET::Type>> AltaCore::DET::Type::getUnderl
 };
 
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::reference() {
-  modifiers.push_back((uint8_t)Shared::TypeModifierFlag::Reference);
-  return shared_from_this();
+  auto other = copy();
+  other->modifiers.push_back((uint8_t)Shared::TypeModifierFlag::Reference);
+  return other;
 };
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::dereference() {
-  if (modifiers.size() > 0) {
-    auto idx = modifiers.size() - 1;
-    modifiers[idx] &= ~(uint8_t)Shared::TypeModifierFlag::Reference;
+  auto other = copy();
+  if (other->modifiers.size() > 0) {
+    auto idx = other->modifiers.size() - 1;
+    other->modifiers[idx] &= ~(uint8_t)Shared::TypeModifierFlag::Reference;
     // `pop_back` if the modifier level is now empty
     // why keep around a useless entry in the vector?
-    if (modifiers[idx] == 0) {
-      modifiers.pop_back();
+    if (other->modifiers[idx] == 0) {
+      other->modifiers.pop_back();
     }
   }
-  return shared_from_this();
+  return other;
 };
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::point() {
-  modifiers.push_back((uint8_t)Shared::TypeModifierFlag::Pointer);
-  return shared_from_this();
+  auto other = copy();
+  other->modifiers.push_back((uint8_t)Shared::TypeModifierFlag::Pointer);
+  return other;
 };
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::follow() {
-  if (modifiers.size() > 0) {
-    auto idx = modifiers.size() - 1;
-    modifiers[idx] &= ~(uint8_t)Shared::TypeModifierFlag::Pointer;
-    if (modifiers[idx] == 0) {
-      modifiers.pop_back();
+  auto other = copy();
+  if (other->modifiers.size() > 0) {
+    auto idx = other->modifiers.size() - 1;
+    other->modifiers[idx] &= ~(uint8_t)Shared::TypeModifierFlag::Pointer;
+    if (other->modifiers[idx] == 0) {
+      other->modifiers.pop_back();
     }
   }
-  return shared_from_this();
+  return other;
 };
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::followBlindly() {
-  if (modifiers.size() > 0) {
-    auto idx = modifiers.size() - 1;
-    modifiers[idx] &= ~((uint8_t)Shared::TypeModifierFlag::Reference | (uint8_t)Shared::TypeModifierFlag::Pointer);
-    if (modifiers[idx] == 0) {
-      modifiers.pop_back();
+  auto other = copy();
+  if (other->modifiers.size() > 0) {
+    auto idx = other->modifiers.size() - 1;
+    other->modifiers[idx] &= ~((uint8_t)Shared::TypeModifierFlag::Reference | (uint8_t)Shared::TypeModifierFlag::Pointer);
+    if (other->modifiers[idx] == 0) {
+      other->modifiers.pop_back();
     }
   }
-  return shared_from_this();
+  return other;
 };
 const size_t AltaCore::DET::Type::indirectionLevel() const {
   size_t count = 0;
@@ -173,7 +198,9 @@ const size_t AltaCore::DET::Type::referenceLevel() const {
 };
 
 size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
-  size_t compat = 1;
+  size_t compat = 2;
+
+  if (isAny || other.isAny) return 1;
 
   if (isExactlyCompatibleWith(other)) return SIZE_MAX;
   if (!commonCompatiblity(other)) return 0;
@@ -201,7 +228,7 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
     compat += retCompat;
     if (parameters.size() != other.parameters.size()) return 0;
     for (size_t i = 0; i < parameters.size(); i++) {
-      auto paramCompat = parameters[i].second->compatiblity(*other.parameters[i].second);
+      auto paramCompat = std::get<1>(parameters[i])->compatiblity(*std::get<1>(other.parameters[i]));
       if (paramCompat == 0) return 0;
       compat += paramCompat;
     }
@@ -215,6 +242,7 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
 };
 
 bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
+  if (isAny || other.isAny) return true;
   if (isFunction != other.isFunction) return false;
   if (isNative != other.isNative) return false;
   if (pointerLevel() != other.pointerLevel()) return false;
@@ -242,6 +270,7 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
 
 bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& other) {
   if (!commonCompatiblity(other)) return false;
+  if (isAny || other.isAny) return false;
 
   // here, we care about *exact* compatability, and that includes all modifiers
   if (modifiers.size() != other.modifiers.size()) return false;
@@ -252,7 +281,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
   if (isFunction) {
     if (!returnType->isExactlyCompatibleWith(*other.returnType)) return false;
     for (size_t i = 0; i < parameters.size(); i++) {
-      if (!parameters[i].second->isExactlyCompatibleWith(*other.parameters[i].second)) return false;
+      if (!std::get<1>(parameters[i])->isExactlyCompatibleWith(*std::get<1>(other.parameters[i]))) return false;
     }
   } else {
     if (nativeTypeName != other.nativeTypeName) return false;
@@ -263,12 +292,13 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
 
 bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
   if (!commonCompatiblity(other)) return false;
+  if (isAny || other.isAny) return true;
 
   if (isFunction) {
     if (!returnType->isCompatibleWith(*other.returnType)) return false;
     if (parameters.size() != other.parameters.size()) return false;
     for (size_t i = 0; i < parameters.size(); i++) {
-      if (!parameters[i].second->isCompatibleWith(*other.parameters[i].second)) return false;
+      if (!std::get<1>(parameters[i])->isCompatibleWith(*std::get<1>(other.parameters[i]))) return false;
     }
   } else {
     // only check for void
@@ -284,7 +314,7 @@ AltaCore::DET::Type::Type(AltaCore::DET::NativeType _nativeTypeName, std::vector
   nativeTypeName(_nativeTypeName),
   modifiers(_modifiers)
   {};
-AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std::vector<std::pair<std::string, std::shared_ptr<AltaCore::DET::Type>>> _parameters, std::vector<uint8_t> _modifiers):
+AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> _parameters, std::vector<uint8_t> _modifiers):
   isNative(true),
   isFunction(true),
   returnType(_returnType),

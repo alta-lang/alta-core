@@ -18,12 +18,13 @@ namespace AltaCore {
 
         std::string name;
         std::vector<std::shared_ptr<Parameter>> parameters;
-        std::shared_ptr<Type> returnType;
+        std::shared_ptr<Type> returnType = nullptr;
         std::vector<std::string> modifiers;
-        std::shared_ptr<BlockNode> body;
+        std::shared_ptr<BlockNode> body = nullptr;
 
-        std::shared_ptr<DET::Function> $function;
+        std::shared_ptr<DET::Function> $function = nullptr;
 
+        FunctionDefinitionNode() {};
         FunctionDefinitionNode(std::string name, std::vector<std::shared_ptr<Parameter>> parameters, std::shared_ptr<Type> returnType, std::vector<std::string> modifiers, std::shared_ptr<BlockNode> body);
 
         virtual void detail(std::shared_ptr<DET::Scope> scope);

@@ -33,6 +33,9 @@ void AltaCore::AST::AttributeNode::detail(std::shared_ptr<AltaCore::DET::Scope> 
       throw std::runtime_error("welp.");
     }
   }
+
+  findAttribute();
+  run(target);
 };
 
 void AltaCore::AST::AttributeNode::run(std::shared_ptr<AltaCore::AST::Node> target) {
@@ -46,4 +49,20 @@ void AltaCore::AST::AttributeNode::run(std::shared_ptr<AltaCore::AST::Node> targ
 
 void AltaCore::AST::AttributeNode::findAttribute() {
   $attribute = Attributes::findAttribute(accessors, ALTACORE_NULLOPT, $module.lock()->path.toString());
+};
+
+std::string AltaCore::AST::AttributeNode::id() const {
+  std::string result = "";
+
+  bool isFirst = true;
+  for (auto& item: accessors) {
+    if (isFirst) {
+      isFirst = false;
+    } else {
+      result += '.';
+    }
+    result += item;
+  }
+
+  return result;
 };

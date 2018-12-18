@@ -34,6 +34,8 @@ namespace AltaCore {
       AttributeNode,
       LiteralNode,
       AttributeStatement,
+      ConditionalStatement,
+      ConditionalExpression,
     };
 
     static const char* const NodeType_names[] = {
@@ -62,6 +64,8 @@ namespace AltaCore {
       "AttributeNode",
       "LiteralNode",
       "AttributeStatment",
+      "ConditionalStatement",
+      "ConditionalExpression",
     };
 
     enum class OperatorType {

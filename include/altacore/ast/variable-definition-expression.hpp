@@ -14,12 +14,13 @@ namespace AltaCore {
         virtual const NodeType nodeType();
 
         std::string name;
-        std::shared_ptr<Type> type;
+        std::shared_ptr<Type> type = nullptr;
         std::shared_ptr<ExpressionNode> initializationExpression = nullptr;
         std::vector<std::string> modifiers;
 
-        std::shared_ptr<DET::Variable> $variable;
+        std::shared_ptr<DET::Variable> $variable = nullptr;
 
+        VariableDefinitionExpression() {};
         VariableDefinitionExpression(std::string name, std::shared_ptr<Type> type, std::shared_ptr<ExpressionNode> initializationExpression);
 
         virtual void detail(std::shared_ptr<DET::Scope> scope);

@@ -27,5 +27,7 @@
 #include "ast/attribute-node.hpp"
 #include "ast/literal-node.hpp"
 #include "ast/attribute-statement.hpp"
+#include "ast/conditional-statement.hpp"
+#include "ast/conditional-expression.hpp"
 
 #endif // ALTACORE_AST_HPP

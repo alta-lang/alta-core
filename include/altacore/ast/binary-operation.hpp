@@ -10,10 +10,11 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
-        OperatorType type;
-        std::shared_ptr<ExpressionNode> left;
-        std::shared_ptr<ExpressionNode> right;
+        OperatorType type = OperatorType::Addition;
+        std::shared_ptr<ExpressionNode> left = nullptr;
+        std::shared_ptr<ExpressionNode> right = nullptr;
 
+        BinaryOperation() {};
         BinaryOperation(OperatorType type, std::shared_ptr<ExpressionNode> left, std::shared_ptr<ExpressionNode> right);
 
         virtual void detail(std::shared_ptr<DET::Scope> scope);

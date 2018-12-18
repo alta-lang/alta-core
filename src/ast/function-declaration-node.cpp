@@ -19,11 +19,11 @@ AltaCore::AST::FunctionDeclarationNode::FunctionDeclarationNode(
   {};
 
 void AltaCore::AST::FunctionDeclarationNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>>> params;
+  std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
 
   for (auto& param: parameters) {
     param->detail(scope);
-    params.push_back(std::make_tuple(param->name, param->type->$type));
+    params.push_back(std::make_tuple(param->name, param->type->$type, param->isVariable, param->id));
   }
 
   returnType->detail(scope);
