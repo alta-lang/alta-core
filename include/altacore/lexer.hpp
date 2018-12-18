@@ -44,6 +44,7 @@ namespace AltaCore {
       Asterisk,
       ForwardSlash,
       AtSign, // or Ampersat?
+      QuestionMark,
       LAST, // always keep this as last, it counts the number of items in the enum
     };
 
@@ -71,6 +72,7 @@ namespace AltaCore {
       '*',
       '/',
       '@',
+      '?',
       '\0',
     };
 
@@ -93,6 +95,7 @@ namespace AltaCore {
       "EqualSign",
       "Dot",
       "AtSign",
+      "QuestionMark",
       "LAST", // shouldn't be necessary, but just in case ;)
     };
     
