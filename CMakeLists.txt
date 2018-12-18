@@ -8,6 +8,7 @@ set(OPTIONAL_ENABLE_TESTS OFF CACHE BOOL "Disable Optional tests")
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/deps/yaml-cpp")
 add_subdirectory("${PROJECT_SOURCE_DIR}/deps/optional")
+add_subdirectory("${PROJECT_SOURCE_DIR}/deps/crossguid")
 
 include("${PROJECT_SOURCE_DIR}/deps/CMakeLists-semver.c.cmake")
 
