@@ -176,9 +176,9 @@ namespace AltaCore {
           }
         }
 
-        if (state.internalValue.has_value()) {
+        if (ALTACORE_ANY_HAS_VALUE(state.internalValue)) {
           // continuation of wrapped expression check above
-          rulesToIgnore = std::any_cast<decltype(rulesToIgnore)>(state.internalValue);
+          rulesToIgnore = ALTACORE_ANY_CAST<decltype(rulesToIgnore)>(state.internalValue);
           if (!exps[0]) return ALTACORE_NULLOPT;
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
           return exps[0].item;
@@ -202,7 +202,7 @@ namespace AltaCore {
           state.internalIndex = 1;
           return RuleType::Parameter;
         } else if (state.internalIndex == 1) {
-          auto funcDef = std::any_cast<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
+          auto funcDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
 
           if (exps.back()) {
             std::shared_ptr<AST::Parameter> parameter = std::dynamic_pointer_cast<AST::Parameter>(*exps.back().item);
@@ -224,7 +224,7 @@ namespace AltaCore {
           state.internalIndex = 2;
           return RuleType::Type;
         } else if (state.internalIndex == 2) {
-          auto funcDef = std::any_cast<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
+          auto funcDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
 
           if (!exps.back()) return ALTACORE_NULLOPT;
           funcDef->returnType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
@@ -232,7 +232,7 @@ namespace AltaCore {
           state.internalIndex = 3;
           return RuleType::Block;
         } else {
-          auto funcDef = std::any_cast<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
+          auto funcDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
 
           if (!exps.back()) return ALTACORE_NULLOPT;
           funcDef->body = std::dynamic_pointer_cast<AST::BlockNode>(*exps.back().item);
@@ -279,7 +279,7 @@ namespace AltaCore {
             }
           }
 
-          auto param = std::any_cast<std::shared_ptr<AST::Parameter>>(state.internalValue);
+          auto param = ALTACORE_ANY_CAST<std::shared_ptr<AST::Parameter>>(state.internalValue);
 
           if (isAny) {
             param->type = std::make_shared<AST::Type>();
@@ -332,7 +332,7 @@ namespace AltaCore {
 
           return RuleType::Type;
         } else if (state.internalIndex == 1) {
-          auto type = std::any_cast<std::shared_ptr<AST::Type>>(state.internalValue);
+          auto type = ALTACORE_ANY_CAST<std::shared_ptr<AST::Type>>(state.internalValue);
 
           if (exps.back()) {
             type->parameters.push_back({
@@ -370,7 +370,7 @@ namespace AltaCore {
         } else {
           if (!exps.back()) return ALTACORE_NULLOPT;
 
-          auto type = std::any_cast<std::shared_ptr<AST::Type>>(state.internalValue);
+          auto type = ALTACORE_ANY_CAST<std::shared_ptr<AST::Type>>(state.internalValue);
 
           type->returnType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
           return type;
@@ -400,7 +400,7 @@ namespace AltaCore {
 
           return RuleType::Statement;
         } else {
-          auto block = std::any_cast<std::shared_ptr<AST::BlockNode>>(state.internalValue);
+          auto block = ALTACORE_ANY_CAST<std::shared_ptr<AST::BlockNode>>(state.internalValue);
 
           if (exps.back()) {
             block->statements.push_back(std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item));
@@ -431,7 +431,7 @@ namespace AltaCore {
           return RuleType::Type;
         } else if (state.internalIndex == 1) {
           if (!exps.back()) return ALTACORE_NULLOPT;
-          auto varDef = std::any_cast<std::shared_ptr<AST::VariableDefinitionExpression>>(state.internalValue);
+          auto varDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::VariableDefinitionExpression>>(state.internalValue);
           varDef->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
 
           if (expect(TokenType::EqualSign)) {
@@ -443,7 +443,7 @@ namespace AltaCore {
         } else {
           // we're expecting a value to initialize the variable
           if (!exps.back()) return ALTACORE_NULLOPT;
-          auto varDef = std::any_cast<std::shared_ptr<AST::VariableDefinitionExpression>>(state.internalValue);
+          auto varDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::VariableDefinitionExpression>>(state.internalValue);
           varDef->initializationExpression = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
           return varDef;
@@ -501,7 +501,7 @@ namespace AltaCore {
         } else {
           if (!exps.back()) return ALTACORE_NULLOPT;
 
-          auto lhs = std::any_cast<std::shared_ptr<AST::ExpressionNode>>(state.internalValue);
+          auto lhs = ALTACORE_ANY_CAST<std::shared_ptr<AST::ExpressionNode>>(state.internalValue);
 
           return std::make_shared<AST::AssignmentExpression>(lhs, std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item));
         }
@@ -538,7 +538,7 @@ namespace AltaCore {
           rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
           return RuleType::Expression;
         } else {
-          auto [savedState, binOp] = std::any_cast<std::pair<decltype(currentState), std::shared_ptr<AST::BinaryOperation>>>(state.internalValue);
+          auto [savedState, binOp] = ALTACORE_ANY_CAST<std::pair<decltype(currentState), std::shared_ptr<AST::BinaryOperation>>>(state.internalValue);
 
           rulesToIgnore.pop_back();
           if (!exps.back()) {
@@ -606,7 +606,7 @@ namespace AltaCore {
           rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
           return RuleType::Expression;
         } else {
-          auto [savedState, binOp] = std::any_cast<std::pair<decltype(currentState), std::shared_ptr<AST::BinaryOperation>>>(state.internalValue);
+          auto [savedState, binOp] = ALTACORE_ANY_CAST<std::pair<decltype(currentState), std::shared_ptr<AST::BinaryOperation>>>(state.internalValue);
 
           rulesToIgnore.pop_back();
           if (!exps.back()) {
@@ -759,7 +759,7 @@ namespace AltaCore {
           rulesToIgnore.clear();
           return RuleType::Expression;
         } else if (state.internalIndex == 2) {
-          auto& callState = std::any_cast<FunctionCallState>(state.internalValue);
+          auto callState = ALTACORE_ANY_CAST<FunctionCallState>(state.internalValue);
 
           //rulesToIgnore = callState.ignores;
           if (exps.back()) {
@@ -833,7 +833,7 @@ namespace AltaCore {
           state.internalIndex = 1;
           return RuleType::Parameter;
         } else if (state.internalIndex == 1) {
-          auto funcDecl = std::any_cast<std::shared_ptr<AST::FunctionDeclarationNode>>(state.internalValue);
+          auto funcDecl = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionDeclarationNode>>(state.internalValue);
 
           if (exps.back()) {
             std::shared_ptr<AST::Parameter> parameter = std::dynamic_pointer_cast<AST::Parameter>(*exps.back().item);
@@ -855,7 +855,7 @@ namespace AltaCore {
           state.internalIndex = 2;
           return RuleType::Type;
         } else {
-          auto funcDecl = std::any_cast<std::shared_ptr<AST::FunctionDeclarationNode>>(state.internalValue);
+          auto funcDecl = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionDeclarationNode>>(state.internalValue);
 
           if (!exps.back()) return ALTACORE_NULLOPT;
           funcDecl->returnType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
@@ -885,7 +885,7 @@ namespace AltaCore {
             return std::move(attr);
           }
         } else {
-          auto attr = std::any_cast<std::shared_ptr<AST::AttributeNode>>(state.internalValue);
+          auto attr = ALTACORE_ANY_CAST<std::shared_ptr<AST::AttributeNode>>(state.internalValue);
 
           if (exps.back()) {
             attr->arguments.push_back(std::dynamic_pointer_cast<AST::LiteralNode>(*exps.back().item));
@@ -939,7 +939,7 @@ namespace AltaCore {
         } else if (state.internalIndex == 2) {
           if (!exps.back()) return ALTACORE_NULLOPT;
 
-          auto intern = std::any_cast<ConditionStatementState<decltype(currentState)>>(state.internalValue);
+          auto intern = ALTACORE_ANY_CAST<ConditionStatementState<decltype(currentState)>>(state.internalValue);
 
           intern.cond->primaryResult = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
 
@@ -956,7 +956,7 @@ namespace AltaCore {
 
           return intern.cond;
         } else if (state.internalIndex == 3) {
-          auto intern = std::any_cast<ConditionStatementState<decltype(currentState)>>(state.internalValue);
+          auto intern = ALTACORE_ANY_CAST<ConditionStatementState<decltype(currentState)>>(state.internalValue);
 
           if (!exps.back()) {
             currentState = intern.state;
@@ -972,7 +972,7 @@ namespace AltaCore {
 
           return RuleType::Statement;
         } else if (state.internalIndex == 4) {
-          auto intern = std::any_cast<ConditionStatementState<decltype(currentState)>>(state.internalValue);
+          auto intern = ALTACORE_ANY_CAST<ConditionStatementState<decltype(currentState)>>(state.internalValue);
 
           if (!exps.back()) {
             currentState = intern.state;
@@ -995,7 +995,7 @@ namespace AltaCore {
 
           return intern.cond;
         } else if (state.internalIndex == 5) {
-          auto intern = std::any_cast<ConditionStatementState<decltype(currentState)>>(state.internalValue);
+          auto intern = ALTACORE_ANY_CAST<ConditionStatementState<decltype(currentState)>>(state.internalValue);
 
           if (!exps.back()) {
             currentState = intern.state;
@@ -1026,7 +1026,7 @@ namespace AltaCore {
 
           return RuleType::Expression;
         } else if (state.internalIndex == 2) {
-          auto ruleState = std::any_cast<VerbalConditionalState>(state.internalValue);
+          auto ruleState = ALTACORE_ANY_CAST<VerbalConditionalState>(state.internalValue);
 
           if (!exps.back()) {
             if (!ruleState.isRepeat) return ALTACORE_NULLOPT;
@@ -1047,7 +1047,7 @@ namespace AltaCore {
         } else if (state.internalIndex == 3) {
           rulesToIgnore.pop_back();
 
-          auto ruleState = std::any_cast<VerbalConditionalState>(state.internalValue);
+          auto ruleState = ALTACORE_ANY_CAST<VerbalConditionalState>(state.internalValue);
 
           if (!exps.back()) {
             if (!ruleState.isRepeat) return ALTACORE_NULLOPT;
@@ -1092,7 +1092,7 @@ namespace AltaCore {
 
           if (!expect(TokenType::Colon)) return ALTACORE_NULLOPT;
 
-          auto cond = std::any_cast<std::shared_ptr<AST::ConditionalExpression>>(state.internalValue);
+          auto cond = ALTACORE_ANY_CAST<std::shared_ptr<AST::ConditionalExpression>>(state.internalValue);
           cond->primaryResult = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
           state.internalIndex = 3;
@@ -1101,7 +1101,7 @@ namespace AltaCore {
         } else if (state.internalIndex == 3) {
           if (!exps.back()) return ALTACORE_NULLOPT;
 
-          auto cond = std::any_cast<std::shared_ptr<AST::ConditionalExpression>>(state.internalValue);
+          auto cond = ALTACORE_ANY_CAST<std::shared_ptr<AST::ConditionalExpression>>(state.internalValue);
           cond->secondaryResult = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
           return cond;

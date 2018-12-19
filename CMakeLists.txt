@@ -63,6 +63,7 @@ add_library(altacore
 target_include_directories(altacore PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
 target_compile_definitions(altacore PUBLIC ALTACORE_LOCAL_SEMVER)
+target_compile_definitions(altacore PUBLIC ALTACORE_LOCAL_ANY)
 
 target_link_libraries(altacore PRIVATE yaml-cpp)
 target_link_libraries(altacore PUBLIC semver_c optional crossguid)

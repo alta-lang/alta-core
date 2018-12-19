@@ -11,7 +11,7 @@
 #define ALTACORE_NULLOPT tl::nullopt
 #endif
 
-#include <any>
+#include "any.hpp"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -144,7 +144,7 @@ namespace AltaCore {
       public:
         size_t iteration = 0;
         size_t internalIndex = 0;
-        std::any internalValue;
+        ALTACORE_ANY internalValue;
     };
 
     template<typename RT, typename TT, class T> class GenericParser {
