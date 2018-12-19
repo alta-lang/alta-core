@@ -291,7 +291,7 @@ AltaCore::Preprocessor::ExpressionParser::RuleReturn AltaCore::Preprocessor::Exp
 
       if (!exps.back()) return ALTACORE_NULLOPT;
 
-      auto& left = (exps.size() == 1) ? ALTACORE_ANY_CAST<Expression>(state.internalValue) : *exps.front().item;
+      auto left = (exps.size() == 1) ? ALTACORE_ANY_CAST<Expression>(state.internalValue) : *exps.front().item;
       auto result = evaluateExpressions ? Expression(left == *exps.back().item) : Expression();
 
       exps.clear();
@@ -314,7 +314,7 @@ AltaCore::Preprocessor::ExpressionParser::RuleReturn AltaCore::Preprocessor::Exp
       rulesToIgnore.clear();
       return RuleType::Expression;
     } else {
-      auto& [ignores, target, args] = ALTACORE_ANY_CAST<std::tuple<decltype(rulesToIgnore), std::string, std::vector<Expression>>>(state.internalValue);
+      auto [ignores, target, args] = ALTACORE_ANY_CAST<std::tuple<decltype(rulesToIgnore), std::string, std::vector<Expression>>>(state.internalValue);
       rulesToIgnore = ignores;
 
       if (exps.back()) {
@@ -380,7 +380,7 @@ AltaCore::Preprocessor::ExpressionParser::RuleReturn AltaCore::Preprocessor::Exp
 
       if (!exps.back()) return ALTACORE_NULLOPT;
 
-      auto& left = (exps.size() == 1) ? ALTACORE_ANY_CAST<Expression>(state.internalValue) : *exps.front().item;
+      auto left = (exps.size() == 1) ? ALTACORE_ANY_CAST<Expression>(state.internalValue) : *exps.front().item;
       auto result = evaluateExpressions ? Expression(left && *exps.back().item) : Expression();
       if (!result) {
         evaluateExpressions = false;
@@ -416,7 +416,7 @@ AltaCore::Preprocessor::ExpressionParser::RuleReturn AltaCore::Preprocessor::Exp
 
       if (!exps.back()) return ALTACORE_NULLOPT;
 
-      auto& left = (exps.size() == 1) ? ALTACORE_ANY_CAST<Expression>(state.internalValue) : *exps.front().item;
+      auto left = (exps.size() == 1) ? ALTACORE_ANY_CAST<Expression>(state.internalValue) : *exps.front().item;
       auto result = evaluateExpressions ? Expression(left || *exps.back().item) : Expression();
       if (result) {
         evaluateExpressions = false;
@@ -476,7 +476,7 @@ ALTACORE_OPTIONAL<AltaCore::Preprocessor::Expression> AltaCore::Preprocessor::Ex
     auto left = expect(RuleType::Expression);
     rulesToIgnore.pop_back();
     if (!left) return ALTACORE_NULLOPT;
-    
+
     if (!expect(TokenType::Equality)) return ALTACORE_NULLOPT;
 
     rulesToIgnore.push_back(RuleType::Equality);
