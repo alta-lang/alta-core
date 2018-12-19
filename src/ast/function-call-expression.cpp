@@ -3,7 +3,6 @@
 #include "../../include/altacore/ast/fetch.hpp"
 #include "../../include/altacore/ast/accessor.hpp"
 #include <unordered_map>
-#include <variant>
 
 const AltaCore::AST::NodeType AltaCore::AST::FunctionCallExpression::nodeType() {
   return NodeType::FunctionCallExpression;
