@@ -13,3 +13,6 @@
 [submodule "deps/any"]
 	path = deps/any
 	url = https://github.com/thelink2012/any
+[submodule "deps/variant"]
+	path = deps/variant
+	url = https://github.com/mpark/variant.git

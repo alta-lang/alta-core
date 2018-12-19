@@ -28,12 +28,12 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
 
   bool found = false; // whether we found the right function
   bool possible = false; // whether we found any function at all
-  std::vector<std::tuple<std::vector<size_t>, std::shared_ptr<DET::Type>, std::vector<std::variant<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>>, std::unordered_map<size_t, size_t>>> compatibles;
+  std::vector<std::tuple<std::vector<size_t>, std::shared_ptr<DET::Type>, std::vector<ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>>, std::unordered_map<size_t, size_t>>> compatibles;
   for (auto& targetType: targetTypes) {
     if (!targetType->isFunction) continue;
     possible = true;
     //if (targetType->parameters.size() != arguments.size()) continue;
-    std::unordered_map<size_t, std::pair<std::string, std::variant<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>>> argumentsInOrder;
+    std::unordered_map<size_t, std::pair<std::string, ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>>> argumentsInOrder;
     std::vector<size_t> compatiblities(targetType->parameters.size(), 0);
     size_t funcArgIndex = 0;
     bool ok = true;
@@ -111,7 +111,7 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
         if (argumentsInOrder.find(funcArgIndex) == argumentsInOrder.end()) {
           argumentsInOrder[funcArgIndex] = { argument.first, std::vector<std::shared_ptr<ExpressionNode>>() };
         }
-        std::get<std::vector<std::shared_ptr<ExpressionNode>>>(argumentsInOrder[funcArgIndex].second).push_back(argument.second);
+        ALTACORE_VARIANT_GET<std::vector<std::shared_ptr<ExpressionNode>>>(argumentsInOrder[funcArgIndex].second).push_back(argument.second);
       } else {
         argumentsInOrder[funcArgIndex] = argument;
       }
@@ -122,7 +122,7 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
     }
     if (!ok) continue;
     found = true;
-    std::vector<std::variant<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>> args(argumentsInOrder.size(), nullptr);
+    std::vector<ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>> args(argumentsInOrder.size(), nullptr);
     for (auto& [i, arg]: argumentsInOrder) {
       args[i] = arg.second;
     }
@@ -131,7 +131,7 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
 
   std::vector<size_t> mostCompatibleCompatiblities;
   std::shared_ptr<DET::Type> mostCompatibleType = nullptr;
-  std::vector<std::variant<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>> mostCompatibleArguments;
+  std::vector<ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>> mostCompatibleArguments;
   std::unordered_map<size_t, size_t> mostCompatibleArgMap;
   for (auto& [compatabilities, type, args, argMap]: compatibles) {
     if (mostCompatibleCompatiblities.size() > 0) {

@@ -11,12 +11,12 @@
 #define ALTACORE_NULLOPT tl::nullopt
 #endif
 
+#include "variant.hpp"
 #include "any.hpp"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 #include <functional>
-#include <variant>
 #include <unordered_set>
 #include "lexer.hpp"
 #include "ast.hpp"
@@ -152,7 +152,7 @@ namespace AltaCore {
         using Expectation = GenericExpectation<RT, TT, T>;
         using ExpectationType = GenericExpectationType<RT, TT>;
         using State = GenericState<RT>;
-        using RuleReturn = std::variant<ExpectationType, std::initializer_list<ExpectationType>, ALTACORE_OPTIONAL<T>>;
+        using RuleReturn = ALTACORE_VARIANT<ExpectationType, std::initializer_list<ExpectationType>, ALTACORE_OPTIONAL<T>>;
         //using Rule = std::function<RuleReturn(RuleState&, std::vector<Expectation>&)>;
       private:
         std::unordered_map<RT, State> loopCache;
@@ -162,7 +162,7 @@ namespace AltaCore {
         std::vector<Token> tokens;
         State currentState;
         std::vector<RT>& rulesToIgnore = currentState.rulesToIgnore;
-        
+
         /*
         virtual std::unordered_map<RT, Rule>& ruleTable() {
           return defaultRuleTable;

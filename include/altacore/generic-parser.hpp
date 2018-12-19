@@ -60,7 +60,7 @@ namespace AltaCore {
             std::vector<Expectation>(),
             stateAtStart
           );
-          
+
           auto tmp = runRule(expectation.rule, std::get<2>(ruleStack.top()), std::get<3>(ruleStack.top()));
           ALTACORE_OPTIONAL<T> finalVal;
 
@@ -71,19 +71,19 @@ namespace AltaCore {
             // whether to ignore the rulesToIgnore and currentFails
             // this is used to return to rules that previously yielded
             bool ignoreIgnore = false;
-            
+
             auto position = std::get<4>(ruleStack.top()).currentPosition;
             if (failed.find(position) == failed.end()) {
               failed[position] = std::unordered_set<RT>();
             }
             auto& currentFails = failed[position];
-            if (!std::holds_alternative<ALTACORE_OPTIONAL<T>>(tmp)) {
+            if (!ALTACORE_VARIANT_HOLDS_ALTERNATIVE<ALTACORE_OPTIONAL<T>>(tmp)) {
               auto& [ruleType, expTypes, ruleState, exps, stateAtStart] = ruleStack.top();
               expTypes = std::stack<ExpectationType>();
-              if (std::holds_alternative<ExpectationType>(tmp)) {
-                expTypes.push(std::get<ExpectationType>(tmp));
+              if (ALTACORE_VARIANT_HOLDS_ALTERNATIVE<ExpectationType>(tmp)) {
+                expTypes.push(ALTACORE_VARIANT_GET<ExpectationType>(tmp));
               } else {
-                auto& list = std::get<std::initializer_list<ExpectationType>>(tmp);
+                auto& list = ALTACORE_VARIANT_GET<std::initializer_list<ExpectationType>>(tmp);
                 for (auto it = std::rbegin(list); it != std::rend(list); ++it) {
                   expTypes.push(*it);
                 }
@@ -100,7 +100,7 @@ namespace AltaCore {
               );
               nextRule = expTypes.top();
             } else {
-              finalVal = std::get<ALTACORE_OPTIONAL<T>>(tmp);
+              finalVal = ALTACORE_VARIANT_GET<ALTACORE_OPTIONAL<T>>(tmp);
               auto rule = std::get<0>(ruleStack.top());
               auto stateAtStart = std::get<4>(ruleStack.top());
               ruleStack.pop();
