@@ -1,3 +1,7 @@
+trigger:
+- master
+- refs/tags/*
+
 jobs:
 - job: Linux
   pool:
