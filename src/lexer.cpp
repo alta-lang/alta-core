@@ -1,4 +1,5 @@
 #include "../include/altacore/lexer.hpp"
+#include <string.h>
 
 namespace AltaCore {
   namespace Lexer {

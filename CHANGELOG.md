@@ -4,14 +4,53 @@ All the changes for Alta's frontend/core functionality (parser, lexer, AST, DET,
 This project follows [semantic versioning](https://semver.org).
 
 ## [Unreleased]
+Nothing yet.
+
+## [0.10.0] - 2018-12-20
 ### Added
+#### [Project]
+  * CI integration via [Azure Pipelines](https://facekapow.visualstudio.com/alta/_build?definitionId=2)
+    * This gets us closer to automated testing of every commit
+      * All that's left to add are tests :smile:
+#### Attributes
+  * Attributes now have their full ID path on them
+  * The ability to clear attributes has been added
+#### AST
+  * AST nodes now have their own UUIDs (universally unique identifiers)
+#### DET, AST
+  * The `void` type is now supported
+#### Palo (parser), Waterwheel (lexer), AST
+  * Add support for more binary operators; Specifically:
+    * Equality (`==`)
+    * Inequality (`!=`)
+    * Greater than (`>`)
+    * Less than (`<`)
+    * Greater than or equal to (`>=`)
+    * Less than or equal to (`<=`)
+#### Palo (parser), AST
+  * Support for conditional expressions and statements
 #### Palo (parser), DET, AST
-  * Add support for named parameters
+  * Support for named parameters added
+  * Arbitrary type (`any`) support for function declarations
+    * Mainly inteded for declarations for C vararg functions (like `printf`)
+  * Variable parameter support added
+    * Fully supported for external function declarations (like for `printf`)
+    * *Theoretically* supported in function definitions
+      * But not really, since it would require at least pointer dereferencing support
+      * Preferably, it would be properly implemented as a generic container class once user-types (**and** generic classes) are added
 #### Module System
-  * Add support for package targets
+  * Support for package targets added
 ### Fixed
 #### [Internal] Filesystem
   * Invalid filesystem `Path`s do not exist
+### Changed
+#### Palo (parser)
+  * The generic parser interface has been completely changed
+    * Now we use a coroutine-like interface that prevents stack overflows when parsing
+    * Though it leads to much more boilerplate to write for new rules, it is a much more stable parser
+#### [Internal] Filesystem
+  * Many `Path` methods have been made `const` methods
+    * Hopefully, this will allow compilers to perform more optimizations on `Path`s
 
 ## [0.9.0] - 2018-12-03
 ### Changed
