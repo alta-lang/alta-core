@@ -73,6 +73,12 @@ namespace AltaCore {
       Subtraction,
       Multiplication,
       Division,
+      EqualTo,
+      NotEqualTo,
+      GreaterThan,
+      LessThan,
+      GreaterThanOrEqualTo,
+      LessThanOrEqualTo,
     };
   };
 };

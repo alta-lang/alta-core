@@ -6,6 +6,18 @@
 
 namespace AltaCore {
   namespace Parser {
+    template<typename RT, typename TT> bool GenericExpectationType<RT, TT>::operator ==(const GenericExpectationType<RT, TT>& other) {
+      if (valid != other.valid) return false;
+      if (!valid) return true;
+
+      if (isToken != other.isToken) return false;
+      
+      if (isToken && token != other.token) return false;
+      if (!isToken && rule != other.rule) return false;
+
+      return true;
+    };
+
     template<typename RT> bool GenericState<RT>::operator ==(const GenericState<RT>& rhs) const {
       if (currentPosition != rhs.currentPosition) return false;
       if (rulesToIgnore.size() != rhs.rulesToIgnore.size()) return false;
@@ -17,7 +29,7 @@ namespace AltaCore {
       return true;
     };
 
-    template<typename RT, typename TT, class T> auto GenericParser<RT, TT, T>::expect(std::initializer_list<typename GenericParser<RT, TT, T>::ExpectationType> expectations) -> Expectation {
+    template<typename RT, typename TT, class T> auto GenericParser<RT, TT, T>::expect(std::vector<typename GenericParser<RT, TT, T>::ExpectationType> expectations) -> Expectation {
       Expectation ret; // by default, Expectations are invalid
       const auto stateAtStart = currentState;
       State state = stateAtStart;
@@ -113,8 +125,7 @@ namespace AltaCore {
               if (finalVal) {
                 currentFails.erase(rule);
                 exp.valid = true;
-                exp.type.isToken = false;
-                exp.type.rule = rule;
+                exp.type = rule;
                 exp.item = finalVal;
                 state = currentState;
 
@@ -160,8 +171,7 @@ namespace AltaCore {
 
           if (finalVal) {
             ret.valid = true;
-            ret.type.isToken = false;
-            ret.type.rule = expectation.rule;
+            ret.type = expectation.rule;
             ret.item = finalVal;
             state = currentState;
           } else {
@@ -170,8 +180,7 @@ namespace AltaCore {
         } else {
           if (tokens[state.currentPosition].type == expectation.token) {
             ret.valid = true;
-            ret.type.isToken = true;
-            ret.type.token = expectation.token;
+            ret.type = expectation.token;
             ret.token = tokens[state.currentPosition];
             state.currentPosition++;
             break;

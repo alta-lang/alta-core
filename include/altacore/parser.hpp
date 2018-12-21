@@ -81,6 +81,8 @@ namespace AltaCore {
       VerbalConditionalExpression,
       PunctualConditonalExpression,
       Block,
+      NonequalityRelationalOperation,
+      EqualityRelationalOperation,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {
@@ -104,6 +106,7 @@ namespace AltaCore {
         isToken(true),
         token(_token)
         {};
+      bool operator ==(const GenericExpectationType<RT, TT>& other);
     };
     template<typename RT, typename TT, typename T> struct GenericExpectation {
       using ExpectationType = GenericExpectationType<RT, TT>;
@@ -169,7 +172,10 @@ namespace AltaCore {
         };
         */
 
-        Expectation expect(std::initializer_list<ExpectationType> expectations);
+        Expectation expect(std::vector<ExpectationType> expectations);
+        Expectation expect(std::initializer_list<ExpectationType> expectations) {
+          return expect(std::vector(expectations));
+        };
         Expectation expect(ExpectationType expectation) {
           return expect({ expectation });
         };
@@ -202,6 +208,7 @@ namespace AltaCore {
         std::vector<std::string> expectModifiers(ModifierTargetType mtt);
         bool expectKeyword(std::string keyword);
         std::vector<std::shared_ptr<AST::AttributeNode>> expectAttributes();
+        RuleReturn expectBinaryOperation(RuleType rule, std::vector<ExpectationType> operatorTokens, std::vector<AST::OperatorType> operatorTypes, RuleState& state, std::vector<Expectation>& expectations);
         // </helper-functions>
 
         std::unordered_set<std::string> typesToIgnore;

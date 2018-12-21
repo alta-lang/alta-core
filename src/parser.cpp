@@ -78,6 +78,81 @@ namespace AltaCore {
       currentState = state;
       return false;
     };
+    Parser::RuleReturn Parser::expectBinaryOperation(RuleType rule, std::vector<ExpectationType> operatorTokens, std::vector<AST::OperatorType> operatorTypes, RuleState& state, std::vector<Expectation>& exps) {
+      if (operatorTokens.size() != operatorTypes.size()) {
+        throw std::runtime_error("malformed binary operation expectation: the number of operator tokens must match the number of operator types.");
+      }
+      if (state.internalIndex == 0) {
+        state.internalIndex = 1;
+        rulesToIgnore.push_back(rule);
+        return RuleType::Expression;
+      } else if (state.internalIndex == 1) {
+        rulesToIgnore.pop_back();
+        if (!exps.back()) return ALTACORE_NULLOPT;
+
+        auto binOp = std::make_shared<AST::BinaryOperation>();
+        binOp->left = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+        auto opExp = expect(operatorTokens);
+        if (!opExp) return ALTACORE_NULLOPT;
+
+        // comment 0.0:
+        // must be initialized to keep the compiler happy
+        AST::OperatorType op = AST::OperatorType::Addition;
+        for (size_t i = 0; i < operatorTokens.size(); i++) {
+          if (opExp.type == operatorTokens[i]) {
+            op = operatorTypes[i];
+            break;
+          }
+        }
+        binOp->type = op;
+
+        state.internalValue = std::make_pair(currentState, std::move(binOp));
+        state.internalIndex = 2;
+
+        rulesToIgnore.push_back(rule);
+        return RuleType::Expression;
+      } else {
+        auto [savedState, binOp] = ALTACORE_ANY_CAST<std::pair<decltype(currentState), std::shared_ptr<AST::BinaryOperation>>>(state.internalValue);
+
+        rulesToIgnore.pop_back();
+        if (!exps.back()) {
+          if (state.internalIndex == 2) {
+            return ALTACORE_NULLOPT;
+          } else {
+            currentState = savedState;
+            return binOp->left;
+          }
+        }
+
+        binOp->right = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+        Expectation opExp = expect(operatorTokens);
+
+        if (opExp) {
+          auto savedState = currentState;
+          // see comment 0.0
+          AST::OperatorType op = AST::OperatorType::Addition;
+          for (size_t i = 0; i < operatorTokens.size(); i++) {
+            if (opExp.type == operatorTokens[i]) {
+              op = operatorTypes[i];
+              break;
+            }
+          }
+
+          auto otherBinOp = std::make_shared<AST::BinaryOperation>();
+          otherBinOp->left = binOp;
+          otherBinOp->type = op;
+
+          state.internalValue = std::make_pair(savedState, std::move(otherBinOp));
+          state.internalIndex = 3;
+          rulesToIgnore.push_back(rule);
+          return RuleType::Expression;
+        } else {
+          return binOp;
+        }
+      }
+    };
     // </helper-functions>
 
     Parser::Parser(std::vector<Token> _tokens):
@@ -161,6 +236,8 @@ namespace AltaCore {
               RuleType::Assignment,
               RuleType::VerbalConditionalExpression,
               RuleType::PunctualConditonalExpression,
+              RuleType::EqualityRelationalOperation,
+              RuleType::NonequalityRelationalOperation,
               RuleType::AdditionOrSubtraction,
               RuleType::MultiplicationOrDivision,
               RuleType::FunctionCall,
@@ -506,144 +583,21 @@ namespace AltaCore {
           return std::make_shared<AST::AssignmentExpression>(lhs, std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item));
         }
       } else if (rule == RuleType::AdditionOrSubtraction) {
-        // TODO: move the MDAS (as in, PEMDAS) logic into a reusable function
-        //       for now, the code here and in MultiplicationOrDivision has been copy-pasted
-        //       and edited where necessary (and that's not very DRY)
-        if (state.internalIndex == 0) {
-          state.internalIndex = 1;
-          rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
-          return RuleType::Expression;
-        } else if (state.internalIndex == 1) {
-          rulesToIgnore.pop_back();
-          if (!exps.back()) return ALTACORE_NULLOPT;
-
-          auto binOp = std::make_shared<AST::BinaryOperation>();
-          binOp->left = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
-
-          auto opExp = expect({
-            TokenType::PlusSign,
-            TokenType::MinusSign,
-            });
-          if (!opExp) return ALTACORE_NULLOPT;
-
-          auto op = AST::OperatorType::Addition;
-          if (opExp.token.type == TokenType::MinusSign) {
-            op = AST::OperatorType::Subtraction;
-          }
-          binOp->type = op;
-
-          state.internalValue = std::make_pair(currentState, std::move(binOp));
-          state.internalIndex = 2;
-
-          rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
-          return RuleType::Expression;
-        } else {
-          auto [savedState, binOp] = ALTACORE_ANY_CAST<std::pair<decltype(currentState), std::shared_ptr<AST::BinaryOperation>>>(state.internalValue);
-
-          rulesToIgnore.pop_back();
-          if (!exps.back()) {
-            if (state.internalIndex == 2) {
-              return ALTACORE_NULLOPT;
-            } else {
-              currentState = savedState;
-              return binOp->left;
-            }
-          }
-
-          binOp->right = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
-
-          Expectation opExp = expect({
-            TokenType::PlusSign,
-            TokenType::MinusSign,
-          });
-
-          if (opExp) {
-            auto savedState = currentState;
-            auto op = AST::OperatorType::Addition;
-            if (opExp.token.type == TokenType::MinusSign) {
-              op = AST::OperatorType::Subtraction;
-            }
-
-            auto otherBinOp = std::make_shared<AST::BinaryOperation>();
-            otherBinOp->left = binOp;
-            otherBinOp->type = op;
-
-            state.internalValue = std::make_pair(savedState, std::move(otherBinOp));
-            state.internalIndex = 3;
-            rulesToIgnore.push_back(RuleType::AdditionOrSubtraction);
-            return RuleType::Expression;
-          } else {
-            return binOp;
-          }
-        }
+        return expectBinaryOperation(rule, {
+          TokenType::PlusSign,
+          TokenType::MinusSign,
+        }, {
+          AST::OperatorType::Addition,
+          AST::OperatorType::Subtraction,
+        }, state, exps);
       } else if (rule == RuleType::MultiplicationOrDivision) {
-        if (state.internalIndex == 0) {
-          state.internalIndex = 1;
-          rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
-          return RuleType::Expression;
-        } else if (state.internalIndex == 1) {
-          rulesToIgnore.pop_back();
-          if (!exps.back()) return ALTACORE_NULLOPT;
-
-          auto binOp = std::make_shared<AST::BinaryOperation>();
-          binOp->left = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
-
-          auto opExp = expect({
-            TokenType::Asterisk,
-            TokenType::ForwardSlash,
-            });
-          if (!opExp) return ALTACORE_NULLOPT;
-
-          auto op = AST::OperatorType::Multiplication;
-          if (opExp.token.type == TokenType::ForwardSlash) {
-            op = AST::OperatorType::Division;
-          }
-          binOp->type = op;
-
-          state.internalValue = std::make_pair(currentState, std::move(binOp));
-          state.internalIndex = 2;
-
-          rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
-          return RuleType::Expression;
-        } else {
-          auto [savedState, binOp] = ALTACORE_ANY_CAST<std::pair<decltype(currentState), std::shared_ptr<AST::BinaryOperation>>>(state.internalValue);
-
-          rulesToIgnore.pop_back();
-          if (!exps.back()) {
-            if (state.internalIndex == 2) {
-              return ALTACORE_NULLOPT;
-            } else {
-              currentState = savedState;
-              return binOp->left;
-            }
-          }
-
-          binOp->right = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
-
-          Expectation opExp = expect({
-            TokenType::Asterisk,
-            TokenType::ForwardSlash,
-          });
-
-          if (opExp) {
-            auto savedState = currentState;
-            auto op = AST::OperatorType::Multiplication;
-            if (opExp.token.type == TokenType::ForwardSlash) {
-              op = AST::OperatorType::Division;
-            }
-
-            auto otherBinOp = std::make_shared<AST::BinaryOperation>();
-            otherBinOp->left = binOp;
-            otherBinOp->type = op;
-
-            state.internalValue = std::make_pair(savedState, std::move(otherBinOp));
-            state.internalIndex = 3;
-            rulesToIgnore.push_back(RuleType::MultiplicationOrDivision);
-            return RuleType::Expression;
-          } else {
-            return binOp;
-          }
-        }
+        return expectBinaryOperation(rule, {
+          TokenType::Asterisk,
+          TokenType::ForwardSlash,
+        }, {
+          AST::OperatorType::Multiplication,
+          AST::OperatorType::Division,
+        }, state, exps);
       } else if (rule == RuleType::ModuleOnlyStatement) {
         if (state.iteration == 0) {
           return std::initializer_list<ExpectationType> {
@@ -1106,6 +1060,26 @@ namespace AltaCore {
 
           return cond;
         }
+      } else if (rule == RuleType::NonequalityRelationalOperation) {
+        return expectBinaryOperation(rule, {
+          TokenType::OpeningAngleBracket,
+          TokenType::ClosingAngleBracket,
+          TokenType::LessThanOrEqualTo,
+          TokenType::GreaterThanOrEqualTo,
+        }, {
+          AST::OperatorType::LessThan,
+          AST::OperatorType::GreaterThan,
+          AST::OperatorType::LessThanOrEqualTo,
+          AST::OperatorType::GreaterThanOrEqualTo,
+        }, state, exps);
+      } else if (rule == RuleType::EqualityRelationalOperation) {
+        return expectBinaryOperation(rule, {
+          TokenType::Equality,
+          TokenType::Inequality,
+        }, {
+          AST::OperatorType::EqualTo,
+          AST::OperatorType::NotEqualTo,
+        }, state, exps);
       }
 
       return ALTACORE_NULLOPT;

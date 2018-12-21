@@ -8,7 +8,7 @@ namespace AltaCore {
       column(_column)
       {};
 
-    bool Lexer::runRule(const TokenType rule, const char character, bool first, bool* ended) {
+    bool Lexer::runRule(const TokenType rule, const char character, bool first, bool* ended, bool* contigious) {
       switch (rule) {
         case TokenType::Identifier: {
           if (
@@ -41,8 +41,18 @@ namespace AltaCore {
           }
         } break;
         default: {
-          if (character == TokenType_simpleCharacters[(int)rule]) {
-            *ended = true;
+          *contigious = true;
+          auto string = TokenType_simpleCharacters[(int)rule];
+          auto length = strlen(string);
+          
+          if (length == 0) return false;
+          
+          auto stringChar = string[ruleIteration];
+
+          if (character == stringChar) {
+            if (ruleIteration + 1 >= length) {
+              *ended = true;
+            }
             return true;
           }
         } break;
@@ -52,6 +62,7 @@ namespace AltaCore {
 
     Token& Lexer::appendNewToken(const TokenType rule, const char character, bool setHanging) {
       Token token;
+      token.position = totalCount;
       token.line = currentLine;
       token.column = currentColumn;
       token.type = rule;
@@ -62,6 +73,7 @@ namespace AltaCore {
     };
     Token& Lexer::appendNewToken(const TokenType rule, std::string data, bool setHanging) {
       Token token;
+      token.position = totalCount;
       token.line = currentLine;
       token.column = currentColumn;
       token.type = rule;
@@ -71,85 +83,92 @@ namespace AltaCore {
       return tokens.back();
     };
     void Lexer::feed(const std::string data) {
-      backlog.append(data);
+      for (auto& character: data) {
+        backlog.push_back(character);
+      }
       lex();
     };
     void Lexer::lex() {
-      for (size_t i = 0; i < backlog.length(); i++) {
+      bool incrementTotal = false;
+      while (!backlog.empty()) {
+        if (!incrementTotal) {
+          incrementTotal = true;
+        } else {
+          totalCount++;
+        }
         currentColumn++;
-        const char character = backlog[i];
+        const char character = backlog.front();
 
         if (consumeNext) {
           consumeNext = false;
           Token& token = tokens.back();
           token.raw.append(1, character);
+          backlog.pop_front();
           continue;
         }
 
         if (hangingRule != TokenType::None) {
+          ruleIteration++;
           bool ended = false;
-          bool matches = runRule(hangingRule, character, false, &ended);
+          bool contigious = false;
+          bool matches = runRule(hangingRule, character, false, &ended, &contigious);
           if (matches) {
             Token& token = tokens.back();
             token.raw.append(1, character);
-            if (ended) hangingRule = TokenType::None;
+            if (ended) {
+              hangingRule = TokenType::None;
+              ruleIteration = 0;
+            }
+            backlog.pop_front();
             continue;
           } else {
             hangingRule = TokenType::None;
+            ruleIteration = 0;
+            if (contigious) {
+              auto& back = tokens.back();
+              for (auto rit = back.raw.rbegin(); rit < back.raw.rend(); rit++) {
+                backlog.push_front(*rit);
+              }
+              totalCount = back.position;
+              currentLine = back.line;
+              currentLine = back.column;
+              fails[totalCount].insert(back.type);
+              tokens.pop_back();
+              incrementTotal = false;
+              continue;
+            }
           }
         }
 
         bool cont = false;
         for (int j = 1; j < (int)TokenType::LAST + 1; j++) {
+          auto tokType = (TokenType)j;
+          if (fails[totalCount].find(tokType) != fails[totalCount].end()) continue;
           bool ended = false;
-          if ((TokenType)j == TokenType::Equality) {
-            if (character == '=' && backlog.length() > i + 1 && backlog[i + 1] == '=') {
-              appendNewToken(TokenType::Equality, "==");
-              cont = true;
-              hangingRule = TokenType::None;
-              i++; // skip the next character
-              break;
-            }
-          } else if ((TokenType)j == TokenType::And) {
-            if (character == '&' && backlog.length() > i + 1 && backlog[i + 1] == '&') {
-              appendNewToken(TokenType::And, "&&");
-              cont = true;
-              hangingRule = TokenType::None;
-              i++; // skip the next character
-              break;
-            }
-          } else if ((TokenType)j == TokenType::Or) {
-            if (character == '|' && backlog.length() > i + 1 && backlog[i + 1] == '|') {
-              appendNewToken(TokenType::Or, "||");
-              cont = true;
-              hangingRule = TokenType::None;
-              i++; // skip the next character
-              break;
-            }
-          } else if ((TokenType)j == TokenType::Returns) {
-            if (character == '-' && backlog.length() > i + 1 && backlog[i + 1] == '>') {
-              appendNewToken(TokenType::Returns, "->");
-              cont = true;
-              hangingRule = TokenType::None;
-              i++; // skip the next character
-              break;
-            }
-          } else if (runRule((TokenType)j, character, true, &ended)) {
+          bool contigious = false;
+          if (runRule((TokenType)j, character, true, &ended, &contigious)) {
             appendNewToken((TokenType)j, character);
             cont = true;
             if (ended) hangingRule = TokenType::None;
             break;
+          } else {
+            fails[totalCount].insert(tokType);
           }
         }
-        if (cont) continue;
+        if (cont) {
+          backlog.pop_front();
+          continue;
+        }
 
         if (character == '\n') {
           currentLine++;
           currentColumn = 0;
+          backlog.pop_front();
           continue;
         }
 
         if (character == ' ' || character == '\r' || character == '\t') {
+          backlog.pop_front();
           continue;
         }
 
@@ -159,8 +178,6 @@ namespace AltaCore {
           absences.push_back(std::tuple<size_t, size_t>(currentLine, currentColumn));
         }
       }
-
-      backlog.clear();
     };
   };
 };

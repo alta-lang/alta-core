@@ -6,6 +6,10 @@
 
 namespace AltaCore {
   namespace AST {
+    // this is a binary operation, not in the sense
+    // that it performs any binary manipulation, but in
+    // literal sense of the word:
+    //     bi(n)-ary = 2-arguments
     class BinaryOperation: public ExpressionNode {
       public:
         virtual const NodeType nodeType();
