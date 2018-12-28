@@ -11,7 +11,7 @@ namespace AltaCore {
       if (!valid) return true;
 
       if (isToken != other.isToken) return false;
-      
+
       if (isToken && token != other.token) return false;
       if (!isToken && rule != other.rule) return false;
 
@@ -68,7 +68,7 @@ namespace AltaCore {
           ruleStack.emplace(
             expectation.rule,
             std::stack<ExpectationType>(),
-            RuleState(),
+            RuleState(stateAtStart),
             std::vector<Expectation>(),
             stateAtStart
           );
@@ -106,7 +106,7 @@ namespace AltaCore {
               ruleStack.emplace(
                 expTypes.top().rule,
                 std::stack<ExpectationType>(),
-                RuleState(),
+                RuleState(currentState),
                 std::vector<Expectation>(),
                 currentState
               );
@@ -145,7 +145,7 @@ namespace AltaCore {
                   ruleStack.emplace(
                     expTypes.top().rule,
                     std::stack<ExpectationType>(),
-                    RuleState(),
+                    RuleState(currentState),
                     std::vector<Expectation>(),
                     currentState
                   );

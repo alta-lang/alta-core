@@ -143,11 +143,16 @@ namespace AltaCore {
         bool operator ==(const GenericState<RT>& rhs) const;
     };
 
-    class RuleState {
+    template<typename S> class GenericRuleState {
       public:
         size_t iteration = 0;
         size_t internalIndex = 0;
+        S stateAtStart;
         ALTACORE_ANY internalValue;
+
+        GenericRuleState(S _stateAtStart):
+          stateAtStart(_stateAtStart)
+          {};
     };
 
     template<typename RT, typename TT, class T> class GenericParser {
@@ -155,6 +160,7 @@ namespace AltaCore {
         using Expectation = GenericExpectation<RT, TT, T>;
         using ExpectationType = GenericExpectationType<RT, TT>;
         using State = GenericState<RT>;
+        using RuleState = GenericRuleState<State>;
         using RuleReturn = ALTACORE_VARIANT<ExpectationType, std::initializer_list<ExpectationType>, ALTACORE_OPTIONAL<T>>;
         //using Rule = std::function<RuleReturn(RuleState&, std::vector<Expectation>&)>;
       private:

@@ -53,7 +53,7 @@ namespace AltaCore {
         null(nullptr),
         defined(false)
         {};
-      
+
       bool operator ==(const Expression& right);
       explicit operator bool();
     };
@@ -85,7 +85,7 @@ namespace AltaCore {
         };
         */
 
-        virtual RuleReturn runRule(RuleType, Parser::RuleState&, std::vector<Expectation>&);
+        virtual RuleReturn runRule(RuleType, RuleState&, std::vector<Expectation>&);
       public:
         void parse();
 

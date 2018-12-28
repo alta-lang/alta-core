@@ -255,7 +255,7 @@ AltaCore::Preprocessor::ExpressionParser::ExpressionParser(std::vector<Lexer::To
   definitions(_definitions)
   {};
 
-AltaCore::Preprocessor::ExpressionParser::RuleReturn AltaCore::Preprocessor::ExpressionParser::runRule(RuleType rule, Parser::RuleState& state, std::vector<Expectation>& exps) {
+AltaCore::Preprocessor::ExpressionParser::RuleReturn AltaCore::Preprocessor::ExpressionParser::runRule(RuleType rule, RuleState& state, std::vector<Expectation>& exps) {
   if (rule == RuleType::Expression) {
     if (state.iteration == 0) {
       return std::initializer_list<ExpectationType> {

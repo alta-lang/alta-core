@@ -94,7 +94,7 @@ namespace AltaCore {
         binOp->left = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
         auto opExp = expect(operatorTokens);
-        if (!opExp) return ALTACORE_NULLOPT;
+        if (!opExp) return exps.back().item;
 
         // comment 0.0:
         // must be initialized to keep the compiler happy
@@ -160,6 +160,27 @@ namespace AltaCore {
       {};
 
     Parser::RuleReturn Parser::runRule(RuleType rule, RuleState& state, std::vector<Expectation>& exps) {
+      /*
+       * note about early returns in front-recursive rules:
+       *
+       * all front-recursive rules expect another expression as
+       * their first expectation and thus lead to semi-recursion. they
+       * also expect a differentiating token like `+` or `(` or `if` etc.
+       * for those rules, in order to optimize parse times (literally in half,
+       * probably even exponentially), if their left-hand expression is found
+       * but their differentiating token is not, they simply return their
+       * left-hand expression and pretend to succeed. this, however, is fine
+       * because the parser doesn't really care what rules succeed or fail,
+       * only the results of those rules. so if, for example, while trying to
+       * find an AdditionOrSubtraction expression we find a FunctionCall and
+       * then we don't find `+` or `-`, the AdditionOrSubtraction expression will
+       * simply return the FunctionCall result as if it were its own. the
+       * parser won't care that AdditionOrSubtraction is returning
+       * an AST::FunctionCallExpression instead of a AST::BinaryOperation, only
+       * that it did return a result, and it'll pass the result back to whatever
+       * rule invoked AdditionOrSubtraction.
+       */
+
       if (rule == RuleType::Root) {
         // TODO: use custom `ParserError`s instead of throwing `std::runtime_error`s
 
@@ -223,7 +244,8 @@ namespace AltaCore {
         return ret;
       } else if (rule == RuleType::Expression) {
         if (state.iteration == 0) {
-          if (expect(TokenType::OpeningParenthesis)) {
+          if (auto exp = expect(TokenType::OpeningParenthesis)) {
+            exps.push_back(exp);
             state.internalValue = rulesToIgnore;
             rulesToIgnore.clear();
             return RuleType::Expression;
@@ -231,8 +253,13 @@ namespace AltaCore {
             // precendence here is least to most
             // i.e. VariableDefinition has the least precedence,
             //      FunctionCall has the most precedence
+
+            state.internalValue = currentState;
+
             return std::initializer_list<ExpectationType> {
               RuleType::VariableDefinition,
+
+              // <front-recursive-rules>
               RuleType::Assignment,
               RuleType::VerbalConditionalExpression,
               RuleType::PunctualConditonalExpression,
@@ -241,6 +268,7 @@ namespace AltaCore {
               RuleType::AdditionOrSubtraction,
               RuleType::MultiplicationOrDivision,
               RuleType::FunctionCall,
+              // </front-recursive-rules>
 
               // <special>
               RuleType::BooleanLiteral,
@@ -253,15 +281,15 @@ namespace AltaCore {
           }
         }
 
-        if (ALTACORE_ANY_HAS_VALUE(state.internalValue)) {
+        if (exps.front().type.isToken) {
           // continuation of wrapped expression check above
           rulesToIgnore = ALTACORE_ANY_CAST<decltype(rulesToIgnore)>(state.internalValue);
-          if (!exps[0]) return ALTACORE_NULLOPT;
+          if (!exps.back()) return ALTACORE_NULLOPT;
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
-          return exps[0].item;
+          return exps.back().item;
         }
 
-        return exps[0].item;
+        return exps.back().item;
       } else if (rule == RuleType::FunctionDefinition) {
         if (state.internalIndex == 0) {
           auto funcDef = std::make_shared<AST::FunctionDefinitionNode>();
@@ -569,7 +597,7 @@ namespace AltaCore {
 
           if (!exps.back()) return ALTACORE_NULLOPT;
 
-          if (!expect(TokenType::EqualSign)) return ALTACORE_NULLOPT;
+          if (!expect(TokenType::EqualSign)) return exps.back().item;
 
           state.internalValue = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
           state.internalIndex = 2;
@@ -691,7 +719,7 @@ namespace AltaCore {
           rulesToIgnore.pop_back();
           if (!exps.back()) return ALTACORE_NULLOPT;
 
-          if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
+          if (!expect(TokenType::OpeningParenthesis)) return exps.back().item;
 
           auto funcCall = std::make_shared<AST::FunctionCallExpression>();
           funcCall->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
@@ -970,7 +998,7 @@ namespace AltaCore {
 
           if (!exps.back()) return ALTACORE_NULLOPT;
 
-          if (!expectKeyword("if")) return ALTACORE_NULLOPT;
+          if (!expectKeyword("if")) return exps.back().item;
 
           auto cond = std::make_shared<AST::ConditionalExpression>();
           cond->primaryResult = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
@@ -1032,7 +1060,7 @@ namespace AltaCore {
 
           if (!exps.back()) return ALTACORE_NULLOPT;
 
-          if (!expect(TokenType::QuestionMark)) return ALTACORE_NULLOPT;
+          if (!expect(TokenType::QuestionMark)) return exps.back().item;
 
           auto cond = std::make_shared<AST::ConditionalExpression>();
           cond->test = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
