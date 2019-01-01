@@ -192,9 +192,6 @@ namespace AltaCore {
         virtual void parse() {};
         void reset() {
           currentState = State();
-          rulesToIgnore.clear();
-          failed.clear();
-          loopCache.clear();
           root = nullptr;
         };
 
