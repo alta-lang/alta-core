@@ -67,6 +67,7 @@ namespace AltaCore {
       And,
       Or,
       Wrapped,
+      AnyLiteral,
     };
     class ExpressionParser: public Parser::GenericParser<RuleType, Lexer::TokenType, Expression> {
       protected:
@@ -77,20 +78,13 @@ namespace AltaCore {
         Expression defined(std::vector<Expression> targets);
         // </builtin-macros>
 
-        /*
-        std::unordered_map<RuleType, Rule> internalRuleTable;
-
-        virtual std::unordered_map<RuleType, Rule>& ruleTable() {
-          return internalRuleTable;
-        };
-        */
-
         virtual RuleReturn runRule(RuleType, RuleState&, std::vector<Expectation>&);
       public:
         void parse();
 
         ExpressionParser(std::vector<Lexer::Token> tokens, std::map<std::string, Expression>& definitions);
     };
+
     class Preprocessor;
     void defaultFileReader(Preprocessor& orig, Preprocessor& newPre, std::string importRequest);
     class Preprocessor {

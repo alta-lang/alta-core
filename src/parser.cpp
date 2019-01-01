@@ -5,15 +5,6 @@
 namespace AltaCore {
   namespace Parser {
     // <rule-state-structures>
-    struct FunctionCallState {
-      std::vector<RuleType> ignores;
-      std::shared_ptr<AST::FunctionCallExpression> call = nullptr;
-
-      FunctionCallState(decltype(ignores) _ignores, decltype(call) _call):
-        ignores(_ignores),
-        call(_call)
-        {};
-    };
     template<typename S> struct ConditionStatementState {
       S state;
       std::shared_ptr<AST::ConditionalStatement> cond = nullptr;
@@ -23,35 +14,20 @@ namespace AltaCore {
         cond(_cond)
         {};
     };
-    struct VerbalConditionalState {
+    template<typename S> struct VerbalConditionalState {
       std::shared_ptr<AST::ConditionalExpression> cond = nullptr;
       bool isRepeat = false;
+      S stateCache;
 
-      VerbalConditionalState(decltype(cond) _cond, bool _isRepeat = false):
+      VerbalConditionalState(decltype(cond) _cond, S _stateCache, bool _isRepeat = false):
         cond(_cond),
+        stateCache(_stateCache),
         isRepeat(_isRepeat)
         {};
     };
     // </rule-state-structures>
 
     // <helper-functions>
-    std::vector<std::shared_ptr<AST::Parameter>> Parser::expectParameters() {
-      std::vector<std::shared_ptr<AST::Parameter>> parameters;
-      Expectation param;
-      param = expect(RuleType::Parameter);
-      if (param.valid) {
-        do {
-          std::shared_ptr<AST::Parameter> parameter = std::dynamic_pointer_cast<AST::Parameter>(*param.item);
-          if (parameter == nullptr) throw std::runtime_error("oh no.");
-          parameters.push_back(parameter);
-          State state = currentState;
-          if (!expect(TokenType::Comma).valid) break;
-          param = expect(RuleType::Parameter);
-          if (!param.valid) currentState = state;
-        } while (param.valid);
-      }
-      return parameters;
-    };
     std::vector<std::string> Parser::expectModifiers(ModifierTargetType mtt) {
       std::vector<std::string> modifiers;
       Expectation mod;
@@ -78,16 +54,14 @@ namespace AltaCore {
       currentState = state;
       return false;
     };
-    Parser::RuleReturn Parser::expectBinaryOperation(RuleType rule, std::vector<ExpectationType> operatorTokens, std::vector<AST::OperatorType> operatorTypes, RuleState& state, std::vector<Expectation>& exps) {
+    Parser::RuleReturn Parser::expectBinaryOperation(RuleType rule, RuleType nextHigherPrecedentRule, std::vector<ExpectationType> operatorTokens, std::vector<AST::OperatorType> operatorTypes, RuleState& state, std::vector<Expectation>& exps) {
       if (operatorTokens.size() != operatorTypes.size()) {
         throw std::runtime_error("malformed binary operation expectation: the number of operator tokens must match the number of operator types.");
       }
       if (state.internalIndex == 0) {
         state.internalIndex = 1;
-        rulesToIgnore.push_back(rule);
-        return RuleType::Expression;
+        return nextHigherPrecedentRule;
       } else if (state.internalIndex == 1) {
-        rulesToIgnore.pop_back();
         if (!exps.back()) return ALTACORE_NULLOPT;
 
         auto binOp = std::make_shared<AST::BinaryOperation>();
@@ -110,12 +84,10 @@ namespace AltaCore {
         state.internalValue = std::make_pair(currentState, std::move(binOp));
         state.internalIndex = 2;
 
-        rulesToIgnore.push_back(rule);
-        return RuleType::Expression;
+        return nextHigherPrecedentRule;
       } else {
         auto [savedState, binOp] = ALTACORE_ANY_CAST<std::pair<decltype(currentState), std::shared_ptr<AST::BinaryOperation>>>(state.internalValue);
 
-        rulesToIgnore.pop_back();
         if (!exps.back()) {
           if (state.internalIndex == 2) {
             return ALTACORE_NULLOPT;
@@ -146,8 +118,7 @@ namespace AltaCore {
 
           state.internalValue = std::make_pair(savedState, std::move(otherBinOp));
           state.internalIndex = 3;
-          rulesToIgnore.push_back(rule);
-          return RuleType::Expression;
+          return nextHigherPrecedentRule;
         } else {
           return binOp;
         }
@@ -243,11 +214,16 @@ namespace AltaCore {
         }
         return ret;
       } else if (rule == RuleType::Expression) {
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          return RuleType::VariableDefinition;
+        } else {
+          return exps.back().item;
+        }
+        /*
         if (state.iteration == 0) {
           if (auto exp = expect(TokenType::OpeningParenthesis)) {
             exps.push_back(exp);
-            state.internalValue = rulesToIgnore;
-            rulesToIgnore.clear();
             return RuleType::Expression;
           } else {
             // precendence here is least to most
@@ -283,13 +259,13 @@ namespace AltaCore {
 
         if (exps.front().type.isToken) {
           // continuation of wrapped expression check above
-          rulesToIgnore = ALTACORE_ANY_CAST<decltype(rulesToIgnore)>(state.internalValue);
           if (!exps.back()) return ALTACORE_NULLOPT;
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
           return exps.back().item;
         }
 
         return exps.back().item;
+        */
       } else if (rule == RuleType::FunctionDefinition) {
         if (state.internalIndex == 0) {
           auto funcDef = std::make_shared<AST::FunctionDefinitionNode>();
@@ -521,9 +497,14 @@ namespace AltaCore {
         if (state.internalIndex == 0) {
           auto varDef = std::make_shared<AST::VariableDefinitionExpression>();
 
+          const auto saved = currentState;
           varDef->modifiers = expectModifiers(ModifierTargetType::Variable);
 
-          if (!expectKeyword("let") && !expectKeyword("var")) return ALTACORE_NULLOPT;
+          if (!expectKeyword("let") && !expectKeyword("var")) {
+            currentState = saved;
+            state.internalIndex = 3;
+            return RuleType::Assignment;
+          }
 
           auto name = expect(TokenType::Identifier);
           if (!name) return ALTACORE_NULLOPT;
@@ -545,6 +526,8 @@ namespace AltaCore {
           } else {
             return varDef;
           }
+        } else if (state.internalIndex == 3) {
+          return exps.back().item;
         } else {
           // we're expecting a value to initialize the variable
           if (!exps.back()) return ALTACORE_NULLOPT;
@@ -560,14 +543,14 @@ namespace AltaCore {
       } else if (rule == RuleType::Accessor) {
         if (state.internalIndex == 0) {
           state.internalIndex = 1;
-          rulesToIgnore.push_back(RuleType::Accessor);
-          return RuleType::Expression;
+          return std::initializer_list<ExpectationType> {
+            RuleType::Fetch,
+            RuleType::GroupedExpression,
+          };
         } else {
-          rulesToIgnore.pop_back();
-
           if (!exps.back()) return ALTACORE_NULLOPT;
 
-          if (!expect(TokenType::Dot)) return ALTACORE_NULLOPT;
+          if (!expect(TokenType::Dot)) return exps.back().item;
 
           auto query = expect(TokenType::Identifier);
           if (!query) return ALTACORE_NULLOPT;
@@ -590,11 +573,8 @@ namespace AltaCore {
       } else if (rule == RuleType::Assignment) {
         if (state.internalIndex == 0) {
           state.internalIndex = 1;
-          rulesToIgnore.push_back(RuleType::Assignment);
-          return RuleType::Expression;
+          return RuleType::VerbalConditionalExpression;
         } else if (state.internalIndex == 1) {
-          rulesToIgnore.pop_back();
-
           if (!exps.back()) return ALTACORE_NULLOPT;
 
           if (!expect(TokenType::EqualSign)) return exps.back().item;
@@ -602,7 +582,7 @@ namespace AltaCore {
           state.internalValue = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
           state.internalIndex = 2;
 
-          return RuleType::Expression;
+          return RuleType::Assignment;
         } else {
           if (!exps.back()) return ALTACORE_NULLOPT;
 
@@ -611,7 +591,7 @@ namespace AltaCore {
           return std::make_shared<AST::AssignmentExpression>(lhs, std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item));
         }
       } else if (rule == RuleType::AdditionOrSubtraction) {
-        return expectBinaryOperation(rule, {
+        return expectBinaryOperation(rule, RuleType::MultiplicationOrDivision, {
           TokenType::PlusSign,
           TokenType::MinusSign,
         }, {
@@ -619,7 +599,7 @@ namespace AltaCore {
           AST::OperatorType::Subtraction,
         }, state, exps);
       } else if (rule == RuleType::MultiplicationOrDivision) {
-        return expectBinaryOperation(rule, {
+        return expectBinaryOperation(rule, RuleType::FunctionCall, {
           TokenType::Asterisk,
           TokenType::ForwardSlash,
         }, {
@@ -713,10 +693,13 @@ namespace AltaCore {
       } else if (rule == RuleType::FunctionCall) {
         if (state.internalIndex == 0) {
           state.internalIndex = 1;
-          rulesToIgnore.push_back(RuleType::FunctionCall);
-          return RuleType::Expression;
+          return std::initializer_list<ExpectationType> {
+            RuleType::BooleanLiteral,
+            RuleType::IntegralLiteral,
+            RuleType::String,
+            RuleType::Accessor,
+          };
         } else if (state.internalIndex == 1) {
-          rulesToIgnore.pop_back();
           if (!exps.back()) return ALTACORE_NULLOPT;
 
           if (!expect(TokenType::OpeningParenthesis)) return exps.back().item;
@@ -735,17 +718,15 @@ namespace AltaCore {
             nullptr,
           });
 
-          state.internalValue = FunctionCallState(rulesToIgnore, std::move(funcCall));
+          state.internalValue = std::move(funcCall);
           state.internalIndex = 2;
 
-          rulesToIgnore.clear();
           return RuleType::Expression;
         } else if (state.internalIndex == 2) {
-          auto callState = ALTACORE_ANY_CAST<FunctionCallState>(state.internalValue);
+          auto callState = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionCallExpression>>(state.internalValue);
 
-          //rulesToIgnore = callState.ignores;
           if (exps.back()) {
-            callState.call->arguments.back().second = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            callState->arguments.back().second = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
             if (expect(TokenType::Comma)) {
               auto tmpState = currentState;
               auto name = expect(TokenType::Identifier);
@@ -754,24 +735,21 @@ namespace AltaCore {
                 currentState = tmpState;
               }
 
-              callState.call->arguments.push_back({
+              callState->arguments.push_back({
                 (name) ? name.token.raw : "",
                 nullptr,
               });
 
-              //state.internalValue = FunctionCallState(rulesToIgnore, callState.call);
-              //rulesToIgnore.clear();
               return RuleType::Expression;
             }
           } else {
-            callState.call->arguments.pop_back();
+            callState->arguments.pop_back();
           }
 
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
 
-
           if (expect(TokenType::OpeningParenthesis)) {
-            auto newCall = std::make_shared<AST::FunctionCallExpression>(callState.call);
+            auto newCall = std::make_shared<AST::FunctionCallExpression>(callState);
 
             auto tmpState = currentState;
             auto name = expect(TokenType::Identifier);
@@ -783,14 +761,11 @@ namespace AltaCore {
               (name) ? name.token.raw : "",
               nullptr,
             });
-            state.internalValue = FunctionCallState(callState.ignores, newCall);
-            rulesToIgnore.clear();
+            state.internalValue = std::move(newCall);
             return RuleType::Expression;
           }
 
-          rulesToIgnore = callState.ignores;
-
-          return callState.call;
+          return callState;
         }
       } else if (rule == RuleType::String) {
         auto raw = expect(TokenType::String);
@@ -991,58 +966,53 @@ namespace AltaCore {
       } else if (rule == RuleType::VerbalConditionalExpression) {
         if (state.internalIndex == 0) {
           state.internalIndex = 1;
-          rulesToIgnore.push_back(RuleType::VerbalConditionalExpression);
-          return RuleType::Expression;
+          return RuleType::PunctualConditonalExpression;
         } else if (state.internalIndex == 1) {
-          rulesToIgnore.pop_back();
-
           if (!exps.back()) return ALTACORE_NULLOPT;
 
+          State stateCache = currentState;
           if (!expectKeyword("if")) return exps.back().item;
 
           auto cond = std::make_shared<AST::ConditionalExpression>();
           cond->primaryResult = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
-          state.internalValue = VerbalConditionalState(std::move(cond));
+          state.internalValue = VerbalConditionalState<State>(std::move(cond), stateCache);
           state.internalIndex = 2;
 
           return RuleType::Expression;
         } else if (state.internalIndex == 2) {
-          auto ruleState = ALTACORE_ANY_CAST<VerbalConditionalState>(state.internalValue);
+          auto ruleState = ALTACORE_ANY_CAST<VerbalConditionalState<State>>(state.internalValue);
 
           if (!exps.back()) {
-            if (!ruleState.isRepeat) return ALTACORE_NULLOPT;
+            currentState = ruleState.stateCache;
             return ruleState.cond->primaryResult;
           }
 
           if (!expectKeyword("else")) {
-            if (!ruleState.isRepeat) return ALTACORE_NULLOPT;
+            currentState = ruleState.stateCache;
             return ruleState.cond->primaryResult;
           }
 
           ruleState.cond->test = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
           state.internalIndex = 3;
-
-          rulesToIgnore.push_back(RuleType::VerbalConditionalExpression);
-          return RuleType::Expression;
+          return RuleType::PunctualConditonalExpression;
         } else if (state.internalIndex == 3) {
-          rulesToIgnore.pop_back();
-
-          auto ruleState = ALTACORE_ANY_CAST<VerbalConditionalState>(state.internalValue);
+          auto ruleState = ALTACORE_ANY_CAST<VerbalConditionalState<State>>(state.internalValue);
 
           if (!exps.back()) {
-            if (!ruleState.isRepeat) return ALTACORE_NULLOPT;
+            currentState = ruleState.stateCache;
             return ruleState.cond->primaryResult;
           }
 
           ruleState.cond->secondaryResult = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
+          State stateCache = currentState;
           if (expectKeyword("if")) {
             auto newCond = std::make_shared<AST::ConditionalExpression>();
             newCond->primaryResult = ruleState.cond;
 
-            state.internalValue = VerbalConditionalState(std::move(newCond), true);
+            state.internalValue = VerbalConditionalState<State>(std::move(newCond), stateCache, true);
             state.internalIndex = 2;
 
             return RuleType::Expression;
@@ -1053,11 +1023,8 @@ namespace AltaCore {
       } else if (rule == RuleType::PunctualConditonalExpression) {
         if (state.internalIndex == 0) {
           state.internalIndex = 1;
-          rulesToIgnore.push_back(RuleType::PunctualConditonalExpression);
-          return RuleType::Expression;
+          return RuleType::EqualityRelationalOperation;
         } else if (state.internalIndex == 1) {
-          rulesToIgnore.pop_back();
-
           if (!exps.back()) return ALTACORE_NULLOPT;
 
           if (!expect(TokenType::QuestionMark)) return exps.back().item;
@@ -1079,7 +1046,7 @@ namespace AltaCore {
 
           state.internalIndex = 3;
 
-          return RuleType::Expression;
+          return RuleType::PunctualConditonalExpression;
         } else if (state.internalIndex == 3) {
           if (!exps.back()) return ALTACORE_NULLOPT;
 
@@ -1089,7 +1056,7 @@ namespace AltaCore {
           return cond;
         }
       } else if (rule == RuleType::NonequalityRelationalOperation) {
-        return expectBinaryOperation(rule, {
+        return expectBinaryOperation(rule, RuleType::AdditionOrSubtraction, {
           TokenType::OpeningAngleBracket,
           TokenType::ClosingAngleBracket,
           TokenType::LessThanOrEqualTo,
@@ -1101,13 +1068,23 @@ namespace AltaCore {
           AST::OperatorType::GreaterThanOrEqualTo,
         }, state, exps);
       } else if (rule == RuleType::EqualityRelationalOperation) {
-        return expectBinaryOperation(rule, {
+        return expectBinaryOperation(rule, RuleType::NonequalityRelationalOperation, {
           TokenType::Equality,
           TokenType::Inequality,
         }, {
           AST::OperatorType::EqualTo,
           AST::OperatorType::NotEqualTo,
         }, state, exps);
+      } else if (rule == RuleType::GroupedExpression) {
+        if (state.internalIndex == 0) {
+          if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
+          state.internalIndex = 1;
+          return RuleType::Expression;
+        } else {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+          return exps.back().item;
+        }
       }
 
       return ALTACORE_NULLOPT;

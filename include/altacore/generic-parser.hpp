@@ -20,12 +20,6 @@ namespace AltaCore {
 
     template<typename RT> bool GenericState<RT>::operator ==(const GenericState<RT>& rhs) const {
       if (currentPosition != rhs.currentPosition) return false;
-      if (rulesToIgnore.size() != rhs.rulesToIgnore.size()) return false;
-      for (size_t i = 0; i< rulesToIgnore.size(); i++) {
-        if (rulesToIgnore[i] != rhs.rulesToIgnore[i]) {
-          return false;
-        }
-      }
       return true;
     };
 
@@ -34,36 +28,18 @@ namespace AltaCore {
       const auto stateAtStart = currentState;
       State state = stateAtStart;
 
+#ifdef ALTACORE_GENERIC_PARSER_USE_FAILED
       if (failed.find(stateAtStart.currentPosition) == failed.end()) {
         failed[stateAtStart.currentPosition] = std::unordered_set<RT>();
       }
+#endif
 
       if (state.currentPosition >= tokens.size()) return ret;
 
       for (auto& expectation: expectations) {
         state = stateAtStart;
         currentState = state;
-        /*
         if (!expectation.isToken) {
-          if (std::find(rulesToIgnore.begin(), rulesToIgnore.end(), expectation.rule) != rulesToIgnore.end()) {
-            continue;
-          }
-          if (std::find(currentFails.begin(), currentFails.end(), expectation.rule) != currentFails.end()) {
-            continue;
-          }
-          if (loopCache.find(expectation.rule) != loopCache.end() && loopCache[expectation.rule] == state) {
-            continue;
-          }
-        }
-        */
-        if (!expectation.isToken) {
-          //loopCache[expectation.rule] = state;
-          /*
-          auto& table = ruleTable();
-          if (!table[expectation.rule]) {
-            throw std::runtime_error("no handler is registered for the given rule");
-          }
-          */
           std::stack<std::tuple<RT, std::stack<ExpectationType>, RuleState, std::vector<Expectation>, State>> ruleStack;
           ruleStack.emplace(
             expectation.rule,
@@ -82,13 +58,17 @@ namespace AltaCore {
 
             // whether to ignore the rulesToIgnore and currentFails
             // this is used to return to rules that previously yielded
+#ifdef ALTACORE_GENERIC_PARSER_USE_FAILED
             bool ignoreIgnore = false;
+#endif
 
             auto position = std::get<4>(ruleStack.top()).currentPosition;
+#ifdef ALTACORE_GENERIC_PARSER_USE_FAILED
             if (failed.find(position) == failed.end()) {
               failed[position] = std::unordered_set<RT>();
             }
             auto& currentFails = failed[position];
+#endif
             if (!ALTACORE_VARIANT_HOLDS_ALTERNATIVE<ALTACORE_OPTIONAL<T>>(tmp)) {
               auto& [ruleType, expTypes, ruleState, exps, stateAtStart] = ruleStack.top();
               expTypes = std::stack<ExpectationType>();
@@ -123,7 +103,9 @@ namespace AltaCore {
               expTypes.pop();
               Expectation exp;
               if (finalVal) {
+#ifdef ALTACORE_GENERIC_PARSER_USE_FAILED
                 currentFails.erase(rule);
+#endif
                 exp.valid = true;
                 exp.type = rule;
                 exp.item = finalVal;
@@ -132,15 +114,21 @@ namespace AltaCore {
                 exps.push_back(exp);
                 ruleState.iteration++;
                 nextRule = ruleType;
+#ifdef ALTACORE_GENERIC_PARSER_USE_FAILED
                 ignoreIgnore = true;
+#endif
               } else {
+#ifdef ALTACORE_GENERIC_PARSER_USE_FAILED
                 currentFails.insert(rule);
+#endif
                 currentState = stateAtStart;
                 if (expTypes.size() == 0) {
                   exps.push_back(exp);
                   ruleState.iteration++;
                   nextRule = ruleType;
+#ifdef ALTACORE_GENERIC_PARSER_USE_FAILED
                   ignoreIgnore = true;
+#endif
                 } else {
                   ruleStack.emplace(
                     expTypes.top().rule,
@@ -157,15 +145,13 @@ namespace AltaCore {
               throw std::runtime_error("invalid yielded expectation in coroutine rule. NOTE: to use token type expectations, use `expect` instead of yielding");
             }
             auto& [_ignored1, _ignored2, newRuleState, newRuleExps, newState] = ruleStack.top();
+#ifdef ALTACORE_GENERIC_PARSER_USE_FAILED
             auto& newCurrentFails = failed[newState.currentPosition];
-            if (!ignoreIgnore && std::find(rulesToIgnore.begin(), rulesToIgnore.end(), nextRule.rule) != rulesToIgnore.end()) {
-              tmp = ALTACORE_NULLOPT;
-              continue;
-            }
             if (!ignoreIgnore && newCurrentFails.find(nextRule.rule) != newCurrentFails.end()) {
               tmp = ALTACORE_NULLOPT;
               continue;
             }
+#endif
             tmp = runRule(nextRule.rule, newRuleState, newRuleExps);
           }
 
@@ -175,7 +161,9 @@ namespace AltaCore {
             ret.item = finalVal;
             state = currentState;
           } else {
+#ifdef ALTACORE_GENERIC_PARSER_USE_FAILED
             failed[stateAtStart.currentPosition].insert(expectation.rule);
+#endif
           }
         } else {
           if (tokens[state.currentPosition].type == expectation.token) {

@@ -83,6 +83,7 @@ namespace AltaCore {
       Block,
       NonequalityRelationalOperation,
       EqualityRelationalOperation,
+      GroupedExpression,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {
@@ -138,7 +139,6 @@ namespace AltaCore {
     template<typename RT> class GenericState {
       public:
         size_t currentPosition = 0;
-        std::vector<RT> rulesToIgnore;
 
         bool operator ==(const GenericState<RT>& rhs) const;
     };
@@ -157,26 +157,22 @@ namespace AltaCore {
 
     template<typename RT, typename TT, class T> class GenericParser {
       public:
-        using Expectation = GenericExpectation<RT, TT, T>;
-        using ExpectationType = GenericExpectationType<RT, TT>;
-        using State = GenericState<RT>;
+        using RuleType = RT;
+        using TokenType = TT;
+        using NodeType = T;
+
+        using Expectation = GenericExpectation<RuleType, TokenType, NodeType>;
+        using ExpectationType = GenericExpectationType<RuleType, TokenType>;
+        using State = GenericState<RuleType>;
         using RuleState = GenericRuleState<State>;
-        using RuleReturn = ALTACORE_VARIANT<ExpectationType, std::initializer_list<ExpectationType>, ALTACORE_OPTIONAL<T>>;
-        //using Rule = std::function<RuleReturn(RuleState&, std::vector<Expectation>&)>;
+        using RuleReturn = ALTACORE_VARIANT<ExpectationType, std::initializer_list<ExpectationType>, ALTACORE_OPTIONAL<NodeType>>;
       private:
-        std::unordered_map<RT, State> loopCache;
-        std::unordered_map<size_t, std::unordered_set<RT>> failed;
-        //std::unordered_map<RT, Rule> defaultRuleTable;
+#ifdef ALTACORE_GENERIC_PARSER_USE_FAILED
+        std::unordered_map<size_t, std::unordered_set<RuleType>> failed;
+#endif
       protected:
         std::vector<Token> tokens;
         State currentState;
-        std::vector<RT>& rulesToIgnore = currentState.rulesToIgnore;
-
-        /*
-        virtual std::unordered_map<RT, Rule>& ruleTable() {
-          return defaultRuleTable;
-        };
-        */
 
         Expectation expect(std::vector<ExpectationType> expectations);
         Expectation expect(std::initializer_list<ExpectationType> expectations) {
@@ -187,11 +183,11 @@ namespace AltaCore {
         };
         Expectation expectAnyToken();
 
-        virtual RuleReturn runRule(RT, RuleState&, std::vector<Expectation>&) {
+        virtual RuleReturn runRule(RuleType, RuleState&, std::vector<Expectation>&) {
           return ALTACORE_NULLOPT;
         };
       public:
-        ALTACORE_OPTIONAL<T> root;
+        ALTACORE_OPTIONAL<NodeType> root;
 
         virtual void parse() {};
         void reset() {
@@ -210,11 +206,10 @@ namespace AltaCore {
     class Parser: public GenericParser<RuleType, TokenType, std::shared_ptr<AST::Node>> {
       private:
         // <helper-functions>
-        std::vector<std::shared_ptr<AST::Parameter>> expectParameters();
         std::vector<std::string> expectModifiers(ModifierTargetType mtt);
         bool expectKeyword(std::string keyword);
         std::vector<std::shared_ptr<AST::AttributeNode>> expectAttributes();
-        RuleReturn expectBinaryOperation(RuleType rule, std::vector<ExpectationType> operatorTokens, std::vector<AST::OperatorType> operatorTypes, RuleState& state, std::vector<Expectation>& expectations);
+        RuleReturn expectBinaryOperation(RuleType rule, RuleType nextHigherPrecedentRule, std::vector<ExpectationType> operatorTokens, std::vector<AST::OperatorType> operatorTypes, RuleState& state, std::vector<Expectation>& expectations);
         // </helper-functions>
 
         std::unordered_set<std::string> typesToIgnore;
