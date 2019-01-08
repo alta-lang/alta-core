@@ -28,6 +28,18 @@ namespace AltaCore {
     // </rule-state-structures>
 
     // <helper-functions>
+    ALTACORE_OPTIONAL<std::string> Parser::expectModifier(ModifierTargetType mtt) {
+      auto state = currentState;
+      if (auto mod = expect(TokenType::Identifier)) {
+        for (auto& modifier: modifiersForTargets[(unsigned int)mtt]) {
+          if (mod.token.raw == modifier) {
+            return mod.token.raw;
+          }
+        }
+      }
+      currentState = state;
+      return ALTACORE_NULLOPT;
+    };
     std::vector<std::string> Parser::expectModifiers(ModifierTargetType mtt) {
       std::vector<std::string> modifiers;
       Expectation mod;
@@ -191,6 +203,7 @@ namespace AltaCore {
             RuleType::ReturnDirective,
             RuleType::ConditionalStatement,
             RuleType::Block,
+            RuleType::ClassDefinition,
             RuleType::Expression,
 
             // general attributes must come last because
@@ -203,7 +216,7 @@ namespace AltaCore {
 
         if (!exps[0]) return ALTACORE_NULLOPT;
 
-        expect(TokenType::Semicolon); // optional
+        while (expect(TokenType::Semicolon)); // optional
 
         auto& exp = exps[0];
         auto ret = std::dynamic_pointer_cast<AST::StatementNode>(*exp.item);
@@ -612,7 +625,7 @@ namespace AltaCore {
             RuleType::Import,
           };
         } else {
-          expect(TokenType::Semicolon); // optional
+          while (expect(TokenType::Semicolon)); // optional
           if (!exps.back()) return ALTACORE_NULLOPT;
           return exps.back().item;
         }
@@ -1084,6 +1097,117 @@ namespace AltaCore {
           if (!exps.back()) return ALTACORE_NULLOPT;
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
           return exps.back().item;
+        }
+      } else if (rule == RuleType::ClassDefinition) {
+        if (state.internalIndex == 0) {
+          if (!expectKeyword("class")) return ALTACORE_NULLOPT;
+
+          auto id = expect(TokenType::Identifier);
+          if (!id) return ALTACORE_NULLOPT;
+
+          if (!expect(TokenType::OpeningBrace)) return ALTACORE_NULLOPT;
+
+          state.internalValue = std::make_shared<AST::ClassDefinitionNode>(id.token.raw);
+          state.internalIndex = 1;
+          return RuleType::ClassStatement;
+        } else {
+          auto klass = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassDefinitionNode>>(state.internalValue);
+
+          if (exps.back()) {
+            klass->statements.push_back(std::dynamic_pointer_cast<AST::ClassStatementNode>(*exps.back().item));
+            return RuleType::ClassStatement;
+          }
+
+          if (!expect(TokenType::ClosingBrace)) return ALTACORE_NULLOPT;
+
+          return klass;
+        }
+      } else if (rule == RuleType::ClassStatement) {
+        if (state.iteration == 0) {
+          return std::initializer_list<ExpectationType> {
+            RuleType::ClassMember,
+            RuleType::ClassMethod,
+            RuleType::ClassSpecialMethod,
+          };
+        }
+
+        if (!exps.back()) return ALTACORE_NULLOPT;
+
+        while (expect(TokenType::Semicolon)); // optional
+
+        return exps.back().item;
+      } else if (rule == RuleType::ClassMember) {
+        if (state.internalIndex == 0) {
+          auto visibilityMod = expectModifier(ModifierTargetType::ClassStatement);
+          if (!visibilityMod) return ALTACORE_NULLOPT;
+
+          state.internalValue = std::make_shared<AST::ClassMemberDefinitionStatement>(AST::parseVisibility(*visibilityMod));
+          state.internalIndex = 1;
+          return RuleType::VariableDefinition;
+        } else {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          auto memberDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassMemberDefinitionStatement>>(state.internalValue);
+          memberDef->varDef = std::dynamic_pointer_cast<AST::VariableDefinitionExpression>(*exps.back().item);
+
+          return memberDef;
+        }
+      } else if (rule == RuleType::ClassMethod) {
+        if (state.internalIndex == 0) {
+          auto visibilityMod = expectModifier(ModifierTargetType::ClassStatement);
+          if (!visibilityMod) return ALTACORE_NULLOPT;
+
+          state.internalValue = std::make_shared<AST::ClassMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod));
+          state.internalIndex = 1;
+          return RuleType::VariableDefinition;
+        } else {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          auto methodDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassMethodDefinitionStatement>>(state.internalValue);
+          methodDef->funcDef = std::dynamic_pointer_cast<AST::FunctionDefinitionNode>(*exps.back().item);
+
+          return methodDef;
+        }
+      } else if (rule == RuleType::ClassSpecialMethod) {
+        if (state.internalIndex == 0) {
+          auto visibilityMod = expectModifier(ModifierTargetType::ClassStatement);
+          if (!visibilityMod) return ALTACORE_NULLOPT;
+
+          auto kind = AST::SpecialClassMethod::Constructor;
+          if (expectKeyword("constructor")) {
+            kind = AST::SpecialClassMethod::Constructor;
+          } else if (expectKeyword("destructor")) {
+            kind = AST::SpecialClassMethod::Destructor;
+          } else {
+            return ALTACORE_NULLOPT;
+          }
+
+          if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
+
+          auto method = std::make_shared<AST::ClassSpecialMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod), kind);
+
+          state.internalValue = std::move(method);
+          state.internalIndex = 1;
+          return RuleType::Parameter;
+        } else if (state.internalIndex == 1) {
+          auto method = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement>>(state.internalValue);
+
+          if (exps.back()) {
+            method->parameters.push_back(std::dynamic_pointer_cast<AST::Parameter>(*exps.back().item));
+            return RuleType::Parameter;
+          }
+
+          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+
+          state.internalIndex = 2;
+          return RuleType::Block;
+        } else {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          auto method = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement>>(state.internalValue);
+          method->body = std::dynamic_pointer_cast<AST::BlockNode>(*exps.back().item);
+
+          return method;
         }
       }
 

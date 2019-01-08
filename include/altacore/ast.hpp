@@ -29,5 +29,10 @@
 #include "ast/attribute-statement.hpp"
 #include "ast/conditional-statement.hpp"
 #include "ast/conditional-expression.hpp"
+#include "ast/class-definition-node.hpp"
+#include "ast/class-statement-node.hpp"
+#include "ast/class-member-definition-statement.hpp"
+#include "ast/class-method-definition-statement.hpp"
+#include "ast/class-special-method-definition-statement.hpp"
 
 #endif // ALTACORE_AST_HPP

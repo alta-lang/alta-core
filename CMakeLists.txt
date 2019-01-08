@@ -49,6 +49,11 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/attribute-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/conditional-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/conditional-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-definition-node.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-statement-node.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-member-definition-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-method-definition-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-special-method-definition-statement.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"
