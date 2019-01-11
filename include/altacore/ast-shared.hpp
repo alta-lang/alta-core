@@ -8,6 +8,7 @@
 namespace AltaCore {
   namespace AST {
     using Shared::TypeModifierFlag;
+    using Shared::Visibility;
 
     enum class NodeType {
       Node,
@@ -41,6 +42,7 @@ namespace AltaCore {
       ClassMemberDefinitionStatement,
       ClassMethodDefinitionStatement,
       ClassSpecialMethodDefinitionStatement,
+      ClassInstantiationExpression,
     };
 
     static const char* const NodeType_names[] = {
@@ -76,6 +78,7 @@ namespace AltaCore {
       "ClassMemberDefinitionStatement",
       "ClassMethodDefinitionStatement",
       "ClassSpecialMethodDefinitionStatement",
+      "ClassInstantiationExpression",
     };
 
     enum class OperatorType {
@@ -89,12 +92,6 @@ namespace AltaCore {
       LessThan,
       GreaterThanOrEqualTo,
       LessThanOrEqualTo,
-    };
-
-    enum class Visibility {
-      Public,
-      Protected,
-      Private,
     };
   };
 };

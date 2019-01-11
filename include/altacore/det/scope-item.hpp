@@ -17,6 +17,7 @@ namespace AltaCore {
         virtual std::shared_ptr<Node> clone();
         virtual std::shared_ptr<Node> deepClone();
 
+        Visibility visibility = Visibility::Public;
         std::weak_ptr<Scope> parentScope;
         std::string name;
 

@@ -30,7 +30,10 @@ void AltaCore::AST::Accessor::detail(std::shared_ptr<AltaCore::DET::Scope> scope
       auto expr = std::dynamic_pointer_cast<ExpressionNode>(target);
       auto types = DET::Type::getUnderlyingTypes(expr.get());
       if (types.size() == 1) {
-        throw std::runtime_error("types don't currently have anything to access");
+        if (types[0]->isNative) {
+          throw std::runtime_error("native types can't be accessed");
+        }
+        targetScope = types[0]->klass->scope;
       } else if (items.size() > 0) {
         throw std::runtime_error("target must be narrowed before it can be accessed");
       } else {

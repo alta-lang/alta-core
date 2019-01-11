@@ -34,5 +34,6 @@
 #include "ast/class-member-definition-statement.hpp"
 #include "ast/class-method-definition-statement.hpp"
 #include "ast/class-special-method-definition-statement.hpp"
+#include "ast/class-instantiation-expression.hpp"
 
 #endif // ALTACORE_AST_HPP

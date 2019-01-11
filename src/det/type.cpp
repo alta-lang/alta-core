@@ -63,6 +63,10 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     auto cond = dynamic_cast<AST::ConditionalExpression*>(expression);
     if (cond == nullptr) throw std::runtime_error("nope");
     return getUnderlyingType(cond->primaryResult.get());
+  } else if (exprType == ExpressionType::ClassInstantiationExpression) {
+    auto inst = dynamic_cast<AST::ClassInstantiationExpression*>(expression);
+    if (inst == nullptr) throw std::runtime_error("hMmmMmMM...");
+    return std::make_shared<Type>(inst->$class);
   }
 
   return nullptr;
@@ -245,6 +249,7 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
   if (isAny || other.isAny) return true;
   if (isFunction != other.isFunction) return false;
   if (isNative != other.isNative) return false;
+  if (!isNative && klass->id != other.klass->id) return false;
   if (pointerLevel() != other.pointerLevel()) return false;
 
   /**
@@ -283,7 +288,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
     for (size_t i = 0; i < parameters.size(); i++) {
       if (!std::get<1>(parameters[i])->isExactlyCompatibleWith(*std::get<1>(other.parameters[i]))) return false;
     }
-  } else {
+  } else if (isNative) {
     if (nativeTypeName != other.nativeTypeName) return false;
   }
 
@@ -300,7 +305,7 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
     for (size_t i = 0; i < parameters.size(); i++) {
       if (!std::get<1>(parameters[i])->isCompatibleWith(*std::get<1>(other.parameters[i]))) return false;
     }
-  } else {
+  } else if (isNative) {
     // only check for void
     // all other native types are integral and can be coerced to each other
   }
@@ -319,6 +324,12 @@ AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std:
   isFunction(true),
   returnType(_returnType),
   parameters(_parameters),
+  modifiers(_modifiers)
+  {};
+AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Class> _klass, std::vector<uint8_t> _modifiers):
+  isNative(false),
+  isFunction(false),
+  klass(_klass),
   modifiers(_modifiers)
   {};
 

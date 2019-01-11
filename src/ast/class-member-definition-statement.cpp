@@ -9,5 +9,7 @@ AltaCore::AST::ClassMemberDefinitionStatement::ClassMemberDefinitionStatement(Al
   {};
 
 void AltaCore::AST::ClassMemberDefinitionStatement::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-
+  if (varDef == nullptr) throw std::runtime_error("bad computer. bad.");
+  varDef->detail(scope);
+  varDef->$variable->visibility = visibilityModifier;
 };

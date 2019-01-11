@@ -9,5 +9,7 @@ AltaCore::AST::ClassMethodDefinitionStatement::ClassMethodDefinitionStatement(Al
   {};
 
 void AltaCore::AST::ClassMethodDefinitionStatement::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-
+  if (funcDef == nullptr) throw std::runtime_error("stop that");
+  funcDef->detail(scope);
+  funcDef->$function->visibility = visibilityModifier;
 };

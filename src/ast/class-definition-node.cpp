@@ -9,5 +9,18 @@ AltaCore::AST::ClassDefinitionNode::ClassDefinitionNode(std::string _name):
   {};
 
 void AltaCore::AST::ClassDefinitionNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
+  $klass = DET::Class::create(name, scope);
+  scope->items.push_back($klass);
 
+  auto loop = [&](std::vector<std::shared_ptr<ClassStatementNode>>& tgt) -> void {
+    for (auto stmt: tgt) {
+      if (stmt->nodeType() == NodeType::ClassSpecialMethodDefinitionStatement) {
+        throw std::runtime_error("special class methods aren't supported yet");
+      } else {
+        stmt->detail($klass->scope);
+      }
+    }
+  };
+
+  loop(statements);
 };

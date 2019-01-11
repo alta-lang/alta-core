@@ -391,6 +391,35 @@ namespace AltaCore {
 
           return std::move(param);
         }
+      } else if (rule == RuleType::StrictAccessor) {
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          return std::initializer_list<ExpectationType> {
+            RuleType::Fetch,
+          };
+        } else {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          if (!expect(TokenType::Dot)) return exps.back().item;
+
+          auto query = expect(TokenType::Identifier);
+          if (!query) return ALTACORE_NULLOPT;
+
+          auto acc = std::make_shared<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item), query.token.raw);
+
+          auto state = currentState;
+          while (expect(TokenType::Dot)) {
+            query = expect(TokenType::Identifier);
+            if (!query) {
+              currentState = state;
+              break;
+            }
+            acc = std::make_shared<AST::Accessor>(acc, query.token.raw);
+            state = currentState;
+          }
+
+          return acc;
+        }
       } else if (rule == RuleType::Type) {
         if (state.internalIndex == 0) {
           auto type = std::make_shared<AST::Type>();
@@ -413,15 +442,13 @@ namespace AltaCore {
             type->modifiers.pop_back();
           }
 
+          state.internalValue = std::move(type);
+
           if (!expect(TokenType::OpeningParenthesis)) {
-            auto name = expect(TokenType::Identifier);
-            if (!name) return ALTACORE_NULLOPT;
-            if (typesToIgnore.find(name.token.raw) != typesToIgnore.end()) return ALTACORE_NULLOPT;
-            type->name = name.token.raw;
-            return std::move(type);
+            state.internalIndex = 3;
+            return RuleType::StrictAccessor;
           }
 
-          state.internalValue = std::move(type);
           state.internalIndex = 1;
 
           return RuleType::Type;
@@ -461,12 +488,36 @@ namespace AltaCore {
             otherType->modifiers.insert(otherType->modifiers.begin(), type->modifiers.begin(), type->modifiers.end());
             return otherType;
           }
-        } else {
+        } else if (state.internalIndex == 2) {
           if (!exps.back()) return ALTACORE_NULLOPT;
 
           auto type = ALTACORE_ANY_CAST<std::shared_ptr<AST::Type>>(state.internalValue);
 
           type->returnType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+          return type;
+        } else {
+          auto type = ALTACORE_ANY_CAST<std::shared_ptr<AST::Type>>(state.internalValue);
+
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          auto expr = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          if (expr->nodeType() == AST::NodeType::Fetch) {
+            auto id = std::dynamic_pointer_cast<AST::Fetch>(expr);
+            auto name = id->query;
+            if (name == "int" || name == "byte" || name == "char" || name == "bool" || name == "void") {
+              if (typesToIgnore.find(name) != typesToIgnore.end()) return ALTACORE_NULLOPT;
+              type->name = name;
+              type->isNative = true;
+            } else {
+              type->lookup = expr;
+              type->isNative = false;
+            }
+          } else {
+            type->lookup = expr;
+              type->isNative = false;
+          }
+
           return type;
         }
       } else if (rule == RuleType::IntegralLiteral) {
@@ -707,10 +758,7 @@ namespace AltaCore {
         if (state.internalIndex == 0) {
           state.internalIndex = 1;
           return std::initializer_list<ExpectationType> {
-            RuleType::BooleanLiteral,
-            RuleType::IntegralLiteral,
-            RuleType::String,
-            RuleType::Accessor,
+            RuleType::ClassInstantiation,
           };
         } else if (state.internalIndex == 1) {
           if (!exps.back()) return ALTACORE_NULLOPT;
@@ -1208,6 +1256,82 @@ namespace AltaCore {
           method->body = std::dynamic_pointer_cast<AST::BlockNode>(*exps.back().item);
 
           return method;
+        }
+      } else if (rule == RuleType::ClassInstantiation) {
+        if (state.internalIndex == 0) {
+          if (!expectKeyword("new")) {
+            state.internalIndex = 4;
+            return std::initializer_list<ExpectationType> {
+              RuleType::BooleanLiteral,
+              RuleType::IntegralLiteral,
+              RuleType::String,
+              RuleType::Accessor,
+            };
+          }
+          state.internalIndex = 1;
+          state.internalValue = currentState;
+          return RuleType::Accessor;
+        } else if (state.internalIndex == 1) {
+          if (!exps.back()) {
+            state.internalIndex = 4;
+            currentState = ALTACORE_ANY_CAST<decltype(currentState)>(state.internalValue);
+            return std::initializer_list<ExpectationType> {
+              RuleType::BooleanLiteral,
+              RuleType::IntegralLiteral,
+              RuleType::String,
+              RuleType::Accessor,
+            };
+          }
+
+          auto inst = std::make_shared<AST::ClassInstantiationExpression>();
+
+          if (expect(TokenType::OpeningParenthesis)) {
+            auto tmpState = currentState;
+            auto name = expect(TokenType::Identifier);
+            if (name && !expect(TokenType::Colon)) {
+              name = Expectation(); // constructs an invalid expectation
+              currentState = tmpState;
+            }
+            inst->arguments.push_back({
+              (name) ? name.token.raw : "",
+              nullptr,
+            });
+
+            state.internalIndex = 2;
+            state.internalValue = std::move(inst);
+            return RuleType::Expression;
+          }
+
+          return inst;
+        } else if (state.internalIndex == 2) {
+          auto inst = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassInstantiationExpression>>(state.internalValue);
+
+          if (exps.back()) {
+            inst->arguments.back().second = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            if (expect(TokenType::Comma)) {
+              auto tmpState = currentState;
+              auto name = expect(TokenType::Identifier);
+              if (name && !expect(TokenType::Colon)) {
+                name = Expectation(); // constructs an invalid expectation
+                currentState = tmpState;
+              }
+
+              inst->arguments.push_back({
+                (name) ? name.token.raw : "",
+                nullptr,
+              });
+
+              return RuleType::Expression;
+            }
+          } else {
+            inst->arguments.pop_back();
+          }
+
+          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+
+          return inst;
+        } else {
+          return exps.back().item;
         }
       }
 

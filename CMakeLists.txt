@@ -54,6 +54,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/class-member-definition-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/class-method-definition-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/class-special-method-definition-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-instantiation-expression.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"
@@ -65,6 +66,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/det/variable.cpp"
   "${PROJECT_SOURCE_DIR}/src/det/alias.cpp"
   "${PROJECT_SOURCE_DIR}/src/det/namespace.cpp"
+  "${PROJECT_SOURCE_DIR}/src/det/class.cpp"
 )
 target_include_directories(altacore PUBLIC "${PROJECT_SOURCE_DIR}/include")
 

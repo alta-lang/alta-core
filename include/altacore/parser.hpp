@@ -93,6 +93,8 @@ namespace AltaCore {
       ClassMember,
       ClassMethod,
       ClassSpecialMethod,
+      ClassInstantiation,
+      StrictAccessor,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {

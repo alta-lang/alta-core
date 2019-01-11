@@ -1,6 +1,8 @@
 #ifndef ALTACORE_SHARED_HPP
 #define ALTACORE_SHARED_HPP
 
+#include <cinttypes>
+
 namespace AltaCore {
   namespace Shared {
     enum class TypeModifierFlag: uint8_t {
@@ -8,6 +10,12 @@ namespace AltaCore {
       Pointer   = 1 << 0,
       Constant  = 1 << 1,
       Reference = 1 << 2,
+    };
+
+    enum class Visibility {
+      Public,
+      Protected,
+      Private,
     };
   };
 };
