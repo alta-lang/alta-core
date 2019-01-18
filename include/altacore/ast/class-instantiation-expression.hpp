@@ -4,6 +4,8 @@
 #include "expression-node.hpp"
 #include "../det/class.hpp"
 #include <string>
+#include <unordered_map>
+#include "../variant.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -20,7 +22,9 @@ namespace AltaCore {
         std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments;
 
         std::shared_ptr<DET::Function> $constructor = nullptr;
-        std::shared_ptr<DET::Class> $class = nullptr;
+        std::shared_ptr<DET::Class> $klass = nullptr;
+        std::unordered_map<size_t, size_t> $argumentMap;
+        std::vector<ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>> $adjustedArguments;
 
         ClassInstantiationExpression() {};
 

@@ -1174,8 +1174,8 @@ namespace AltaCore {
         if (state.iteration == 0) {
           return std::initializer_list<ExpectationType> {
             RuleType::ClassMember,
-            RuleType::ClassMethod,
             RuleType::ClassSpecialMethod,
+            RuleType::ClassMethod,
           };
         }
 
@@ -1197,6 +1197,7 @@ namespace AltaCore {
 
           auto memberDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassMemberDefinitionStatement>>(state.internalValue);
           memberDef->varDef = std::dynamic_pointer_cast<AST::VariableDefinitionExpression>(*exps.back().item);
+          if (!memberDef->varDef) return ALTACORE_NULLOPT;
 
           return memberDef;
         }
@@ -1207,12 +1208,13 @@ namespace AltaCore {
 
           state.internalValue = std::make_shared<AST::ClassMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod));
           state.internalIndex = 1;
-          return RuleType::VariableDefinition;
+          return RuleType::FunctionDefinition;
         } else {
           if (!exps.back()) return ALTACORE_NULLOPT;
 
           auto methodDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassMethodDefinitionStatement>>(state.internalValue);
           methodDef->funcDef = std::dynamic_pointer_cast<AST::FunctionDefinitionNode>(*exps.back().item);
+          if (!methodDef->funcDef) return ALTACORE_NULLOPT;
 
           return methodDef;
         }
@@ -1284,6 +1286,8 @@ namespace AltaCore {
           }
 
           auto inst = std::make_shared<AST::ClassInstantiationExpression>();
+
+          inst->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
           if (expect(TokenType::OpeningParenthesis)) {
             auto tmpState = currentState;

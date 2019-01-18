@@ -4,6 +4,7 @@
 #include "class-statement-node.hpp"
 #include "parameter.hpp"
 #include "block-node.hpp"
+#include "../det/function.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -20,6 +21,9 @@ namespace AltaCore {
         SpecialClassMethod type = SpecialClassMethod::Constructor;
         std::vector<std::shared_ptr<Parameter>> parameters;
         std::shared_ptr<BlockNode> body = nullptr;
+
+        std::shared_ptr<DET::Class> $klass = nullptr;
+        std::shared_ptr<DET::Function> $method = nullptr;
 
         ClassSpecialMethodDefinitionStatement(Visibility visibilityModifier, SpecialClassMethod type);
 

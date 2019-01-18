@@ -1,4 +1,5 @@
 #include "../../include/altacore/ast/class-definition-node.hpp"
+#include "../../include/altacore/ast/class-special-method-definition-statement.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::ClassDefinitionNode::nodeType() {
   return NodeType::ClassDefinitionNode;
@@ -14,13 +15,25 @@ void AltaCore::AST::ClassDefinitionNode::detail(std::shared_ptr<AltaCore::DET::S
 
   auto loop = [&](std::vector<std::shared_ptr<ClassStatementNode>>& tgt) -> void {
     for (auto stmt: tgt) {
+      stmt->detail($klass->scope);
       if (stmt->nodeType() == NodeType::ClassSpecialMethodDefinitionStatement) {
-        throw std::runtime_error("special class methods aren't supported yet");
-      } else {
-        stmt->detail($klass->scope);
+        auto special = std::dynamic_pointer_cast<ClassSpecialMethodDefinitionStatement>(stmt);
+        if (special->type == SpecialClassMethod::Constructor) {
+          $klass->constructors.push_back(special->$method);
+        } else {
+          throw std::runtime_error("destructors aren't supported yet");
+        }
       }
     }
   };
 
   loop(statements);
+
+  if ($klass->constructors.size() == 0) {
+    $createDefaultConstructor = true;
+    $defaultConstructor = std::make_shared<ClassSpecialMethodDefinitionStatement>(Visibility::Public, SpecialClassMethod::Constructor);
+    $defaultConstructor->body = std::make_shared<BlockNode>();
+    $defaultConstructor->detail($klass->scope);
+    $klass->constructors.push_back($defaultConstructor->$method);
+  }
 };

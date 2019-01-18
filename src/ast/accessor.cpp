@@ -22,6 +22,11 @@ void AltaCore::AST::Accessor::detail(std::shared_ptr<AltaCore::DET::Scope> scope
     } else if (items[0]->nodeType() == DET::NodeType::Namespace) {
       accessesNamespace = true;
     }
+    try {
+      $targetType = DET::Type::getUnderlyingType(items[0]);
+    } catch (...) {
+      $targetType = nullptr;
+    }
     targetScope = DET::Scope::getMemberScope(items[0]);
   } else if (items.size() > 0) {
     throw std::runtime_error("target must be narrowed before it can be accessed");
@@ -30,6 +35,7 @@ void AltaCore::AST::Accessor::detail(std::shared_ptr<AltaCore::DET::Scope> scope
       auto expr = std::dynamic_pointer_cast<ExpressionNode>(target);
       auto types = DET::Type::getUnderlyingTypes(expr.get());
       if (types.size() == 1) {
+        $targetType = types[0];
         if (types[0]->isNative) {
           throw std::runtime_error("native types can't be accessed");
         }

@@ -99,6 +99,8 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
     parentScope = parentFunction.lock()->parentScope.lock();
   } else if (!parentNamespace.expired() && !parentNamespace.lock()->parentScope.expired()) {
     parentScope = parentNamespace.lock()->parentScope.lock();
+  } else if (!parentClass.expired() && !parentClass.lock()->parentScope.expired()) {
+    parentScope = parentClass.lock()->parentScope.lock();
   }
 
   if (searchParents && parentScope != nullptr && (allFunctions || !first)) {

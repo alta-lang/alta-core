@@ -29,6 +29,8 @@ namespace AltaCore {
         bool isAny = false;
         bool isNative = true;
         bool isFunction = false;
+        bool isMethod = false;
+        std::shared_ptr<Class> methodParent = nullptr;
         NativeType nativeTypeName = NativeType::Void;
         std::shared_ptr<Class> klass = nullptr;
         std::shared_ptr<Type> returnType = nullptr;
@@ -77,6 +79,8 @@ namespace AltaCore {
 
         // operator for `isCompatiableWith`
         bool operator %(const Type& other);
+        
+        const size_t requiredArgumentCount() const;
     };
   };
 };

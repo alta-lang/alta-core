@@ -3,6 +3,7 @@
 
 #include "statement-node.hpp"
 #include "class-statement-node.hpp"
+#include "class-special-method-definition-statement.hpp"
 #include "../det/class.hpp"
 #include <vector>
 #include <string>
@@ -16,6 +17,8 @@ namespace AltaCore {
         std::string name;
         std::vector<std::shared_ptr<ClassStatementNode>> statements;
 
+        bool $createDefaultConstructor = false;
+        std::shared_ptr<ClassSpecialMethodDefinitionStatement> $defaultConstructor = nullptr;
         std::shared_ptr<DET::Class> $klass = nullptr;
 
         ClassDefinitionNode(std::string name);

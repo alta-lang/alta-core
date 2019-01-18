@@ -66,7 +66,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (exprType == ExpressionType::ClassInstantiationExpression) {
     auto inst = dynamic_cast<AST::ClassInstantiationExpression*>(expression);
     if (inst == nullptr) throw std::runtime_error("hMmmMmMM...");
-    return std::make_shared<Type>(inst->$class);
+    return std::make_shared<Type>(inst->$klass);
   }
 
   return nullptr;
@@ -82,7 +82,14 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
     for (auto& [name, type, isVariable, id]: func->parameters) {
       params.push_back(std::make_tuple(name, type, isVariable, id));
     }
-    return std::make_shared<Type>(func->returnType, params);
+    auto type = std::make_shared<Type>(func->returnType, params);
+    if (auto parent = item->parentScope.lock()) {
+      if (auto klass = parent->parentClass.lock()) {
+        type->isMethod = true;
+        type->methodParent = klass;
+      }
+    }
+    return type;
   } else if (itemType == ItemType::Variable) {
     auto var = std::dynamic_pointer_cast<Variable>(item);
     return std::dynamic_pointer_cast<Type>(var->type);
@@ -335,4 +342,15 @@ AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Class> _klass, std::vec
 
 bool AltaCore::DET::Type::operator %(const AltaCore::DET::Type& other) {
   return isCompatibleWith(other);
+};
+
+
+const size_t AltaCore::DET::Type::requiredArgumentCount() const {
+  size_t count = 0;
+  for (auto [name, type, isVariable, id]: parameters) {
+    if (!isVariable) {
+      count++;
+    }
+  }
+  return count;
 };
