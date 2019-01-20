@@ -56,6 +56,7 @@ namespace AltaCore {
       QuestionMark,
       OpeningAngleBracket,
       ClosingAngleBracket,
+      Ampersand,
 
       LAST, // always keep this as last, it counts the number of items in the enum
     };
@@ -93,6 +94,7 @@ namespace AltaCore {
       "?",
       "<",
       ">",
+      "&",
 
       "",
     };
@@ -129,6 +131,7 @@ namespace AltaCore {
       "Question mark",
       "Opening angle bracket",
       "Closing angle bracket",
+      "Ampersand",
 
       "LAST", // shouldn't be necessary, but just in case ;)
     };

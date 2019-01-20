@@ -663,7 +663,7 @@ namespace AltaCore {
           AST::OperatorType::Subtraction,
         }, state, exps);
       } else if (rule == RuleType::MultiplicationOrDivision) {
-        return expectBinaryOperation(rule, RuleType::FunctionCall, {
+        return expectBinaryOperation(rule, RuleType::PointerOrDereference, {
           TokenType::Asterisk,
           TokenType::ForwardSlash,
         }, {
@@ -1148,6 +1148,7 @@ namespace AltaCore {
         }
       } else if (rule == RuleType::ClassDefinition) {
         if (state.internalIndex == 0) {
+          auto mods = expectModifiers(ModifierTargetType::Class);
           if (!expectKeyword("class")) return ALTACORE_NULLOPT;
 
           auto id = expect(TokenType::Identifier);
@@ -1155,7 +1156,9 @@ namespace AltaCore {
 
           if (!expect(TokenType::OpeningBrace)) return ALTACORE_NULLOPT;
 
-          state.internalValue = std::make_shared<AST::ClassDefinitionNode>(id.token.raw);
+          auto def = std::make_shared<AST::ClassDefinitionNode>(id.token.raw);
+          def->modifiers = mods;
+          state.internalValue = std::move(def);
           state.internalIndex = 1;
           return RuleType::ClassStatement;
         } else {
@@ -1336,6 +1339,37 @@ namespace AltaCore {
           return inst;
         } else {
           return exps.back().item;
+        }
+      } else if (rule == RuleType::PointerOrDereference) {
+        if (state.internalIndex == 0) {
+          if (expect(TokenType::Asterisk) || expectKeyword("valueof")) {
+            state.internalIndex = 2;
+          } else if (expect(TokenType::Ampersand) || expectKeyword("getptr")) {
+            state.internalIndex = 3;
+          } else {
+            state.internalIndex = 1;
+            return RuleType::FunctionCall;
+          }
+
+          return RuleType::PointerOrDereference;
+        } else if (state.internalIndex == 1) {
+          return exps.back().item;
+        } else {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          auto expr = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          if (state.internalIndex == 2) {
+            auto val = std::make_shared<AST::DereferenceExpression>();
+            val->target = expr;
+            return val;
+          } else if (state.internalIndex == 3) {
+            auto val = std::make_shared<AST::PointerExpression>();
+            val->target = expr;
+            return val;
+          } else {
+            return ALTACORE_NULLOPT;
+          }
         }
       }
 

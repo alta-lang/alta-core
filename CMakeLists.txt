@@ -55,6 +55,8 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/class-method-definition-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/class-special-method-definition-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/class-instantiation-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/pointer-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/dereference-expression.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

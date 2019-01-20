@@ -67,6 +67,12 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     auto inst = dynamic_cast<AST::ClassInstantiationExpression*>(expression);
     if (inst == nullptr) throw std::runtime_error("hMmmMmMM...");
     return std::make_shared<Type>(inst->$klass);
+  } else if (exprType == ExpressionType::PointerExpression) {
+    auto ptr = dynamic_cast<AST::PointerExpression*>(expression);
+    return getUnderlyingType(ptr->target.get())->point();
+  } else if (exprType == ExpressionType::DereferenceExpression) {
+    auto deref = dynamic_cast<AST::DereferenceExpression*>(expression);
+    return getUnderlyingType(deref->target.get())->dereference();
   }
 
   return nullptr;

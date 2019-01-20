@@ -43,6 +43,8 @@ namespace AltaCore {
       ClassMethodDefinitionStatement,
       ClassSpecialMethodDefinitionStatement,
       ClassInstantiationExpression,
+      PointerExpression,
+      DereferenceExpression,
     };
 
     static const char* const NodeType_names[] = {
@@ -79,6 +81,8 @@ namespace AltaCore {
       "ClassMethodDefinitionStatement",
       "ClassSpecialMethodDefinitionStatement",
       "ClassInstantiationExpression",
+      "PointerExpression",
+      "DereferenceExpression",
     };
 
     enum class OperatorType {

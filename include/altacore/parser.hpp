@@ -31,6 +31,7 @@ namespace AltaCore {
       Variable,
       Type,
       ClassStatement,
+      Class,
     };
     /**
      * Each entry here corresponds to a `ModifierTargetType`
@@ -53,6 +54,10 @@ namespace AltaCore {
       },
       {
         "public",
+      },
+      {
+        "literal",
+        "export",
       },
     };
 
@@ -95,6 +100,7 @@ namespace AltaCore {
       ClassSpecialMethod,
       ClassInstantiation,
       StrictAccessor,
+      PointerOrDereference,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {

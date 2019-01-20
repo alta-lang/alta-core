@@ -35,5 +35,7 @@
 #include "ast/class-method-definition-statement.hpp"
 #include "ast/class-special-method-definition-statement.hpp"
 #include "ast/class-instantiation-expression.hpp"
+#include "ast/pointer-expression.hpp"
+#include "ast/dereference-expression.hpp"
 
 #endif // ALTACORE_AST_HPP

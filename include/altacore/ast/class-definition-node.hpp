@@ -14,9 +14,12 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
+        std::vector<std::string> modifiers;
         std::string name;
         std::vector<std::shared_ptr<ClassStatementNode>> statements;
 
+        bool isExport = false;
+        bool isLiteral = false;
         bool $createDefaultConstructor = false;
         std::shared_ptr<ClassSpecialMethodDefinitionStatement> $defaultConstructor = nullptr;
         std::shared_ptr<DET::Class> $klass = nullptr;
