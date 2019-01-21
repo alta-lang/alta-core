@@ -204,6 +204,7 @@ namespace AltaCore {
             RuleType::ConditionalStatement,
             RuleType::Block,
             RuleType::ClassDefinition,
+            RuleType::WhileLoop,
             RuleType::Expression,
 
             // general attributes must come last because
@@ -1370,6 +1371,29 @@ namespace AltaCore {
           } else {
             return ALTACORE_NULLOPT;
           }
+        }
+      } else if (rule == RuleType::WhileLoop) {
+        if (state.internalIndex == 0) {
+          if (!expectKeyword("while")) return ALTACORE_NULLOPT;
+
+          state.internalIndex = 1;
+          return RuleType::Expression;
+        } else if (state.internalIndex == 1) {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          auto loop = std::make_shared<AST::WhileLoopStatement>();
+          loop->test = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+          
+          state.internalValue = std::move(loop);
+          state.internalIndex = 2;
+          return RuleType::Statement;
+        } else {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+
+          auto loop = ALTACORE_ANY_CAST<std::shared_ptr<AST::WhileLoopStatement>>(state.internalValue);
+          loop->body = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
+
+          return loop;
         }
       }
 
