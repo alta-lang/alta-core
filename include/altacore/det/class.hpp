@@ -19,6 +19,8 @@ namespace AltaCore {
         std::shared_ptr<Function> defaultConstructor = nullptr;
         std::vector<std::shared_ptr<Function>> constructors;
         std::shared_ptr<Function> destructor = nullptr;
+        
+        std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
 
         Class(std::string name, std::shared_ptr<Scope> parentScope);
     };

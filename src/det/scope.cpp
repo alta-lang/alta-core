@@ -138,6 +138,8 @@ void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::Type> type) {
     scope->hoist(type);
   } else if (auto ns = parentNamespace.lock()) {
     ns->hoistedFunctionalTypes.push_back(type);
+  } else if (auto klass = parentClass.lock()) {
+    klass->hoistedFunctionalTypes.push_back(type);
   } else {
     throw std::runtime_error("failed to hoist type anywhere. no parent functions, modules, or scopes were found");
   }
