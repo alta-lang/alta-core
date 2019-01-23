@@ -13,31 +13,26 @@ AltaCore::AST::FunctionCallExpression::FunctionCallExpression(std::shared_ptr<Al
   arguments(_arguments)
   {};
 
-void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  target->detail(scope);
-
-  for (auto& [name, arg]: arguments) {
-    arg->detail(scope);
-  }
-
-  auto targetTypes = DET::Type::getUnderlyingTypes(target.get());
+std::tuple<size_t, std::unordered_map<size_t, size_t>, std::vector<ALTACORE_VARIANT<std::shared_ptr<AltaCore::AST::ExpressionNode>, std::vector<std::shared_ptr<AltaCore::AST::ExpressionNode>>>>> AltaCore::AST::FunctionCallExpression::findCompatibleCall(std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments, std::vector<std::shared_ptr<DET::Type>> targetTypes) {
   if (targetTypes.size() < 1) {
     throw std::runtime_error("Can't call an unknown expression like a function");
   }
 
   bool found = false; // whether we found the right function
   bool possible = false; // whether we found any function at all
-  std::vector<std::tuple<std::vector<size_t>, std::shared_ptr<DET::Type>, std::vector<ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>>, std::unordered_map<size_t, size_t>>> compatibles;
-  for (auto& targetType: targetTypes) {
+  std::vector<std::tuple<size_t, std::vector<size_t>, std::shared_ptr<DET::Type>, std::vector<ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>>, std::unordered_map<size_t, size_t>>> compatibles;
+  for (size_t index = 0; index < targetTypes.size(); index++) {
+    auto& targetType = targetTypes[index];
     if (!targetType->isFunction) continue;
     possible = true;
     //if (targetType->parameters.size() != arguments.size()) continue;
     std::unordered_map<size_t, std::pair<std::string, ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>>> argumentsInOrder;
     std::vector<size_t> compatiblities(targetType->parameters.size(), 0);
     size_t funcArgIndex = 0;
-    bool ok = true;
+    bool ok = arguments.size() >= targetType->requiredArgumentCount();
     std::unordered_map<size_t, size_t> argMap;
     for (size_t i = 0; i < arguments.size(); i++) {
+      if (!ok) break;
       auto& argument = arguments[i];
       auto types = DET::Type::getUnderlyingTypes(argument.second.get());
       if (argument.first.empty()) {
@@ -125,15 +120,16 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
     for (auto& [i, arg]: argumentsInOrder) {
       args[i] = arg.second;
     }
-    compatibles.push_back({ compatiblities, targetType, args, argMap });
+    compatibles.push_back({ index, compatiblities, targetType, args, argMap });
   }
 
+  size_t mostCompatibleIndex = SIZE_MAX;
   std::vector<size_t> mostCompatibleCompatiblities;
   std::shared_ptr<DET::Type> mostCompatibleType = nullptr;
   std::vector<ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>> mostCompatibleArguments;
   std::unordered_map<size_t, size_t> mostCompatibleArgMap;
-  for (auto& [compatabilities, type, args, argMap]: compatibles) {
-    if (mostCompatibleCompatiblities.size() > 0) {
+  for (auto& [index, compatabilities, type, args, argMap]: compatibles) {
+    if (mostCompatibleIndex != SIZE_MAX) {
       size_t numberGreater = 0;
       if (compatabilities.size() > mostCompatibleCompatiblities.size()) {
         numberGreater = SIZE_MAX;
@@ -145,12 +141,14 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
         }
       }
       if (numberGreater > 0) {
+        mostCompatibleIndex = index;
         mostCompatibleType = type;
         mostCompatibleCompatiblities = compatabilities;
         mostCompatibleArguments = args;
         mostCompatibleArgMap = argMap;
       }
     } else {
+      mostCompatibleIndex = index;
       mostCompatibleType = type;
       mostCompatibleCompatiblities = compatabilities;
       mostCompatibleArguments = args;
@@ -158,7 +156,21 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
     }
   }
 
-  if (mostCompatibleType != nullptr) {
+  return { mostCompatibleIndex, mostCompatibleArgMap, mostCompatibleArguments };
+};
+
+void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
+  target->detail(scope);
+
+  for (auto& [name, arg]: arguments) {
+    arg->detail(scope);
+  }
+
+  auto targetTypes = DET::Type::getUnderlyingTypes(target.get());
+  auto [index, argMap, adjArgs] = findCompatibleCall(arguments, targetTypes);
+
+  if (index != SIZE_MAX) {
+    auto mostCompatibleType = targetTypes[index];
     $targetType = mostCompatibleType;
     if (target->nodeType() == NodeType::Fetch) {
       auto fetch = std::dynamic_pointer_cast<AST::Fetch>(target);
@@ -167,17 +179,25 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
       auto acc = std::dynamic_pointer_cast<AST::Accessor>(target);
       acc->narrowTo(mostCompatibleType);
     }
-  }
-
-  if (mostCompatibleType == nullptr || !found) {
-    if (possible) {
-      throw std::runtime_error("No functions matching the given arguments found in the given expression");
-    } else {
-      throw std::runtime_error("No functions found in the given expression");
+    if ($targetType->isMethod) {
+      $isMethodCall = true;
+      $methodClassTarget = std::dynamic_pointer_cast<AST::Accessor>(target)->target;
     }
   }
 
-  $adjustedArguments = mostCompatibleArguments;
+  if (index == SIZE_MAX) {
+    /*
+    if (possible) {
+      throw std::runtime_error("No functions matching the given arguments found in the given expression");
+    } else {
+    */
+      throw std::runtime_error("No functions found in the given expression");
+    /*
+    }
+    */
+  }
 
-  $argumentMap = mostCompatibleArgMap;
+  $adjustedArguments = adjArgs;
+
+  $argumentMap = argMap;
 };

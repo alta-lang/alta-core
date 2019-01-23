@@ -1,5 +1,12 @@
 #include "../../include/altacore/det/node.hpp"
 #include <memory>
+#include <crossguid/guid.hpp>
+
+AltaCore::DET::Node::Node() {
+  std::stringstream uuidStream;
+  uuidStream << xg::newGuid();
+  id = uuidStream.str();
+};
 
 const AltaCore::DET::NodeType AltaCore::DET::Node::nodeType() {
   return NodeType::Node;

@@ -1,4 +1,7 @@
 #include "../../include/altacore/ast/type.hpp"
+#include "../../include/altacore/ast/fetch.hpp"
+#include "../../include/altacore/ast/accessor.hpp"
+#include "../../include/altacore/det/class.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::Type::nodeType() {
   return NodeType::Type;
@@ -28,7 +31,7 @@ void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bo
   } else {
     if (isAny) {
       $type = std::make_shared<DET::Type>();
-    } else {
+    } else if (isNative) {
       DET::NativeType nt;
 
       if (name == "int") {
@@ -39,11 +42,36 @@ void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bo
         nt = DET::NativeType::Bool;
       } else if (name == "void") {
         nt = DET::NativeType::Void;
-      } else {
-        throw std::runtime_error("non-native types aren't currently supported");
       }
 
       $type = std::make_shared<DET::Type>(nt, modifiers);
+    } else {
+      lookup->detail(scope);
+
+      auto nodeT = lookup->nodeType();
+      std::shared_ptr<DET::Class> klass = nullptr;
+
+      if (nodeT == NodeType::Fetch) {
+        auto fetch = std::dynamic_pointer_cast<Fetch>(lookup);
+        if (!fetch->$narrowedTo) {
+          throw std::runtime_error("that's weird, classes should be narrowed");
+        }
+        klass = std::dynamic_pointer_cast<DET::Class>(fetch->$narrowedTo);
+      } else if (nodeT == NodeType::Accessor) {
+        auto acc = std::dynamic_pointer_cast<Accessor>(lookup);
+        if (!acc->$narrowedTo) {
+          throw std::runtime_error("that's weird, classes should be narrowed");
+        }
+        klass = std::dynamic_pointer_cast<DET::Class>(acc->$narrowedTo);
+      } else {
+        throw std::runtime_error("WTF NO DONT DO THAT");
+      }
+
+      if (!klass) {
+        throw std::runtime_error("y du u du this");
+      }
+
+      $type = std::make_shared<DET::Type>(klass, modifiers);
     }
   }
 };

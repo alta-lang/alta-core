@@ -15,6 +15,7 @@ namespace AltaCore {
 
         std::vector<std::shared_ptr<DET::ScopeItem>> $items;
         std::shared_ptr<DET::ScopeItem> $narrowedTo;
+        std::shared_ptr<DET::Type> $targetType = nullptr;
 
         bool accessesNamespace = false;
 

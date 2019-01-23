@@ -1,8 +1,12 @@
 #ifndef ALTACORE_DET_SHARED_HPP
 #define ALTACORE_DET_SHARED_HPP
 
+#include "shared.hpp"
+
 namespace AltaCore {
   namespace DET {
+    using Shared::Visibility;
+
     enum class NodeType {
       Node,
       Module,
@@ -13,6 +17,7 @@ namespace AltaCore {
       Variable,
       Alias,
       Namespace,
+      Class,
     };
     
     static const char* const NodeType_names[] = {
@@ -25,6 +30,7 @@ namespace AltaCore {
       "Variable",
       "Alias",
       "Namespace",
+      "Class",
     };
 
     enum class NativeType {

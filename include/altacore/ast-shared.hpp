@@ -8,6 +8,7 @@
 namespace AltaCore {
   namespace AST {
     using Shared::TypeModifierFlag;
+    using Shared::Visibility;
 
     enum class NodeType {
       Node,
@@ -36,6 +37,15 @@ namespace AltaCore {
       AttributeStatement,
       ConditionalStatement,
       ConditionalExpression,
+      ClassDefinitionNode,
+      ClassStatementNode,
+      ClassMemberDefinitionStatement,
+      ClassMethodDefinitionStatement,
+      ClassSpecialMethodDefinitionStatement,
+      ClassInstantiationExpression,
+      PointerExpression,
+      DereferenceExpression,
+      WhileLoopStatement,
     };
 
     static const char* const NodeType_names[] = {
@@ -63,9 +73,18 @@ namespace AltaCore {
       "FunctionDeclarationNode",
       "AttributeNode",
       "LiteralNode",
-      "AttributeStatment",
+      "AttributeStatement",
       "ConditionalStatement",
       "ConditionalExpression",
+      "ClassDefinitionNode",
+      "ClassStatementNode",
+      "ClassMemberDefinitionStatement",
+      "ClassMethodDefinitionStatement",
+      "ClassSpecialMethodDefinitionStatement",
+      "ClassInstantiationExpression",
+      "PointerExpression",
+      "DereferenceExpression",
+      "WhileLoopStatement",
     };
 
     enum class OperatorType {

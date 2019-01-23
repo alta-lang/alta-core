@@ -4,6 +4,7 @@
 #include "../../include/altacore/det/alias.hpp"
 #include "../../include/altacore/det/namespace.hpp"
 #include "../../include/altacore/det/variable.hpp"
+#include "../../include/altacore/det/class.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Scope::nodeType() {
   return NodeType::Scope;
@@ -39,6 +40,9 @@ AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Function> _parentFunc
   {};
 AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Namespace> _parentNamespace):
   parentNamespace(_parentNamespace)
+  {};
+AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Class> _parentClass):
+  parentClass(_parentClass)
   {};
 
 std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes, bool searchParents) {
@@ -95,6 +99,8 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
     parentScope = parentFunction.lock()->parentScope.lock();
   } else if (!parentNamespace.expired() && !parentNamespace.lock()->parentScope.expired()) {
     parentScope = parentNamespace.lock()->parentScope.lock();
+  } else if (!parentClass.expired() && !parentClass.lock()->parentScope.expired()) {
+    parentScope = parentClass.lock()->parentScope.lock();
   }
 
   if (searchParents && parentScope != nullptr && (allFunctions || !first)) {
@@ -132,6 +138,8 @@ void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::Type> type) {
     scope->hoist(type);
   } else if (auto ns = parentNamespace.lock()) {
     ns->hoistedFunctionalTypes.push_back(type);
+  } else if (auto klass = parentClass.lock()) {
+    klass->hoistedFunctionalTypes.push_back(type);
   } else {
     throw std::runtime_error("failed to hoist type anywhere. no parent functions, modules, or scopes were found");
   }
@@ -148,7 +156,8 @@ std::shared_ptr<AltaCore::DET::Scope> AltaCore::DET::Scope::getMemberScope(std::
     return func->scope;
   } else if (detType == NodeType::Variable) {
     auto var = std::dynamic_pointer_cast<Variable>(item);
-    return nullptr; // for now, since types can only be native, variables don't have their own scopes
+    if (var->type->isNative) return nullptr;
+    return var->type->klass->scope;
   }
 
   return nullptr;

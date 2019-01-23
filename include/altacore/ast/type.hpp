@@ -5,6 +5,7 @@
 #include "attribute-node.hpp"
 #include "../det/scope.hpp"
 #include "../det/type.hpp"
+#include "expression-node.hpp"
 #include <vector>
 #include <string>
 
@@ -26,6 +27,8 @@ namespace AltaCore {
          * be [TypeModifierFlag::Constant | TypeModifierFlag::Pointer, TypeModifierFlag::Pointer])
          */
         std::vector<uint8_t> modifiers;
+        bool isNative = true;
+        std::shared_ptr<ExpressionNode> lookup = nullptr;
 
         std::shared_ptr<DET::Type> $type = nullptr;
 

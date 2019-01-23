@@ -24,6 +24,9 @@ namespace AltaCore {
         std::shared_ptr<Scope> scope = nullptr;
         bool isLiteral = false;
         bool isExport = false;
+        bool isMethod = false;
+
+        std::shared_ptr<Type> parentClassType = nullptr;
 
         // external (i.e. used in the parameters or return type)
         std::vector<std::shared_ptr<Type>> publicHoistedFunctionalTypes;

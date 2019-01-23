@@ -63,6 +63,16 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     auto cond = dynamic_cast<AST::ConditionalExpression*>(expression);
     if (cond == nullptr) throw std::runtime_error("nope");
     return getUnderlyingType(cond->primaryResult.get());
+  } else if (exprType == ExpressionType::ClassInstantiationExpression) {
+    auto inst = dynamic_cast<AST::ClassInstantiationExpression*>(expression);
+    if (inst == nullptr) throw std::runtime_error("hMmmMmMM...");
+    return std::make_shared<Type>(inst->$klass);
+  } else if (exprType == ExpressionType::PointerExpression) {
+    auto ptr = dynamic_cast<AST::PointerExpression*>(expression);
+    return getUnderlyingType(ptr->target.get())->point();
+  } else if (exprType == ExpressionType::DereferenceExpression) {
+    auto deref = dynamic_cast<AST::DereferenceExpression*>(expression);
+    return getUnderlyingType(deref->target.get())->dereference();
   }
 
   return nullptr;
@@ -78,7 +88,14 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
     for (auto& [name, type, isVariable, id]: func->parameters) {
       params.push_back(std::make_tuple(name, type, isVariable, id));
     }
-    return std::make_shared<Type>(func->returnType, params);
+    auto type = std::make_shared<Type>(func->returnType, params);
+    if (auto parent = item->parentScope.lock()) {
+      if (auto klass = parent->parentClass.lock()) {
+        type->isMethod = true;
+        type->methodParent = klass;
+      }
+    }
+    return type;
   } else if (itemType == ItemType::Variable) {
     auto var = std::dynamic_pointer_cast<Variable>(item);
     return std::dynamic_pointer_cast<Type>(var->type);
@@ -245,6 +262,7 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
   if (isAny || other.isAny) return true;
   if (isFunction != other.isFunction) return false;
   if (isNative != other.isNative) return false;
+  if (!isNative && klass->id != other.klass->id) return false;
   if (pointerLevel() != other.pointerLevel()) return false;
 
   /**
@@ -283,7 +301,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
     for (size_t i = 0; i < parameters.size(); i++) {
       if (!std::get<1>(parameters[i])->isExactlyCompatibleWith(*std::get<1>(other.parameters[i]))) return false;
     }
-  } else {
+  } else if (isNative) {
     if (nativeTypeName != other.nativeTypeName) return false;
   }
 
@@ -300,7 +318,7 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
     for (size_t i = 0; i < parameters.size(); i++) {
       if (!std::get<1>(parameters[i])->isCompatibleWith(*std::get<1>(other.parameters[i]))) return false;
     }
-  } else {
+  } else if (isNative) {
     // only check for void
     // all other native types are integral and can be coerced to each other
   }
@@ -321,7 +339,24 @@ AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std:
   parameters(_parameters),
   modifiers(_modifiers)
   {};
+AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Class> _klass, std::vector<uint8_t> _modifiers):
+  isNative(false),
+  isFunction(false),
+  klass(_klass),
+  modifiers(_modifiers)
+  {};
 
 bool AltaCore::DET::Type::operator %(const AltaCore::DET::Type& other) {
   return isCompatibleWith(other);
+};
+
+
+const size_t AltaCore::DET::Type::requiredArgumentCount() const {
+  size_t count = 0;
+  for (auto [name, type, isVariable, id]: parameters) {
+    if (!isVariable) {
+      count++;
+    }
+  }
+  return count;
 };

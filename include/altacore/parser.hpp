@@ -30,6 +30,8 @@ namespace AltaCore {
       Function,
       Variable,
       Type,
+      ClassStatement,
+      Class,
     };
     /**
      * Each entry here corresponds to a `ModifierTargetType`
@@ -49,6 +51,13 @@ namespace AltaCore {
         "ptr",
         "const",
         "ref",
+      },
+      {
+        "public",
+      },
+      {
+        "literal",
+        "export",
       },
     };
 
@@ -84,6 +93,15 @@ namespace AltaCore {
       NonequalityRelationalOperation,
       EqualityRelationalOperation,
       GroupedExpression,
+      ClassDefinition,
+      ClassStatement,
+      ClassMember,
+      ClassMethod,
+      ClassSpecialMethod,
+      ClassInstantiation,
+      StrictAccessor,
+      PointerOrDereference,
+      WhileLoop,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {
@@ -203,6 +221,7 @@ namespace AltaCore {
     class Parser: public GenericParser<RuleType, TokenType, std::shared_ptr<AST::Node>> {
       private:
         // <helper-functions>
+        ALTACORE_OPTIONAL<std::string> expectModifier(ModifierTargetType mtt);
         std::vector<std::string> expectModifiers(ModifierTargetType mtt);
         bool expectKeyword(std::string keyword);
         std::vector<std::shared_ptr<AST::AttributeNode>> expectAttributes();

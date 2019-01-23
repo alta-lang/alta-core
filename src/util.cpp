@@ -42,6 +42,11 @@ std::weak_ptr<AltaCore::DET::Module> AltaCore::Util::getModule(AltaCore::DET::Sc
       return getModule(parent.get());
     }
   }
+  if (auto klass = scope->parentClass.lock()) {
+    if (auto parent = klass->parentScope.lock()) {
+      return getModule(parent.get());
+    }
+  }
   return std::weak_ptr<AltaCore::DET::Module>();
 };
 

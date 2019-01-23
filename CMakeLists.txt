@@ -49,6 +49,15 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/attribute-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/conditional-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/conditional-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-definition-node.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-statement-node.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-member-definition-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-method-definition-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-special-method-definition-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-instantiation-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/pointer-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/dereference-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/while-loop-statement.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"
@@ -60,6 +69,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/det/variable.cpp"
   "${PROJECT_SOURCE_DIR}/src/det/alias.cpp"
   "${PROJECT_SOURCE_DIR}/src/det/namespace.cpp"
+  "${PROJECT_SOURCE_DIR}/src/det/class.cpp"
 )
 target_include_directories(altacore PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
