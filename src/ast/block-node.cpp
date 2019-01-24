@@ -14,3 +14,7 @@ void AltaCore::AST::BlockNode::detail(std::shared_ptr<AltaCore::DET::Scope> scop
     stmt->detail(scope);
   }
 };
+
+ALTACORE_AST_VALIDATE_D(BlockNode) {
+  return true;
+};

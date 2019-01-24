@@ -13,3 +13,7 @@ void AltaCore::AST::ReturnDirectiveNode::detail(std::shared_ptr<AltaCore::DET::S
     return expression->detail(scope);
   }
 };
+
+ALTACORE_AST_VALIDATE_D(ReturnDirectiveNode) {
+  return true;
+};

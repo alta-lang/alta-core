@@ -17,3 +17,7 @@ void AltaCore::AST::Parameter::detail(std::shared_ptr<DET::Scope> scope, bool ho
   }
   return type->detail(scope, hoist);
 };
+
+ALTACORE_AST_VALIDATE_D(Parameter) {
+  return true;
+};

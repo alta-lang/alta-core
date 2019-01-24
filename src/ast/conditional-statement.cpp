@@ -32,3 +32,7 @@ void AltaCore::AST::ConditionalStatement::detail(std::shared_ptr<AltaCore::DET::
     finalResult->detail($finalScope);
   }
 };
+
+ALTACORE_AST_VALIDATE_D(ConditionalStatement) {
+  return true;
+};

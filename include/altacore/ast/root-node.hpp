@@ -25,6 +25,7 @@ namespace AltaCore {
 
         void detail(Filesystem::Path filePath, std::string moduleName = "");
         void detail(std::string filePath, std::string moduleName = "");
+        ALTACORE_AST_VALIDATE;
     };
   };
 };

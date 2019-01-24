@@ -47,3 +47,7 @@ void AltaCore::AST::ClassDefinitionNode::detail(std::shared_ptr<AltaCore::DET::S
     }
   }
 };
+
+ALTACORE_AST_VALIDATE_D(ClassDefinitionNode) {
+  return true;
+};

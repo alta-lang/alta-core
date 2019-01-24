@@ -37,6 +37,7 @@ namespace AltaCore {
         Type(std::shared_ptr<Type> returnType, std::vector<std::tuple<std::shared_ptr<Type>, bool, std::string>> parameters, std::vector<uint8_t> modifiers);
 
         virtual void detail(std::shared_ptr<DET::Scope> scope, bool hoist = true);
+        ALTACORE_AST_VALIDATE;
     };
   };
 };

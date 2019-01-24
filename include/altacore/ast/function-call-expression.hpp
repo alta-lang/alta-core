@@ -29,6 +29,7 @@ namespace AltaCore {
         static std::tuple<size_t, std::unordered_map<size_t, size_t>, std::vector<ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>>> findCompatibleCall(std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments, std::vector<std::shared_ptr<DET::Type>> funcTypes);
 
         virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_VALIDATE;
     };
   };
 };

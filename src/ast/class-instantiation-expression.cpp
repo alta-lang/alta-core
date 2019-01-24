@@ -46,3 +46,7 @@ void AltaCore::AST::ClassInstantiationExpression::detail(std::shared_ptr<AltaCor
     throw std::runtime_error("unable to find suitable constructor");
   }
 };
+
+ALTACORE_AST_VALIDATE_D(ClassInstantiationExpression) {
+  return true;
+};

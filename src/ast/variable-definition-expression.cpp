@@ -34,3 +34,7 @@ void AltaCore::AST::VariableDefinitionExpression::detail(std::shared_ptr<AltaCor
     }
   }
 };
+
+ALTACORE_AST_VALIDATE_D(VariableDefinitionExpression) {
+  return true;
+};

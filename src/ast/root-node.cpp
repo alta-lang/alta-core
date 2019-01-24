@@ -47,3 +47,7 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
 void AltaCore::AST::RootNode::detail(std::string filePath, std::string moduleName) {
   return detail(Filesystem::Path(filePath, moduleName));
 };
+
+ALTACORE_AST_VALIDATE_D(RootNode) {
+  return true;
+};

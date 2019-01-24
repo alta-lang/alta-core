@@ -39,3 +39,7 @@ void AltaCore::AST::Fetch::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
 
   $items = items;
 };
+
+ALTACORE_AST_VALIDATE_D(Fetch) {
+  return true;
+};

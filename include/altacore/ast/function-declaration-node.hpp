@@ -27,6 +27,7 @@ namespace AltaCore {
         FunctionDeclarationNode(std::string name, std::vector<std::shared_ptr<Parameter>> parameters, std::shared_ptr<Type> returnType, std::vector<std::string> modifiers);
 
         virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_VALIDATE;
     };
   };
 };

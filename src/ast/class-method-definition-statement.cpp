@@ -17,3 +17,7 @@ void AltaCore::AST::ClassMethodDefinitionStatement::detail(std::shared_ptr<AltaC
   auto klass = scope->parentClass.lock();
   funcDef->$function->parentClassType = std::make_shared<DET::Type>(klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
 };
+
+ALTACORE_AST_VALIDATE_D(ClassMethodDefinitionStatement) {
+  return true;
+};

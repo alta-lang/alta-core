@@ -13,3 +13,7 @@ void AltaCore::AST::ClassMemberDefinitionStatement::detail(std::shared_ptr<AltaC
   varDef->detail(scope);
   varDef->$variable->visibility = visibilityModifier;
 };
+
+ALTACORE_AST_VALIDATE_D(ClassMemberDefinitionStatement) {
+  return true;
+};

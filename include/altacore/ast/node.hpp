@@ -3,11 +3,21 @@
 
 #include "../ast-shared.hpp"
 #include "../det/scope.hpp"
+#include <stack>
+#include <memory>
+#include "../validator.hpp"
+
+#define ALTACORE_AST_VALIDATE protected: virtual bool validate(ValidationStack& stack)
+#define ALTACORE_AST_VALIDATE_D(x) bool AltaCore::AST::x::validate(ValidationStack& stack)
 
 namespace AltaCore {
   namespace AST {
     class Node {
+        friend bool AltaCore::Validator::validate(std::shared_ptr<Node>);
+
       public:
+        using ValidationStack = std::stack<std::shared_ptr<Node>>;
+
         virtual ~Node() = default;
 
         std::string id;
@@ -17,6 +27,7 @@ namespace AltaCore {
         virtual const NodeType nodeType();
 
         virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_VALIDATE;
     };
   };
 };

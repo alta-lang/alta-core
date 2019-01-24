@@ -7,3 +7,7 @@ const AltaCore::AST::NodeType AltaCore::AST::DereferenceExpression::nodeType() {
 void AltaCore::AST::DereferenceExpression::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
   target->detail(scope);
 };
+
+ALTACORE_AST_VALIDATE_D(DereferenceExpression) {
+  return true;
+};

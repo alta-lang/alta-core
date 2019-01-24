@@ -10,3 +10,7 @@ void AltaCore::AST::WhileLoopStatement::detail(std::shared_ptr<AltaCore::DET::Sc
   test->detail($scope);
   body->detail($scope);
 };
+
+ALTACORE_AST_VALIDATE_D(WhileLoopStatement) {
+  return true;
+};

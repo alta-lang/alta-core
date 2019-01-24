@@ -18,3 +18,7 @@ void AltaCore::AST::BinaryOperation::detail(std::shared_ptr<AltaCore::DET::Scope
   left->detail(scope);
   right->detail(scope);
 };
+
+ALTACORE_AST_VALIDATE_D(BinaryOperation) {
+  return true;
+};

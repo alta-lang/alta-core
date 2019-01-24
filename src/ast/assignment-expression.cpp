@@ -13,3 +13,7 @@ void AltaCore::AST::AssignmentExpression::detail(std::shared_ptr<AltaCore::DET::
   target->detail(scope);
   value->detail(scope);
 };
+
+ALTACORE_AST_VALIDATE_D(AssignmentExpression) {
+  return true;
+};

@@ -21,6 +21,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/util.cpp"
   "${PROJECT_SOURCE_DIR}/src/preprocessor.cpp"
   "${PROJECT_SOURCE_DIR}/src/attributes.cpp"
+  "${PROJECT_SOURCE_DIR}/src/validator.cpp"
 
   # AST nodes
   "${PROJECT_SOURCE_DIR}/src/ast/node.cpp"

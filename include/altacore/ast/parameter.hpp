@@ -24,6 +24,7 @@ namespace AltaCore {
         Parameter(std::string name, std::shared_ptr<Type> type, bool isVariable = false);
 
         virtual void detail(std::shared_ptr<DET::Scope> scope, bool hoist = true);
+        ALTACORE_AST_VALIDATE;
     };
   };
 };

@@ -28,3 +28,7 @@ void AltaCore::AST::ClassSpecialMethodDefinitionStatement::detail(std::shared_pt
     throw std::runtime_error("destructors aren't supported yet");
   }
 };
+
+ALTACORE_AST_VALIDATE_D(ClassSpecialMethodDefinitionStatement) {
+  return true;
+};
