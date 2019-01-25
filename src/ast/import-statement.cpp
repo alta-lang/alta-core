@@ -44,5 +44,5 @@ void AltaCore::AST::ImportStatement::detail(std::shared_ptr<AltaCore::DET::Scope
 };
 
 ALTACORE_AST_VALIDATE_D(ImportStatement) {
-  return true;
+  
 };

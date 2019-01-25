@@ -19,5 +19,5 @@ void AltaCore::AST::ClassMethodDefinitionStatement::detail(std::shared_ptr<AltaC
 };
 
 ALTACORE_AST_VALIDATE_D(ClassMethodDefinitionStatement) {
-  return true;
+  
 };

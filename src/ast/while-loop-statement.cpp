@@ -12,5 +12,5 @@ void AltaCore::AST::WhileLoopStatement::detail(std::shared_ptr<AltaCore::DET::Sc
 };
 
 ALTACORE_AST_VALIDATE_D(WhileLoopStatement) {
-  return true;
+  
 };

@@ -77,5 +77,5 @@ void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bo
 };
 
 ALTACORE_AST_VALIDATE_D(Type) {
-  return true;
+  
 };

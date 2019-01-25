@@ -20,5 +20,5 @@ void AltaCore::AST::BinaryOperation::detail(std::shared_ptr<AltaCore::DET::Scope
 };
 
 ALTACORE_AST_VALIDATE_D(BinaryOperation) {
-  return true;
+  
 };

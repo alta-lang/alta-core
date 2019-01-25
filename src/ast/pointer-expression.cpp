@@ -9,5 +9,5 @@ void AltaCore::AST::PointerExpression::detail(std::shared_ptr<AltaCore::DET::Sco
 };
 
 ALTACORE_AST_VALIDATE_D(PointerExpression) {
-  return true;
+  
 };

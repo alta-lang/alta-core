@@ -21,5 +21,5 @@ void AltaCore::AST::ConditionalExpression::detail(std::shared_ptr<AltaCore::DET:
 };
 
 ALTACORE_AST_VALIDATE_D(ConditionalExpression) {
-  return true;
+  
 };

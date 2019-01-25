@@ -30,5 +30,5 @@ void AltaCore::AST::ClassSpecialMethodDefinitionStatement::detail(std::shared_pt
 };
 
 ALTACORE_AST_VALIDATE_D(ClassSpecialMethodDefinitionStatement) {
-  return true;
+  
 };

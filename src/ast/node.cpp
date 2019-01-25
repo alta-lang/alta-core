@@ -15,6 +15,5 @@ AltaCore::AST::Node::Node() {
 };
 
 ALTACORE_AST_VALIDATE_D(Node) {
-  return true;  // by default, nodes are valid
-  return true;
+  // by default, nodes are valid, so don't throw any errors
 };

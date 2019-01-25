@@ -68,5 +68,5 @@ std::string AltaCore::AST::AttributeNode::id() const {
 };
 
 ALTACORE_AST_VALIDATE_D(AttributeNode) {
-  return true;
+  
 };

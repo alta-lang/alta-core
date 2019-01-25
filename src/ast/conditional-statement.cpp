@@ -34,5 +34,5 @@ void AltaCore::AST::ConditionalStatement::detail(std::shared_ptr<AltaCore::DET::
 };
 
 ALTACORE_AST_VALIDATE_D(ConditionalStatement) {
-  return true;
+  
 };

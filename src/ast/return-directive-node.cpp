@@ -15,5 +15,5 @@ void AltaCore::AST::ReturnDirectiveNode::detail(std::shared_ptr<AltaCore::DET::S
 };
 
 ALTACORE_AST_VALIDATE_D(ReturnDirectiveNode) {
-  return true;
+  
 };

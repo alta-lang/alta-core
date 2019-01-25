@@ -42,5 +42,5 @@ void AltaCore::AST::FunctionDeclarationNode::detail(std::shared_ptr<AltaCore::DE
 };
 
 ALTACORE_AST_VALIDATE_D(FunctionDeclarationNode) {
-  return true;
+  
 };

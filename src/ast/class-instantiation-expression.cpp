@@ -48,5 +48,5 @@ void AltaCore::AST::ClassInstantiationExpression::detail(std::shared_ptr<AltaCor
 };
 
 ALTACORE_AST_VALIDATE_D(ClassInstantiationExpression) {
-  return true;
+  
 };

@@ -7,8 +7,8 @@
 #include <memory>
 #include "../validator.hpp"
 
-#define ALTACORE_AST_VALIDATE protected: virtual bool validate(ValidationStack& stack)
-#define ALTACORE_AST_VALIDATE_D(x) bool AltaCore::AST::x::validate(ValidationStack& stack)
+#define ALTACORE_AST_VALIDATE protected: virtual void validate(ValidationStack& stack)
+#define ALTACORE_AST_VALIDATE_D(x) void AltaCore::AST::x::validate(ValidationStack& stack)
 
 namespace AltaCore {
   namespace AST {

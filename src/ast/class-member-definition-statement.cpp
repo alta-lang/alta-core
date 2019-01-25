@@ -15,5 +15,5 @@ void AltaCore::AST::ClassMemberDefinitionStatement::detail(std::shared_ptr<AltaC
 };
 
 ALTACORE_AST_VALIDATE_D(ClassMemberDefinitionStatement) {
-  return true;
+  
 };

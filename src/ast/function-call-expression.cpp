@@ -203,5 +203,5 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
 };
 
 ALTACORE_AST_VALIDATE_D(FunctionCallExpression) {
-  return true;
+  
 };

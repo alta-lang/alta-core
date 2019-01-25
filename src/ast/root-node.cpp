@@ -49,5 +49,5 @@ void AltaCore::AST::RootNode::detail(std::string filePath, std::string moduleNam
 };
 
 ALTACORE_AST_VALIDATE_D(RootNode) {
-  return true;
+  
 };

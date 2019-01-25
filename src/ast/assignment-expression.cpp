@@ -15,5 +15,5 @@ void AltaCore::AST::AssignmentExpression::detail(std::shared_ptr<AltaCore::DET::
 };
 
 ALTACORE_AST_VALIDATE_D(AssignmentExpression) {
-  return true;
+  
 };

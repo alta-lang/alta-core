@@ -2,6 +2,8 @@
 #define ALTACORE_VALIDATOR_HPP
 
 #include <memory>
+#include <exception>
+#include <string>
 
 namespace AltaCore {
   namespace AST {
@@ -9,7 +11,14 @@ namespace AltaCore {
     class Node;
   };
   namespace Validator {
-    bool validate(std::shared_ptr<AST::Node> target);
+    class ValidationError: public std::exception {
+      private:
+        std::string message;
+      public:
+        ValidationError(std::string message = "");
+        const char* what() override;
+    };
+    void validate(std::shared_ptr<AST::Node> target);
   };
 };
 

@@ -76,5 +76,5 @@ void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<AltaCore::DET::Type> type
 };
 
 ALTACORE_AST_VALIDATE_D(Accessor) {
-  return true;
+  
 };
