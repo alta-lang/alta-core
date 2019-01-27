@@ -55,6 +55,8 @@ ALTACORE_AST_VALIDATE_D(ImportStatement) {
       if (imp.empty()) throw ValidationError("empty individual import for non-alised import");
     }
   }
+  if (!$importedAST) throw ValidationError("improperly detailed import statement: empty AST");
+  $importedAST->validate(stack);
   // TODO: validate the detailed information
   //       i'm too lazy right now
   ALTACORE_VS_E;

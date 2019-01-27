@@ -250,6 +250,9 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
       compat += paramCompat;
     }
   } else {
+    if ((nativeTypeName == NativeType::Void) != (other.nativeTypeName == NativeType::Void)) {
+      return 0;
+    }
     if (nativeTypeName == other.nativeTypeName) {
       compat++;
     }
@@ -321,6 +324,9 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
   } else if (isNative) {
     // only check for void
     // all other native types are integral and can be coerced to each other
+    if ((nativeTypeName == NativeType::Void) != (other.nativeTypeName == NativeType::Void)) {
+      return false;
+    }
   }
 
   return true;
