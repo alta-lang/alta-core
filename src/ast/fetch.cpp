@@ -41,5 +41,8 @@ void AltaCore::AST::Fetch::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
 };
 
 ALTACORE_AST_VALIDATE_D(Fetch) {
-  
+  ALTACORE_VS_S;
+  if (query.empty()) throw ValidationError("empty query for fetch");
+  if ($items.size() < 1) throw ValidationError("no items found for fetch");
+  ALTACORE_VS_E;
 };

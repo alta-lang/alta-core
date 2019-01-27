@@ -13,5 +13,7 @@ void AltaCore::AST::AttributeStatement::detail(std::shared_ptr<AltaCore::DET::Sc
 };
 
 ALTACORE_AST_VALIDATE_D(AttributeStatement) {
-  
+  ALTACORE_VS_S;
+  attribute->validate(stack);
+  ALTACORE_VS_E;
 };

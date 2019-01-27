@@ -68,5 +68,16 @@ std::string AltaCore::AST::AttributeNode::id() const {
 };
 
 ALTACORE_AST_VALIDATE_D(AttributeNode) {
-  
+  ALTACORE_VS_S;
+  for (auto acc: accessors) {
+    if (acc.empty()) {
+      throw ValidationError("attribute node accessor component can't be empty");
+    }
+  }
+
+  for (auto arg: arguments) {
+    if (!arg) throw ValidationError("empty argument in attribute node");
+    arg->validate(stack);
+  }
+  ALTACORE_VS_E;
 };

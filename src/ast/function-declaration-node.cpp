@@ -42,5 +42,16 @@ void AltaCore::AST::FunctionDeclarationNode::detail(std::shared_ptr<AltaCore::DE
 };
 
 ALTACORE_AST_VALIDATE_D(FunctionDeclarationNode) {
-  
+  ALTACORE_VS_S;
+  if (name.empty()) throw ValidationError("empty name for function declaration");
+  for (auto& param: parameters) {
+    if (!param) throw ValidationError("empty parameter for function declaration");
+    param->validate(stack);
+  }
+  if (!returnType) throw ValidationError("empty return type for function declaration");
+  returnType->validate(stack);
+  for (auto& mod: modifiers) {
+    if (mod.empty()) throw ValidationError("empty modifier for function declaration");
+  }
+  ALTACORE_VS_E;
 };

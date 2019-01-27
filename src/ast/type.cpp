@@ -77,5 +77,31 @@ void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bo
 };
 
 ALTACORE_AST_VALIDATE_D(Type) {
-  
+  ALTACORE_VS_S;
+  if (isFunction) {
+    if (isAny || isNative) throw ValidationError("type can't be multiple kinds, only one of `function`, `any`, or `native`");
+    if (!returnType) throw ValidationError("empty return type for function type");
+    returnType->validate(stack);
+    for (auto& [type, isVariable, name]: parameters) {
+      if (!type) throw ValidationError("empty type for parameter for function type");
+      type->validate(stack);
+    }
+  } else {
+    if (returnType) throw ValidationError("non-function types can't have return types");
+    if (parameters.size() > 0) throw ValidationError("non-function types can't have parameters");
+    if (isAny) {
+      if (isNative) throw ValidationError("type can't be multiple kinds, only one of `function`, `any`, or `native`");
+      if (!name.empty()) throw ValidationError("`any` type can't have a native type name");
+      if (lookup) throw ValidationError("`any` type can't have a target lookup");
+    } else if (isNative) {
+      if (isAny) throw ValidationError("type can't be multiple kinds, only one of `function`, `any`, or `native`");
+      if (name.empty()) throw ValidationError("empty name for native type");
+      if (lookup) throw ValidationError("native type can't have a target lookup");
+    } else {
+      if (!name.empty()) throw ValidationError("non-native type can't have a native type name");
+      if (!lookup) throw ValidationError("empty lookup for non-native type");
+      lookup->validate(stack);
+    }
+  }
+  ALTACORE_VS_E;
 };

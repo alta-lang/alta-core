@@ -48,5 +48,15 @@ void AltaCore::AST::ClassInstantiationExpression::detail(std::shared_ptr<AltaCor
 };
 
 ALTACORE_AST_VALIDATE_D(ClassInstantiationExpression) {
-  
+  ALTACORE_VS_S;
+  if (!target) throw ValidationError("empty target for class instantiation");
+  target->validate(stack);
+  for (auto& [name, arg]: arguments) {
+    if (!arg) throw ValidationError("empty argument for class instantiation");
+    arg->validate(stack);
+  }
+  if (!$klass) throw ValidationError("failed to find desired class for class instantiation");
+  if (!$constructor) throw ValidationError("failed to find proper constructor during detailing of class instantiation");
+  // TODO: validate adjusted arguments
+  ALTACORE_VS_E;
 };

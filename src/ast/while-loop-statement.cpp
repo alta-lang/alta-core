@@ -12,5 +12,10 @@ void AltaCore::AST::WhileLoopStatement::detail(std::shared_ptr<AltaCore::DET::Sc
 };
 
 ALTACORE_AST_VALIDATE_D(WhileLoopStatement) {
-  
+  ALTACORE_VS_S;
+  if (!test) throw ValidationError("empty test for while loop");
+  test->validate(stack);
+  if (!body) throw ValidationError("empty body for while loop");
+  body->validate(stack);
+  ALTACORE_VS_E;
 };

@@ -30,5 +30,13 @@ void AltaCore::AST::ClassSpecialMethodDefinitionStatement::detail(std::shared_pt
 };
 
 ALTACORE_AST_VALIDATE_D(ClassSpecialMethodDefinitionStatement) {
-  
+  ALTACORE_VS_S;
+  for (auto& param: parameters) {
+    if (!param) throw ValidationError("empty parameter for special class method");
+    param->validate(stack);
+  }
+  if (!body) throw ValidationError("empty body for special class method");
+  if (!$klass) throw ValidationError("weird failure: class is empty for special class method (but that should be impossible)");
+  if (!$method) throw ValidationError("failed to properly detail function for special class method");
+  ALTACORE_VS_E;
 };

@@ -16,5 +16,10 @@ void AltaCore::AST::BlockNode::detail(std::shared_ptr<AltaCore::DET::Scope> scop
 };
 
 ALTACORE_AST_VALIDATE_D(BlockNode) {
-  
+  ALTACORE_VS_S;
+  for (auto& stmt: statements) {
+    if (!stmt) throw ValidationError("Empty statement node in block node");
+    stmt->validate(stack);
+  }
+  ALTACORE_VS_E;
 };

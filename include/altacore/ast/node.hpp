@@ -7,16 +7,21 @@
 #include <memory>
 #include "../validator.hpp"
 
-#define ALTACORE_AST_VALIDATE protected: virtual void validate(ValidationStack& stack)
+#define ALTACORE_AST_VALIDATE public: virtual void validate(ValidationStack& stack)
 #define ALTACORE_AST_VALIDATE_D(x) void AltaCore::AST::x::validate(ValidationStack& stack)
+// VS = validation stack
+// S  = start
+// E = end
+#define ALTACORE_VS_S using AltaCore::Validator::ValidationError; stack.push(this)
+#define ALTACORE_VS_E stack.pop()
 
 namespace AltaCore {
   namespace AST {
     class Node {
-        friend bool AltaCore::Validator::validate(std::shared_ptr<Node>);
+        friend void AltaCore::Validator::validate(std::shared_ptr<Node>);
 
       public:
-        using ValidationStack = std::stack<std::shared_ptr<Node>>;
+        using ValidationStack = std::stack<Node*>;
 
         virtual ~Node() = default;
 

@@ -16,7 +16,7 @@ namespace AltaCore {
         std::string message;
       public:
         ValidationError(std::string message = "");
-        const char* what() override;
+        const char* what() const noexcept override;
     };
     void validate(std::shared_ptr<AST::Node> target);
   };

@@ -76,5 +76,10 @@ void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<AltaCore::DET::Type> type
 };
 
 ALTACORE_AST_VALIDATE_D(Accessor) {
-  
+  ALTACORE_VS_S;
+  target->validate(stack);
+  if (query.empty()) {
+    throw ValidationError("accessor query can't be empty");
+  }
+  ALTACORE_VS_E;
 };

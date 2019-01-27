@@ -15,5 +15,8 @@ void AltaCore::AST::AssignmentExpression::detail(std::shared_ptr<AltaCore::DET::
 };
 
 ALTACORE_AST_VALIDATE_D(AssignmentExpression) {
-  
+  ALTACORE_VS_S;
+  target->validate(stack);
+  value->validate(stack);
+  ALTACORE_VS_E;
 };

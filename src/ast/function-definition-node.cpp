@@ -48,5 +48,18 @@ void AltaCore::AST::FunctionDefinitionNode::detail(std::shared_ptr<AltaCore::DET
 };
 
 ALTACORE_AST_VALIDATE_D(FunctionDefinitionNode) {
-  
+  ALTACORE_VS_S;
+  if (name.empty()) throw ValidationError("empty name for function definition");
+  for (auto& param: parameters) {
+    if (!param) throw ValidationError("empty parameter for function definition");
+    param->validate(stack);
+  }
+  if (!returnType) throw ValidationError("empty return type for function definition");
+  returnType->validate(stack);
+  for (auto& mod: modifiers) {
+    if (mod.empty()) throw ValidationError("empty modifier for function definition");
+  }
+  if (!body) throw ValidationError("empty body for function definition");
+  body->validate(stack);
+  ALTACORE_VS_E;
 };

@@ -21,5 +21,12 @@ void AltaCore::AST::ConditionalExpression::detail(std::shared_ptr<AltaCore::DET:
 };
 
 ALTACORE_AST_VALIDATE_D(ConditionalExpression) {
-  
+  ALTACORE_VS_S;
+  if (!test) throw ValidationError("empty test for conditional expression");
+  if (!primaryResult) throw ValidationError("empty primary result for conditional expression");
+  if (!secondaryResult) throw ValidationError("empty secondary result for conditional expression");
+  test->validate(stack);
+  primaryResult->validate(stack);
+  secondaryResult->validate(stack);
+  ALTACORE_VS_E;
 };
