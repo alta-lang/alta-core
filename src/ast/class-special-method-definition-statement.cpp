@@ -36,6 +36,7 @@ ALTACORE_AST_VALIDATE_D(ClassSpecialMethodDefinitionStatement) {
     param->validate(stack);
   }
   if (!body) throw ValidationError("empty body for special class method");
+  body->validate(stack);
   if (!$klass) throw ValidationError("weird failure: class is empty for special class method (but that should be impossible)");
   if (!$method) throw ValidationError("failed to properly detail function for special class method");
   ALTACORE_VS_E;
