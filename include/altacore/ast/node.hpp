@@ -6,11 +6,19 @@
 
 namespace AltaCore {
   namespace AST {
+    class Position {
+      public:
+        size_t line = 0;
+        size_t column = 0;
+
+        Position(size_t line = 0, size_t column = 0);
+    };
     class Node {
       public:
         virtual ~Node() = default;
 
         std::string id;
+        Position position;
 
         Node();
 

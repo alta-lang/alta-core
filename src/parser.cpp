@@ -142,6 +142,7 @@ namespace AltaCore {
       GenericParser(_tokens)
       {};
 
+#define AST_NODE_POSITION(x) x->position.line = tokens[currentState.currentPosition].line; x->position.column = tokens[currentState.currentPosition].column
     Parser::RuleReturn Parser::runRule(RuleType rule, RuleState& state, std::vector<Expectation>& exps) {
       /*
        * note about early returns in front-recursive rules:
@@ -194,7 +195,9 @@ namespace AltaCore {
         if (currentState.currentPosition < tokens.size()) {
           throw std::runtime_error("input not completely parsed; assuming failure");
         }
-        return std::make_shared<AST::RootNode>(statements);
+        auto root = std::make_shared<AST::RootNode>(statements);
+        AST_NODE_POSITION(root);
+        return root;
       } else if (rule == RuleType::Statement) {
         if (state.iteration == 0) {
           return std::initializer_list<ExpectationType> {
@@ -226,13 +229,21 @@ namespace AltaCore {
           if (expr == nullptr) throw std::runtime_error("wtf");
           ret = std::make_shared<AST::ExpressionStatement>(expr);
         }
+        // doing this here means we've already got all the statements
+        // covered; we don't have to repeat it for each statement
+        AST_NODE_POSITION(ret);
         return ret;
       } else if (rule == RuleType::Expression) {
         if (state.internalIndex == 0) {
           state.internalIndex = 1;
           return RuleType::VariableDefinition;
         } else {
-          return exps.back().item;
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          auto expr = *exps.back().item;
+          // same thing about the statements here,
+          // but here it covers all expressions
+          AST_NODE_POSITION(expr);
+          return expr;
         }
         /*
         if (state.iteration == 0) {
@@ -1399,6 +1410,7 @@ namespace AltaCore {
 
       return ALTACORE_NULLOPT;
     };
+#undef AST_NODE_POSITION
 
     void Parser::parse() {
       Expectation exp = expect(RuleType::Root);
