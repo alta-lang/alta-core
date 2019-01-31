@@ -66,6 +66,8 @@ namespace AltaCore {
       token.position = totalCount;
       token.line = currentLine;
       token.column = currentColumn;
+      token.originalLine = currentOriginalLine;
+      token.originalColumn = currentOriginalColumn;
       token.type = rule;
       token.raw = std::string(1, character);
       tokens.push_back(token);
@@ -77,6 +79,8 @@ namespace AltaCore {
       token.position = totalCount;
       token.line = currentLine;
       token.column = currentColumn;
+      token.originalLine = currentOriginalLine;
+      token.originalColumn = currentOriginalColumn;
       token.type = rule;
       token.raw = data;
       tokens.push_back(token);
@@ -97,7 +101,15 @@ namespace AltaCore {
         } else {
           totalCount++;
         }
+
         currentColumn++;
+        currentOriginalColumn++;
+        if (locationLookupFunction) {
+          auto [newLine, newColumn] = locationLookupFunction(currentOriginalLine, currentOriginalColumn);
+          currentLine = newLine;
+          currentColumn = newColumn;
+        }
+
         const char character = backlog.front();
 
         if (consumeNext) {
@@ -132,7 +144,9 @@ namespace AltaCore {
               }
               totalCount = back.position;
               currentLine = back.line;
-              currentLine = back.column;
+              currentColumn = back.column - 1;
+              currentOriginalLine = back.originalLine;
+              currentOriginalColumn = back.originalColumn - 1;
               fails[totalCount].insert(back.type);
               tokens.pop_back();
               incrementTotal = false;
@@ -164,6 +178,8 @@ namespace AltaCore {
         if (character == '\n') {
           currentLine++;
           currentColumn = 0;
+          currentOriginalLine++;
+          currentOriginalColumn = 0;
           backlog.pop_front();
           continue;
         }
