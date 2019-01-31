@@ -142,7 +142,7 @@ namespace AltaCore {
       GenericParser(_tokens)
       {};
 
-#define AST_NODE_POSITION(x) x->position.line = tokens[currentState.currentPosition].line; x->position.column = tokens[currentState.currentPosition].column
+#define AST_NODE_POSITION(x) x->position.line = tokens[currentState.currentPosition - 1].line; x->position.column = tokens[currentState.currentPosition - 1].column
     Parser::RuleReturn Parser::runRule(RuleType rule, RuleState& state, std::vector<Expectation>& exps) {
       /*
        * note about early returns in front-recursive rules:

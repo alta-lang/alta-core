@@ -8,6 +8,8 @@
 #include <deque>
 #include <unordered_map>
 #include <unordered_set>
+#include <functional>
+#include <utility>
 
 namespace AltaCore {
   namespace Lexer {
@@ -140,6 +142,8 @@ namespace AltaCore {
       TokenType type;
       std::string raw;
       size_t position;
+      size_t originalLine;
+      size_t originalColumn;
       size_t line;
       size_t column;
     };
@@ -170,6 +174,13 @@ namespace AltaCore {
         size_t totalCount = 0;
         size_t currentLine = 1;
         size_t currentColumn = 0;
+        size_t currentOriginalLine = 1;
+        size_t currentOriginalColumn = 0;
+        std::function<std::pair<size_t, size_t>(size_t line, size_t column)> locationLookupFunction = nullptr;
+
+        Lexer(std::function<std::pair<size_t, size_t>(size_t line, size_t column)> _locationLookupFunction = nullptr):
+          locationLookupFunction(_locationLookupFunction)
+          {};
 
         void feed(const std::string data);
         void lex();
