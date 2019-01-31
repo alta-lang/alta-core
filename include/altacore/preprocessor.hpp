@@ -4,6 +4,7 @@
 #include <string>
 #include <functional>
 #include <map>
+#include <unordered_map>
 #include <stack>
 #include "fs.hpp"
 #include "parser.hpp"
@@ -85,6 +86,23 @@ namespace AltaCore {
         ExpressionParser(std::vector<Lexer::Token> tokens, std::map<std::string, Expression>& definitions);
     };
 
+    struct Location {
+      size_t originalLine = 0;
+      size_t originalColumn = 0;
+      size_t newLine = 0;
+      size_t newColumn = 0;
+      size_t charactersContained = 0;
+
+      Location() = default;
+      Location(size_t _originalLine, size_t _originalColumn, size_t _newLine, size_t _newColumn, size_t _charactersContained):
+        originalLine(_originalLine),
+        originalColumn(_originalColumn),
+        newLine(_newLine),
+        newColumn(_newColumn),
+        charactersContained(_charactersContained)
+        {};
+    };
+
     class Preprocessor;
     void defaultFileReader(Preprocessor& orig, Preprocessor& newPre, std::string importRequest);
     class Preprocessor {
@@ -98,11 +116,13 @@ namespace AltaCore {
         std::stack<std::string> conditionals;
         std::stack<bool> enteredConditionals;
         std::stack<bool> lastConditionalResults;
+        size_t totalLines = 0;
         bool canSaveForLater = true;
       public:
         Filesystem::Path filePath;
         std::map<std::string, Expression>& definitions;
         std::map<std::string, std::string>& fileResults;
+        std::unordered_map<std::string, std::vector<Location>>& locationMaps;
         void feed(std::string chunk);
         void done();
 
@@ -110,11 +130,13 @@ namespace AltaCore {
           Filesystem::Path _filePath,
           std::map<std::string, Expression>& _defs,
           std::map<std::string, std::string>& _results,
+          std::unordered_map<std::string, std::vector<Location>>& _locationMaps,
           std::function<void(Preprocessor&, Preprocessor&, std::string)> _fileReader = defaultFileReader
         ):
           filePath(_filePath),
           definitions(_defs),
           fileResults(_results),
+          locationMaps(_locationMaps),
           fileReader(_fileReader)
           {};
     };

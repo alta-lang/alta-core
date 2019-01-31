@@ -7,6 +7,7 @@
 #include <vector>
 #include <utility>
 #include <fstream>
+#include <algorithm>
 
 // i *highly* doubt that this preprocessor is efficient, but it works.
 // plus, so far in the tests i've done, the performance hit is negligible.
@@ -455,6 +456,7 @@ AltaCore::Preprocessor::Expression AltaCore::Preprocessor::Preprocessor::evaluat
 
 void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
   auto& result = fileResults[filePath.toString()];
+  auto& locations = locationMaps[filePath.toString()];
 
   auto lines = PreprocessorUtils::split(lineCache + chunk, '\n');
   auto allTokens = PreprocessorUtils::splitLinesByWhitespace(lineCache + chunk, true, true);
@@ -492,6 +494,7 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
 
   // `- 1` because we ignore the last line
   for (size_t k = 0; k < lines.size() - 1; k++) {
+    totalLines++;
     auto line = lines[k];
     auto tokens = allTokens[k];
     auto untouchable = untouchableLines[k];
@@ -683,13 +686,21 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
             target += line.substr(nextStart, delimiterStart - nextStart + 1);
             if (definitions.find(defName) != definitions.end()) {
               auto& val = definitions[defName];
+              std::string result = "";
               if (val.type == ExpressionType::String) {
-                target += val.string;
+                result = val.string;
               } else if (val.type == ExpressionType::Boolean) {
-                target += (val.boolean) ? "true" : "false";
+                result = (val.boolean) ? "true" : "false";
               } else {
-                target += "";
+                result = "";
               }
+              auto linesInTarget = std::count(target.begin(), target.end(), '\n');
+              auto lastTargetLine = target.substr(target.find_last_of('\n') + 1);
+              locations.emplace_back(k + 1, delimiterStart + 1, linesInTarget + 1, lastTargetLine.size(), result.size());
+              target += result;
+              linesInTarget = std::count(target.begin(), target.end(), '\n');
+              lastTargetLine = target.substr(target.find_last_of('\n') + 1);
+              locations.emplace_back(k + 1, delimiterEnd + 1, linesInTarget + 1, lastTargetLine.size(), 0);
             } else {
               throw std::runtime_error("definition not found: " + defName);
             }
@@ -702,7 +713,7 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
             break;
           }
         }
-        Preprocessor pre(Filesystem::Path(), definitions, fileResults, fileReader);
+        Preprocessor pre(Filesystem::Path(), definitions, fileResults, locationMaps, fileReader);
         fileReader(*this, pre, importRequest);
       }
       for (auto& [delimiterStart, delimiterEnd]: delimiters) {
@@ -711,13 +722,21 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
         target += line.substr(nextStart, delimiterStart - nextStart);
         if (definitions.find(defName) != definitions.end()) {
           auto& val = definitions[defName];
+          std::string result = "";
           if (val.type == ExpressionType::String) {
-            target += val.string;
+            result = val.string;
           } else if (val.type == ExpressionType::Boolean) {
-            target += (val.boolean) ? "true" : "false";
+            result = (val.boolean) ? "true" : "false";
           } else {
-            target += "";
+            result = "";
           }
+          auto linesInTarget = std::count(target.begin(), target.end(), '\n');
+          auto lastTargetLine = target.substr(target.find_last_of('\n') + 1);
+          locations.emplace_back(totalLines, delimiterStart + 1, linesInTarget + 1, lastTargetLine.size(), result.size());
+          target += result;
+          linesInTarget = std::count(target.begin(), target.end(), '\n');
+          lastTargetLine = target.substr(target.find_last_of('\n') + 1);
+          locations.emplace_back(totalLines, delimiterEnd + 1, linesInTarget + 1, lastTargetLine.size(), 0);
         } else {
           throw std::runtime_error("definition not found: " + defName);
         }
@@ -736,6 +755,7 @@ void AltaCore::Preprocessor::Preprocessor::done() {
   canSaveForLater = false;
   feed("");
   fileResults[filePath.toString()] += lineCache;
+  totalLines = 0;
 };
 
 void AltaCore::Preprocessor::defaultFileReader(AltaCore::Preprocessor::Preprocessor& orig, AltaCore::Preprocessor::Preprocessor& newPre, std::string importRequest) {
