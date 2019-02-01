@@ -21,8 +21,8 @@ void AltaCore::AST::BinaryOperation::detail(std::shared_ptr<AltaCore::DET::Scope
 
 ALTACORE_AST_VALIDATE_D(BinaryOperation) {
   ALTACORE_VS_S;
-  if (!left) throw ValidationError("Binary operation must contain a left-hand node");
-  if (!right) throw ValidationError("Binary operation must contain a right-hand node");
+  if (!left) ALTACORE_VALIDATION_ERROR("Binary operation must contain a left-hand node");
+  if (!right) ALTACORE_VALIDATION_ERROR("Binary operation must contain a right-hand node");
   left->validate(stack);
   right->validate(stack);
   ALTACORE_VS_E;

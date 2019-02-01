@@ -6,13 +6,15 @@
 #include <stack>
 #include <memory>
 #include "../validator.hpp"
+#include "../fs.hpp"
 
 #define ALTACORE_AST_VALIDATE public: virtual void validate(ValidationStack& stack)
 #define ALTACORE_AST_VALIDATE_D(x) void AltaCore::AST::x::validate(ValidationStack& stack)
 // VS = validation stack
 // S  = start
 // E = end
-#define ALTACORE_VS_S using AltaCore::Validator::ValidationError; stack.push(this)
+#define ALTACORE_VS_S stack.push(this)
+#define ALTACORE_VALIDATION_ERROR(x) throw AltaCore::Validator::ValidationError(x, position.line, position.column, file)
 #define ALTACORE_VS_E stack.pop()
 
 namespace AltaCore {
@@ -34,6 +36,7 @@ namespace AltaCore {
 
         std::string id;
         Position position;
+        Filesystem::Path file;
 
         Node();
 

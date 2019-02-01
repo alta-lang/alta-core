@@ -51,13 +51,13 @@ void AltaCore::AST::ClassDefinitionNode::detail(std::shared_ptr<AltaCore::DET::S
 ALTACORE_AST_VALIDATE_D(ClassDefinitionNode) {
   ALTACORE_VS_S;
   for (auto& mod: modifiers) {
-    if (mod.empty()) throw ValidationError("empty modifier for class defintion");
+    if (mod.empty()) ALTACORE_VALIDATION_ERROR("empty modifier for class defintion");
   }
-  if (name.empty()) throw ValidationError("empty name for class definition");
+  if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for class definition");
   for (auto& stmt: statements) {
-    if (!stmt) throw ValidationError("empty class statement in class definition");
+    if (!stmt) ALTACORE_VALIDATION_ERROR("empty class statement in class definition");
     stmt->validate(stack);
   }
-  if (!$klass) throw ValidationError("class defintion not detailed properly, no DET class attached");
+  if (!$klass) ALTACORE_VALIDATION_ERROR("class defintion not detailed properly, no DET class attached");
   ALTACORE_VS_E;
 };

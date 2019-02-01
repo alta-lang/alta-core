@@ -4,9 +4,12 @@
 #include <stack>
 #include <memory>
 
-AltaCore::Validator::ValidationError::ValidationError(std::string _message) {
-  message = _message;
-};
+AltaCore::Validator::ValidationError::ValidationError(std::string _message, size_t _line, size_t _column, Filesystem::Path _file):
+  message(_message),
+  line(_line),
+  column(_column),
+  file(_file)
+  {};
 
 const char* AltaCore::Validator::ValidationError::what() const noexcept {
   return message.c_str();

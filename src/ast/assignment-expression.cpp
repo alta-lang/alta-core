@@ -24,7 +24,7 @@ ALTACORE_AST_VALIDATE_D(AssignmentExpression) {
   auto valueType = DET::Type::getUnderlyingType(value.get());
   
   if (!targetType->isCompatibleWith(*valueType)) {
-    throw ValidationError("source type is not compatible with the destination type for assignment expression");
+    ALTACORE_VALIDATION_ERROR("source type is not compatible with the destination type for assignment expression");
   }
 
   ALTACORE_VS_E;

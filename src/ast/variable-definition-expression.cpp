@@ -37,14 +37,14 @@ void AltaCore::AST::VariableDefinitionExpression::detail(std::shared_ptr<AltaCor
 
 ALTACORE_AST_VALIDATE_D(VariableDefinitionExpression) {
   ALTACORE_VS_S;
-  if (name.empty()) throw ValidationError("empty name for variable definition");
-  if (!type) throw ValidationError("empty type for variable definition");
+  if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for variable definition");
+  if (!type) ALTACORE_VALIDATION_ERROR("empty type for variable definition");
   type->validate(stack);
   if (initializationExpression) {
     initializationExpression->validate(stack);
   }
   for (auto& mod: modifiers) {
-    if (mod.empty()) throw ValidationError("empty modifer for variable definition");
+    if (mod.empty()) ALTACORE_VALIDATION_ERROR("empty modifer for variable definition");
   }
   ALTACORE_VS_E;
 };

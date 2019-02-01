@@ -45,17 +45,17 @@ void AltaCore::AST::ImportStatement::detail(std::shared_ptr<AltaCore::DET::Scope
 
 ALTACORE_AST_VALIDATE_D(ImportStatement) {
   ALTACORE_VS_S;
-  if (request.empty()) throw ValidationError("empty request/query string for import statement");
+  if (request.empty()) ALTACORE_VALIDATION_ERROR("empty request/query string for import statement");
   if (isAliased) {
-    if (imports.size() > 0) throw ValidationError("no individual imports should be present for aliased imports");
-    if (alias.empty()) throw ValidationError("empty alias for aliased import");
+    if (imports.size() > 0) ALTACORE_VALIDATION_ERROR("no individual imports should be present for aliased imports");
+    if (alias.empty()) ALTACORE_VALIDATION_ERROR("empty alias for aliased import");
   } else {
-    if (!alias.empty()) throw ValidationError("no aliases should be present for non-alised imports");
+    if (!alias.empty()) ALTACORE_VALIDATION_ERROR("no aliases should be present for non-alised imports");
     for (auto& [imp, alias]: imports) {
-      if (imp.empty()) throw ValidationError("empty individual import for non-alised import");
+      if (imp.empty()) ALTACORE_VALIDATION_ERROR("empty individual import for non-alised import");
     }
   }
-  if (!$importedAST) throw ValidationError("improperly detailed import statement: empty AST");
+  if (!$importedAST) ALTACORE_VALIDATION_ERROR("improperly detailed import statement: empty AST");
   $importedAST->validate(stack);
   // TODO: validate the detailed information
   //       i'm too lazy right now

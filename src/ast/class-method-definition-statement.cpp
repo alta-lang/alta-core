@@ -20,7 +20,7 @@ void AltaCore::AST::ClassMethodDefinitionStatement::detail(std::shared_ptr<AltaC
 
 ALTACORE_AST_VALIDATE_D(ClassMethodDefinitionStatement) {
   ALTACORE_VS_S;
-  if (!funcDef) throw ValidationError("empty function definition for class method");
+  if (!funcDef) ALTACORE_VALIDATION_ERROR("empty function definition for class method");
   funcDef->validate(stack);
   ALTACORE_VS_E;
 };

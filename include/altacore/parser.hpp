@@ -229,12 +229,23 @@ namespace AltaCore {
         // </helper-functions>
 
         std::unordered_set<std::string> typesToIgnore;
+        Filesystem::Path filePath;
+
+
       protected:
+        // > calls realRunRule and attaches extra info to nodes that it returns
+        // i prefer the real runRule
         virtual RuleReturn runRule(RuleType, RuleState&, std::vector<Expectation>&);
+
+      private:
+        // i said the *real* runRule
+        RuleReturn realRunRule(RuleType, RuleState&, std::vector<Expectation>&);
+
+        // unfortunately, there's no third runRule so i can't finish the meme
       public:
         void parse();
 
-        Parser(std::vector<Token> tokens);
+        Parser(std::vector<Token> tokens, Filesystem::Path filePath = Filesystem::Path());
     };
   };
 };

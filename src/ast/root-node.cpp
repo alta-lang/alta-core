@@ -51,7 +51,7 @@ void AltaCore::AST::RootNode::detail(std::string filePath, std::string moduleNam
 ALTACORE_AST_VALIDATE_D(RootNode) {
   ALTACORE_VS_S;
   for (auto& stmt: statements) {
-    if (!stmt) throw ValidationError("empty statement in root node");
+    if (!stmt) ALTACORE_VALIDATION_ERROR("empty statement in root node");
     stmt->validate(stack);
   }
   ALTACORE_VS_E;

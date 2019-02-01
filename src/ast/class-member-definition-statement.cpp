@@ -16,7 +16,7 @@ void AltaCore::AST::ClassMemberDefinitionStatement::detail(std::shared_ptr<AltaC
 
 ALTACORE_AST_VALIDATE_D(ClassMemberDefinitionStatement) {
   ALTACORE_VS_S;
-  if (!varDef) throw ValidationError("empty variable definition for class member");
+  if (!varDef) ALTACORE_VALIDATION_ERROR("empty variable definition for class member");
   varDef->validate(stack);
   ALTACORE_VS_E;
 };

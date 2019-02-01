@@ -16,7 +16,7 @@ void AltaCore::AST::ExpressionStatement::detail(std::shared_ptr<AltaCore::DET::S
 
 ALTACORE_AST_VALIDATE_D(ExpressionStatement) {
   ALTACORE_VS_S;
-  if (!expression) throw ValidationError("empty expression for expression statement");
+  if (!expression) ALTACORE_VALIDATION_ERROR("empty expression for expression statement");
   expression->validate(stack);
   ALTACORE_VS_E;
 };

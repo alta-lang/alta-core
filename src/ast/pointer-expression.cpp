@@ -10,7 +10,7 @@ void AltaCore::AST::PointerExpression::detail(std::shared_ptr<AltaCore::DET::Sco
 
 ALTACORE_AST_VALIDATE_D(PointerExpression) {
   ALTACORE_VS_S;
-  if (!target) throw ValidationError("empty target for pointer expression");
+  if (!target) ALTACORE_VALIDATION_ERROR("empty target for pointer expression");
   target->validate(stack);
   ALTACORE_VS_E;
 };
