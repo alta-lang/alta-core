@@ -29,6 +29,7 @@ namespace AltaCore {
         ImportStatement(std::string request, std::string alias);
 
         virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_VALIDATE;
     };
   };
 };

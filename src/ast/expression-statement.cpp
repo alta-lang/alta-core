@@ -13,3 +13,10 @@ AltaCore::AST::ExpressionStatement::ExpressionStatement(std::shared_ptr<AltaCore
 void AltaCore::AST::ExpressionStatement::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
   expression->detail(scope);
 };
+
+ALTACORE_AST_VALIDATE_D(ExpressionStatement) {
+  ALTACORE_VS_S;
+  if (!expression) ALTACORE_VALIDATION_ERROR("empty expression for expression statement");
+  expression->validate(stack);
+  ALTACORE_VS_E;
+};

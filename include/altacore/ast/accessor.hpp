@@ -23,6 +23,7 @@ namespace AltaCore {
 
         void narrowTo(std::shared_ptr<DET::Type> type);
         virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_VALIDATE;
     };
   };
 };

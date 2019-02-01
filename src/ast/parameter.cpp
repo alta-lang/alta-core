@@ -17,3 +17,15 @@ void AltaCore::AST::Parameter::detail(std::shared_ptr<DET::Scope> scope, bool ho
   }
   return type->detail(scope, hoist);
 };
+
+ALTACORE_AST_VALIDATE_D(Parameter) {
+  ALTACORE_VS_S;
+  if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for parameter");
+  if (!type) ALTACORE_VALIDATION_ERROR("empty type for parameter");
+  type->validate(stack);
+  for (auto& attr: attributes) {
+    if (!attr) ALTACORE_VALIDATION_ERROR("empty attribute for parameter");
+    attr->validate(stack);
+  }
+  ALTACORE_VS_E;
+};

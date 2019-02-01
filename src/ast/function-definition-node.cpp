@@ -46,3 +46,20 @@ void AltaCore::AST::FunctionDefinitionNode::detail(std::shared_ptr<AltaCore::DET
     }
   }
 };
+
+ALTACORE_AST_VALIDATE_D(FunctionDefinitionNode) {
+  ALTACORE_VS_S;
+  if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for function definition");
+  for (auto& param: parameters) {
+    if (!param) ALTACORE_VALIDATION_ERROR("empty parameter for function definition");
+    param->validate(stack);
+  }
+  if (!returnType) ALTACORE_VALIDATION_ERROR("empty return type for function definition");
+  returnType->validate(stack);
+  for (auto& mod: modifiers) {
+    if (mod.empty()) ALTACORE_VALIDATION_ERROR("empty modifier for function definition");
+  }
+  if (!body) ALTACORE_VALIDATION_ERROR("empty body for function definition");
+  body->validate(stack);
+  ALTACORE_VS_E;
+};

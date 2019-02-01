@@ -27,6 +27,7 @@ namespace AltaCore {
         ClassDefinitionNode(std::string name);
 
         virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_VALIDATE;
     };
   };
 };

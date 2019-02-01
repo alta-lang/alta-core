@@ -9,5 +9,6 @@
 #include "altacore/util.hpp"
 #include "altacore/preprocessor.hpp"
 #include "altacore/attributes.hpp"
+#include "altacore/validator.hpp"
 
 #endif // ALTACORE_ALTACORE_HPP

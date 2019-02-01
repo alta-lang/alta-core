@@ -32,3 +32,26 @@ void AltaCore::AST::ConditionalStatement::detail(std::shared_ptr<AltaCore::DET::
     finalResult->detail($finalScope);
   }
 };
+
+ALTACORE_AST_VALIDATE_D(ConditionalStatement) {
+  ALTACORE_VS_S;
+  if (!primaryTest) ALTACORE_VALIDATION_ERROR("empty primary test for conditional statement");
+  if (!primaryResult) ALTACORE_VALIDATION_ERROR("empty primary result for conditional statement");
+  primaryTest->validate(stack);
+  primaryResult->validate(stack);
+  for (auto& [test, result]: alternatives) {
+    if (!test) ALTACORE_VALIDATION_ERROR("empty alternative test for conditional statement");
+    if (!result) ALTACORE_VALIDATION_ERROR("empty alternative result conditional statement");
+    test->validate(stack);
+    result->validate(stack);
+  }
+  if (finalResult) {
+    finalResult->validate(stack);
+  }
+  if (!$primaryScope) ALTACORE_VALIDATION_ERROR("improperly detailed primary scope for conditional statement");
+  for (auto& scope: $alternativeScopes) {
+    if (!scope) ALTACORE_VALIDATION_ERROR("improperly detailed alternative scope for conditional statement");
+  }
+  if (finalResult && !$finalScope) ALTACORE_VALIDATION_ERROR("improperly detailed final scope for conditional statement");
+  ALTACORE_VS_E;
+};

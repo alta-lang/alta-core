@@ -17,6 +17,7 @@ namespace AltaCore {
         BlockNode(std::vector<std::shared_ptr<StatementNode>> statements);
         
         virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_VALIDATE;
     };
   };
 };

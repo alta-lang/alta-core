@@ -17,3 +17,10 @@ void AltaCore::AST::ClassMethodDefinitionStatement::detail(std::shared_ptr<AltaC
   auto klass = scope->parentClass.lock();
   funcDef->$function->parentClassType = std::make_shared<DET::Type>(klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
 };
+
+ALTACORE_AST_VALIDATE_D(ClassMethodDefinitionStatement) {
+  ALTACORE_VS_S;
+  if (!funcDef) ALTACORE_VALIDATION_ERROR("empty function definition for class method");
+  funcDef->validate(stack);
+  ALTACORE_VS_E;
+};

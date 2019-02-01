@@ -47,3 +47,12 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
 void AltaCore::AST::RootNode::detail(std::string filePath, std::string moduleName) {
   return detail(Filesystem::Path(filePath, moduleName));
 };
+
+ALTACORE_AST_VALIDATE_D(RootNode) {
+  ALTACORE_VS_S;
+  for (auto& stmt: statements) {
+    if (!stmt) ALTACORE_VALIDATION_ERROR("empty statement in root node");
+    stmt->validate(stack);
+  }
+  ALTACORE_VS_E;
+};

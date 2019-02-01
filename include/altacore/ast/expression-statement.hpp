@@ -17,6 +17,7 @@ namespace AltaCore {
         ExpressionStatement(std::shared_ptr<ExpressionNode> expression);
 
         virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_VALIDATE;
     };
   };
 };

@@ -11,3 +11,9 @@ AltaCore::AST::AttributeStatement::AttributeStatement(std::shared_ptr<AltaCore::
 void AltaCore::AST::AttributeStatement::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
   attribute->detail(scope);
 };
+
+ALTACORE_AST_VALIDATE_D(AttributeStatement) {
+  ALTACORE_VS_S;
+  attribute->validate(stack);
+  ALTACORE_VS_E;
+};

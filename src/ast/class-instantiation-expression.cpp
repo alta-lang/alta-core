@@ -46,3 +46,17 @@ void AltaCore::AST::ClassInstantiationExpression::detail(std::shared_ptr<AltaCor
     throw std::runtime_error("unable to find suitable constructor");
   }
 };
+
+ALTACORE_AST_VALIDATE_D(ClassInstantiationExpression) {
+  ALTACORE_VS_S;
+  if (!target) ALTACORE_VALIDATION_ERROR("empty target for class instantiation");
+  target->validate(stack);
+  for (auto& [name, arg]: arguments) {
+    if (!arg) ALTACORE_VALIDATION_ERROR("empty argument for class instantiation");
+    arg->validate(stack);
+  }
+  if (!$klass) ALTACORE_VALIDATION_ERROR("failed to find desired class for class instantiation");
+  if (!$constructor) ALTACORE_VALIDATION_ERROR("failed to find proper constructor during detailing of class instantiation");
+  // TODO: validate adjusted arguments
+  ALTACORE_VS_E;
+};

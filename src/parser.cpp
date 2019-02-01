@@ -138,12 +138,25 @@ namespace AltaCore {
     };
     // </helper-functions>
 
-    Parser::Parser(std::vector<Token> _tokens):
-      GenericParser(_tokens)
+    Parser::Parser(std::vector<Token> _tokens, Filesystem::Path _filePath):
+      GenericParser(_tokens),
+      filePath(_filePath)
       {};
 
-#define AST_NODE_POSITION(x) x->position.line = tokens[state.stateAtStart.currentPosition - 1].line; x->position.column = tokens[state.stateAtStart.currentPosition - 1].column
     Parser::RuleReturn Parser::runRule(RuleType rule, RuleState& state, std::vector<Expectation>& exps) {
+      auto result = realRunRule(rule, state, exps);
+      if (auto node = ALTACORE_VARIANT_GET_IF<ALTACORE_OPTIONAL<NodeType>>(&result)) {
+        if (*node) {
+          auto& ptr = **node;
+          ptr->position.line = tokens[state.stateAtStart.currentPosition].line;
+          ptr->position.column = tokens[state.stateAtStart.currentPosition].column;
+          ptr->file = filePath;
+        }
+      }
+      return result;
+    };
+
+    Parser::RuleReturn Parser::realRunRule(RuleType rule, RuleState& state, std::vector<Expectation>& exps) {
       /*
        * note about early returns in front-recursive rules:
        *
@@ -196,7 +209,6 @@ namespace AltaCore {
           throw std::runtime_error("input not completely parsed; assuming failure");
         }
         auto root = std::make_shared<AST::RootNode>(statements);
-        AST_NODE_POSITION(root);
         return root;
       } else if (rule == RuleType::Statement) {
         if (state.iteration == 0) {
@@ -231,7 +243,6 @@ namespace AltaCore {
         }
         // doing this here means we've already got all the statements
         // covered; we don't have to repeat it for each statement
-        AST_NODE_POSITION(ret);
         return ret;
       } else if (rule == RuleType::Expression) {
         if (state.internalIndex == 0) {
@@ -242,7 +253,6 @@ namespace AltaCore {
           auto expr = *exps.back().item;
           // same thing about the statements here,
           // but here it covers all expressions
-          AST_NODE_POSITION(expr);
           return expr;
         }
         /*
@@ -1410,7 +1420,6 @@ namespace AltaCore {
 
       return ALTACORE_NULLOPT;
     };
-#undef AST_NODE_POSITION
 
     void Parser::parse() {
       Expectation exp = expect(RuleType::Root);

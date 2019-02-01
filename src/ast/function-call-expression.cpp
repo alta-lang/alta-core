@@ -201,3 +201,26 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
 
   $argumentMap = argMap;
 };
+
+ALTACORE_AST_VALIDATE_D(FunctionCallExpression) {
+  ALTACORE_VS_S;
+  if (!target) ALTACORE_VALIDATION_ERROR("empty target for function call");
+  for (auto& [name, arg]: arguments) {
+    if (!arg) ALTACORE_VALIDATION_ERROR("empty argument for function call");
+  }
+  if ($isMethodCall && !$methodClassTarget) {
+    ALTACORE_VALIDATION_ERROR("improperly detailed method class target for function call");
+  }
+  for (auto& adjArg: $adjustedArguments) {
+    if (auto args = ALTACORE_VARIANT_GET_IF<std::vector<std::shared_ptr<ExpressionNode>>>(&adjArg)) {
+      for (auto& arg: *args) {
+        if (!arg) ALTACORE_VALIDATION_ERROR("empty adjusted argument for function call");
+      }
+    } else if (auto arg = ALTACORE_VARIANT_GET_IF<std::shared_ptr<ExpressionNode>>(&adjArg)) {
+      if (!*arg) ALTACORE_VALIDATION_ERROR("empty adjusted argument for function call");
+    } else {
+      throw std::runtime_error("this is *litterally* impossible");
+    }
+  }
+  ALTACORE_VS_E;
+};

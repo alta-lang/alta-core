@@ -22,6 +22,7 @@ namespace AltaCore {
         BinaryOperation(OperatorType type, std::shared_ptr<ExpressionNode> left, std::shared_ptr<ExpressionNode> right);
 
         virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_VALIDATE;
     };
   };
 };

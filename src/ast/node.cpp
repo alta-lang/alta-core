@@ -18,3 +18,9 @@ AltaCore::AST::Node::Node() {
   uuidStream << xg::newGuid();
   id = uuidStream.str();
 };
+
+ALTACORE_AST_VALIDATE_D(Node) {
+  ALTACORE_VS_S;
+  // by default, nodes are valid, so don't throw any errors
+  ALTACORE_VS_E;
+};
