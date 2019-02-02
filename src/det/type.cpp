@@ -72,7 +72,10 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     return getUnderlyingType(ptr->target.get())->point();
   } else if (exprType == ExpressionType::DereferenceExpression) {
     auto deref = dynamic_cast<AST::DereferenceExpression*>(expression);
-    return getUnderlyingType(deref->target.get())->dereference();
+    return getUnderlyingType(deref->target.get())->follow();
+  } else if (exprType == ExpressionType::CastExpression) {
+    auto cast = dynamic_cast<AST::CastExpression*>(expression);
+    return cast->type->$type;
   }
 
   return nullptr;

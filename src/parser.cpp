@@ -685,7 +685,7 @@ namespace AltaCore {
           AST::OperatorType::Subtraction,
         }, state, exps);
       } else if (rule == RuleType::MultiplicationOrDivision) {
-        return expectBinaryOperation(rule, RuleType::PointerOrDereference, {
+        return expectBinaryOperation(rule, RuleType::Cast, {
           TokenType::Asterisk,
           TokenType::ForwardSlash,
         }, {
@@ -1361,6 +1361,27 @@ namespace AltaCore {
           return inst;
         } else {
           return exps.back().item;
+        }
+      } else if (rule == RuleType::Cast) {
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          return RuleType::PointerOrDereference;
+        } else if (state.internalIndex == 1) {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          auto cast = std::make_shared<AST::CastExpression>();
+          cast->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+          state.internalValue = std::make_pair(std::move(cast), currentState);
+          state.internalIndex = 2;
+          if (!expectKeyword("as")) return exps.back().item;
+          return RuleType::Type;
+        } else {
+          auto cast = ALTACORE_ANY_CAST<std::pair<std::shared_ptr<AST::CastExpression>, decltype(currentState)>>(state.internalValue);
+          if (!exps.back()) {
+            currentState = cast.second;
+            return cast.first->target;
+          }
+          cast.first->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+          return cast.first;
         }
       } else if (rule == RuleType::PointerOrDereference) {
         if (state.internalIndex == 0) {

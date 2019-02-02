@@ -38,5 +38,6 @@
 #include "ast/pointer-expression.hpp"
 #include "ast/dereference-expression.hpp"
 #include "ast/while-loop-statement.hpp"
+#include "ast/cast-expression.hpp"
 
 #endif // ALTACORE_AST_HPP
