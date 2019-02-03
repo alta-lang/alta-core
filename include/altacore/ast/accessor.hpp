@@ -3,6 +3,7 @@
 
 #include "expression-node.hpp"
 #include "../det/scope-item.hpp"
+#include "../det/function.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -10,11 +11,13 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
-        std::shared_ptr<AST::ExpressionNode> target;
+        std::shared_ptr<AST::ExpressionNode> target = nullptr;
         std::string query;
 
         std::vector<std::shared_ptr<DET::ScopeItem>> $items;
-        std::shared_ptr<DET::ScopeItem> $narrowedTo;
+        std::shared_ptr<DET::Function> $readAccessor = nullptr;
+        std::shared_ptr<DET::Function> $writeAccessor = nullptr;
+        std::shared_ptr<DET::ScopeItem> $narrowedTo = nullptr;
         std::shared_ptr<DET::Type> $targetType = nullptr;
 
         bool accessesNamespace = false;

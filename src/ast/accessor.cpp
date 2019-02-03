@@ -13,40 +13,49 @@ AltaCore::AST::Accessor::Accessor(std::shared_ptr<AltaCore::AST::ExpressionNode>
 void AltaCore::AST::Accessor::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
   target->detail(scope);
 
-  auto items = DET::ScopeItem::getUnderlyingItems(target);
   std::shared_ptr<DET::Scope> targetScope = nullptr;
+  auto targetAcc = std::dynamic_pointer_cast<Accessor>(target);
 
-  if (items.size() == 1) {
-    if (items[0]->nodeType() == DET::NodeType::Function) {
-      throw std::runtime_error("can't access a function");
-    } else if (items[0]->nodeType() == DET::NodeType::Namespace) {
-      accessesNamespace = true;
+  if (targetAcc && targetAcc->$readAccessor) {
+    if (targetAcc->$readAccessor->returnType->isNative) {
+      throw std::runtime_error("native types can't be accessed");
     }
-    try {
-      $targetType = DET::Type::getUnderlyingType(items[0]);
-    } catch (...) {
-      $targetType = nullptr;
-    }
-    targetScope = DET::Scope::getMemberScope(items[0]);
-  } else if (items.size() > 0) {
-    throw std::runtime_error("target must be narrowed before it can be accessed");
+    targetScope = targetAcc->$readAccessor->returnType->klass->scope;
   } else {
-    try {
-      auto expr = std::dynamic_pointer_cast<ExpressionNode>(target);
-      auto types = DET::Type::getUnderlyingTypes(expr.get());
-      if (types.size() == 1) {
-        $targetType = types[0];
-        if (types[0]->isNative) {
-          throw std::runtime_error("native types can't be accessed");
-        }
-        targetScope = types[0]->klass->scope;
-      } else if (items.size() > 0) {
-        throw std::runtime_error("target must be narrowed before it can be accessed");
-      } else {
-        // the `!targetScope` check will take care of this later
+    auto items = DET::ScopeItem::getUnderlyingItems(target);
+
+    if (items.size() == 1) {
+      if (items[0]->nodeType() == DET::NodeType::Function) {
+        throw std::runtime_error("can't access a function");
+      } else if (items[0]->nodeType() == DET::NodeType::Namespace) {
+        accessesNamespace = true;
       }
-    } catch (...) {
-      // do nothing
+      try {
+        $targetType = DET::Type::getUnderlyingType(items[0]);
+      } catch (...) {
+        $targetType = nullptr;
+      }
+      targetScope = DET::Scope::getMemberScope(items[0]);
+    } else if (items.size() > 0) {
+      throw std::runtime_error("target must be narrowed before it can be accessed");
+    } else {
+      try {
+        auto expr = std::dynamic_pointer_cast<ExpressionNode>(target);
+        auto types = DET::Type::getUnderlyingTypes(expr.get());
+        if (types.size() == 1) {
+          $targetType = types[0];
+          if (types[0]->isNative) {
+            throw std::runtime_error("native types can't be accessed");
+          }
+          targetScope = types[0]->klass->scope;
+        } else if (items.size() > 0) {
+          throw std::runtime_error("target must be narrowed before it can be accessed");
+        } else {
+          // the `!targetScope` check will take care of this later
+        }
+      } catch (...) {
+        // do nothing
+      }
     }
   }
 
@@ -56,11 +65,28 @@ void AltaCore::AST::Accessor::detail(std::shared_ptr<AltaCore::DET::Scope> scope
 
   $items = targetScope->findAll(query, {}, false);
 
-  if ($items.size() == 1) {
-    $narrowedTo = $items[0];
-  } else if (items.size() == 0) {
-    throw std::runtime_error("no items found for query in target");
+  bool allAccessors = true;
+
+  for (auto& item: $items) {
+    if (item->nodeType() == DET::NodeType::Function && std::dynamic_pointer_cast<DET::Function>(item)->isAccessor) {
+      auto acc = std::dynamic_pointer_cast<DET::Function>(item);
+      if (acc->parameters.size() == 0) {
+        if ($readAccessor) throw std::runtime_error("encountered two read accessors with the same name");
+        $readAccessor = acc;
+      } else if (acc->parameters.size() == 1) {
+        if ($writeAccessor) throw std::runtime_error("encountered two write accessors with the same name");
+        $writeAccessor = acc;
+      } else {
+        throw std::runtime_error("invalid accessor");
+      }
+    }
   }
+
+  if ($items.size() == 0) {
+    throw std::runtime_error("no items found for query in target");
+  } else if ($items.size() == 1) {
+    $narrowedTo = $items[0];
+  } 
 };
 
 void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<AltaCore::DET::Type> type) {
