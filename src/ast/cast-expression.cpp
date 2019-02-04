@@ -15,5 +15,7 @@ ALTACORE_AST_VALIDATE_D(CastExpression) {
   ALTACORE_VS_S;
   if (!target) ALTACORE_VALIDATION_ERROR("empty target for cast expression");
   if (!type) ALTACORE_VALIDATION_ERROR("empty type for cast expression");
+  target->validate(stack);
+  type->validate(stack);
   ALTACORE_VS_E;
 };

@@ -11,4 +11,8 @@
 #include "altacore/attributes.hpp"
 #include "altacore/validator.hpp"
 
+namespace AltaCore {
+  void registerGlobalAttributes();
+};
+
 #endif // ALTACORE_ALTACORE_HPP

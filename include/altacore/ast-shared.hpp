@@ -47,6 +47,7 @@ namespace AltaCore {
       DereferenceExpression,
       WhileLoopStatement,
       CastExpression,
+      ClassReadAccessorDefinitionStatement,
     };
 
     static const char* const NodeType_names[] = {
@@ -87,6 +88,7 @@ namespace AltaCore {
       "DereferenceExpression",
       "WhileLoopStatement",
       "CastExpression",
+      "ClassReadAccessorDefinitionStatement",
     };
 
     enum class OperatorType {

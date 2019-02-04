@@ -40,6 +40,11 @@ void AltaCore::AST::FunctionDefinitionNode::detail(std::shared_ptr<AltaCore::DET
     stmt->detail($function->scope);
   }
 
+  for (auto& attr: attributes) {
+    attr->target = shared_from_this();
+    attr->detail(scope);
+  }
+
   if ($function->isExport) {
     if (auto mod = Util::getModule(scope.get()).lock()) {
       mod->exports->items.push_back($function);
@@ -50,6 +55,10 @@ void AltaCore::AST::FunctionDefinitionNode::detail(std::shared_ptr<AltaCore::DET
 ALTACORE_AST_VALIDATE_D(FunctionDefinitionNode) {
   ALTACORE_VS_S;
   if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for function definition");
+  for (auto& attr: attributes) {
+    if (!attr) ALTACORE_VALIDATION_ERROR("empty attribute for parameter");
+    attr->validate(stack);
+  }
   for (auto& param: parameters) {
     if (!param) ALTACORE_VALIDATION_ERROR("empty parameter for function definition");
     param->validate(stack);

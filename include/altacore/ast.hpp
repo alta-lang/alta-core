@@ -39,5 +39,6 @@
 #include "ast/dereference-expression.hpp"
 #include "ast/while-loop-statement.hpp"
 #include "ast/cast-expression.hpp"
+#include "ast/class-read-accessor-definition-statement.hpp"
 
 #endif // ALTACORE_AST_HPP

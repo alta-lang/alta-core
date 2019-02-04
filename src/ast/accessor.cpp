@@ -85,7 +85,9 @@ void AltaCore::AST::Accessor::detail(std::shared_ptr<AltaCore::DET::Scope> scope
   if ($items.size() == 0) {
     throw std::runtime_error("no items found for query in target");
   } else if ($items.size() == 1) {
-    $narrowedTo = $items[0];
+    if ($items[0]->nodeType() != DET::NodeType::Function || !std::dynamic_pointer_cast<DET::Function>($items[0])->isAccessor) {
+      $narrowedTo = $items[0];
+    }
   } 
 };
 
@@ -95,8 +97,10 @@ void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<AltaCore::DET::Type> type
     auto itemType = DET::Type::getUnderlyingType(item);
     auto compat = itemType->compatiblity(*type);
     if (compat > highestCompat) {
-      highestCompat = compat;
-      $narrowedTo = item;
+      if (item->nodeType() != DET::NodeType::Function || !std::dynamic_pointer_cast<DET::Function>(item)->isAccessor) {
+        highestCompat = compat;
+        $narrowedTo = item;
+      }
     }
   }
 };

@@ -48,7 +48,11 @@ void AltaCore::AST::AttributeNode::run(std::shared_ptr<AltaCore::AST::Node> targ
 };
 
 void AltaCore::AST::AttributeNode::findAttribute() {
-  $attribute = Attributes::findAttribute(accessors, ALTACORE_NULLOPT, $module.lock()->path.toString());
+  $attribute = Attributes::findAttribute(
+    accessors,
+    target ? std::make_optional(target->nodeType()) : ALTACORE_NULLOPT,
+    $module.lock()->path.toString()
+  );
 };
 
 std::string AltaCore::AST::AttributeNode::id() const {

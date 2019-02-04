@@ -6,13 +6,14 @@
 #include "parameter.hpp"
 #include "type.hpp"
 #include "../det/function.hpp"
+#include "attribute-node.hpp"
 #include "../det/scope.hpp"
 #include <vector>
 #include <string>
 
 namespace AltaCore {
   namespace AST {
-    class FunctionDefinitionNode: public StatementNode {
+    class FunctionDefinitionNode: public StatementNode, public std::enable_shared_from_this<FunctionDefinitionNode> {
       public:
         virtual const NodeType nodeType();
 
@@ -21,6 +22,7 @@ namespace AltaCore {
         std::shared_ptr<Type> returnType = nullptr;
         std::vector<std::string> modifiers;
         std::shared_ptr<BlockNode> body = nullptr;
+        std::vector<std::shared_ptr<AttributeNode>> attributes;
 
         std::shared_ptr<DET::Function> $function = nullptr;
 

@@ -303,8 +303,22 @@ namespace AltaCore {
         */
       } else if (rule == RuleType::FunctionDefinition) {
         if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          return RuleType::Attribute;
+        } else if (state.internalIndex == 1) {
+          if (exps.back()) {
+            return RuleType::Attribute;
+          }
+
+          exps.pop_back();
+          
           auto funcDef = std::make_shared<AST::FunctionDefinitionNode>();
           funcDef->modifiers = expectModifiers(ModifierTargetType::Function);
+
+          for (auto& exp: exps) {
+            funcDef->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+          }
+          exps.clear();
 
           if (!expectKeyword("function")) return ALTACORE_NULLOPT;
 
@@ -315,9 +329,9 @@ namespace AltaCore {
           if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
 
           state.internalValue = std::move(funcDef);
-          state.internalIndex = 1;
+          state.internalIndex = 2;
           return RuleType::Parameter;
-        } else if (state.internalIndex == 1) {
+        } else if (state.internalIndex == 2) {
           auto funcDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
 
           if (exps.back()) {
@@ -337,15 +351,15 @@ namespace AltaCore {
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
           if (!expect(TokenType::Colon)) return ALTACORE_NULLOPT;
 
-          state.internalIndex = 2;
+          state.internalIndex = 3;
           return RuleType::Type;
-        } else if (state.internalIndex == 2) {
+        } else if (state.internalIndex == 3) {
           auto funcDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
 
           if (!exps.back()) return ALTACORE_NULLOPT;
           funcDef->returnType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
 
-          state.internalIndex = 3;
+          state.internalIndex = 4;
           return RuleType::Block;
         } else {
           auto funcDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
@@ -1228,18 +1242,35 @@ namespace AltaCore {
         }
       } else if (rule == RuleType::ClassMethod) {
         if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          return RuleType::Attribute;
+        } else if (state.internalIndex == 1) {
+          if (exps.back()) {
+            return RuleType::Attribute;
+          }
+
+          exps.pop_back();
+
           auto visibilityMod = expectModifier(ModifierTargetType::ClassStatement);
           if (!visibilityMod) return ALTACORE_NULLOPT;
 
-          state.internalValue = std::make_shared<AST::ClassMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod));
-          state.internalIndex = 1;
+          std::vector<std::shared_ptr<AST::AttributeNode>> attrs;
+
+          for (auto& exp: exps) {
+            attrs.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+          }
+
+          state.internalValue = std::make_pair(attrs, std::make_shared<AST::ClassMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod)));
+          state.internalIndex = 2;
           return RuleType::FunctionDefinition;
         } else {
           if (!exps.back()) return ALTACORE_NULLOPT;
 
-          auto methodDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassMethodDefinitionStatement>>(state.internalValue);
+          auto [attrs, methodDef] = ALTACORE_ANY_CAST<std::pair<std::vector<std::shared_ptr<AST::AttributeNode>>, std::shared_ptr<AST::ClassMethodDefinitionStatement>>>(state.internalValue);
           methodDef->funcDef = std::dynamic_pointer_cast<AST::FunctionDefinitionNode>(*exps.back().item);
           if (!methodDef->funcDef) return ALTACORE_NULLOPT;
+
+          methodDef->funcDef->attributes.insert(methodDef->funcDef->attributes.begin(), attrs.begin(), attrs.end());
 
           return methodDef;
         }

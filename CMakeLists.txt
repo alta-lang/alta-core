@@ -22,6 +22,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/preprocessor.cpp"
   "${PROJECT_SOURCE_DIR}/src/attributes.cpp"
   "${PROJECT_SOURCE_DIR}/src/validator.cpp"
+  "${PROJECT_SOURCE_DIR}/src/altacore.cpp"
 
   # AST nodes
   "${PROJECT_SOURCE_DIR}/src/ast/node.cpp"
@@ -60,6 +61,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/dereference-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/while-loop-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/cast-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/class-read-accessor-definition-statement.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"
