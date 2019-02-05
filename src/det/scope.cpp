@@ -45,7 +45,7 @@ AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Class> _parentClass):
   parentClass(_parentClass)
   {};
 
-std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes, bool searchParents) {
+std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes, bool searchParents, std::shared_ptr<Scope> originScope) {
   std::vector<std::shared_ptr<ScopeItem>> results;
   std::vector<std::shared_ptr<Type>> funcTypes;
   std::shared_ptr<ScopeItem> first = nullptr;
@@ -53,6 +53,11 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
 
   for (auto& item: items) {
     if (item->name == name) {
+      if (item->visibility == Visibility::Private) {
+        if (originScope && originScope->id != id && !originScope->hasParent(shared_from_this())) {
+          continue;
+        }
+      }
       auto trueItem = item;
       while (trueItem->nodeType() == NodeType::Alias) {
         trueItem = std::dynamic_pointer_cast<Alias>(item)->target;
@@ -161,4 +166,30 @@ std::shared_ptr<AltaCore::DET::Scope> AltaCore::DET::Scope::getMemberScope(std::
   }
 
   return nullptr;
+};
+
+bool AltaCore::DET::Scope::hasParent(std::shared_ptr<Scope> lookup) const {
+  // `s` for `strong` (i.e. locked)
+  if (auto sParent = parent.lock()) {
+    if (sParent->id == lookup->id) return true;
+    return sParent->hasParent(lookup);
+  } else if (auto sModule = parentModule.lock()) {
+    return false;
+  } else if (auto sFunction = parentFunction.lock()) {
+    if (auto sParent = sFunction->parentScope.lock()) {
+      if (sParent->id == lookup->id) return true;
+      return sParent->hasParent(lookup);
+    }
+  } else if (auto sNamespace = parentNamespace.lock()) {
+    if (auto sParent = sNamespace->parentScope.lock()) {
+      if (sParent->id == lookup->id) return true;
+      return sParent->hasParent(lookup);
+    }
+  } else if (auto sClass = parentClass.lock()) {
+    if (auto sParent = sClass->parentScope.lock()) {
+      if (sParent->id == lookup->id) return true;
+      return sParent->hasParent(lookup);
+    }
+  }
+  return false;
 };

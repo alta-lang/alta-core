@@ -63,7 +63,7 @@ void AltaCore::AST::Accessor::detail(std::shared_ptr<AltaCore::DET::Scope> scope
     throw std::runtime_error("could not determine how to access the given target");
   }
 
-  $items = targetScope->findAll(query, {}, false);
+  $items = targetScope->findAll(query, {}, false, scope);
 
   bool allAccessors = true;
 

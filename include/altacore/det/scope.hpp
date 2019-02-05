@@ -35,8 +35,10 @@ namespace AltaCore {
         Scope(std::shared_ptr<Namespace> parentNamespace);
         Scope(std::shared_ptr<Class> parentClass);
 
-        std::vector<std::shared_ptr<ScopeItem>> findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes = {}, bool searchParents = true);
+        std::vector<std::shared_ptr<ScopeItem>> findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes = {}, bool searchParents = true, std::shared_ptr<Scope> originScope = nullptr);
         void hoist(std::shared_ptr<Type> whatToHoist);
+
+        bool hasParent(std::shared_ptr<Scope> parent) const;
 
         static std::shared_ptr<Scope> getMemberScope(std::shared_ptr<ScopeItem> item);
     };

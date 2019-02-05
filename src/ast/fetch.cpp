@@ -21,7 +21,7 @@ void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<AltaCore::DET::Type> type) {
 };
 
 void AltaCore::AST::Fetch::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  auto items = scope->findAll(query);
+  auto items = scope->findAll(query, {}, true, scope);
 
   if (items.size() == 1) {
     $narrowedTo = items[0];

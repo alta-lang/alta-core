@@ -54,6 +54,7 @@ namespace AltaCore {
       },
       {
         "public",
+        "private",
       },
       {
         "literal",
