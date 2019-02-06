@@ -96,6 +96,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
       if (auto klass = parent->parentClass.lock()) {
         type->isMethod = true;
         type->methodParent = klass;
+        type->isAccessor = func->isAccessor;
       }
     }
     return type;

@@ -167,6 +167,13 @@ void AltaCore::AST::FunctionCallExpression::detail(std::shared_ptr<AltaCore::DET
   }
 
   auto targetTypes = DET::Type::getUnderlyingTypes(target.get());
+
+  for (auto& type: targetTypes) {
+    if (type->isAccessor) {
+      type = type->returnType;
+    }
+  }
+
   auto [index, argMap, adjArgs] = findCompatibleCall(arguments, targetTypes);
 
   if (index != SIZE_MAX) {

@@ -30,6 +30,7 @@ namespace AltaCore {
         bool isNative = true;
         bool isFunction = false;
         bool isMethod = false;
+        bool isAccessor = false;
         std::shared_ptr<Class> methodParent = nullptr;
         NativeType nativeTypeName = NativeType::Void;
         std::shared_ptr<Class> klass = nullptr;
