@@ -315,6 +315,18 @@ namespace AltaCore {
           auto funcDef = std::make_shared<AST::FunctionDefinitionNode>();
           funcDef->modifiers = expectModifiers(ModifierTargetType::Function);
 
+          state.internalValue = std::move(funcDef);
+          state.internalIndex = 2;
+          return RuleType::Attribute;
+        } else if (state.internalIndex == 2) {
+          if (exps.back()) {
+            return RuleType::Attribute;
+          }
+
+          exps.pop_back();
+
+          auto funcDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
+
           for (auto& exp: exps) {
             funcDef->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
           }
@@ -328,10 +340,9 @@ namespace AltaCore {
 
           if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
 
-          state.internalValue = std::move(funcDef);
-          state.internalIndex = 2;
+          state.internalIndex = 3;
           return RuleType::Parameter;
-        } else if (state.internalIndex == 2) {
+        } else if (state.internalIndex == 3) {
           auto funcDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
 
           if (exps.back()) {
@@ -351,15 +362,15 @@ namespace AltaCore {
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
           if (!expect(TokenType::Colon)) return ALTACORE_NULLOPT;
 
-          state.internalIndex = 3;
+          state.internalIndex = 4;
           return RuleType::Type;
-        } else if (state.internalIndex == 3) {
+        } else if (state.internalIndex == 4) {
           auto funcDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
 
           if (!exps.back()) return ALTACORE_NULLOPT;
           funcDef->returnType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
 
-          state.internalIndex = 4;
+          state.internalIndex = 5;
           return RuleType::Block;
         } else {
           auto funcDef = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionDefinitionNode>>(state.internalValue);
