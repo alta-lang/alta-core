@@ -4,6 +4,7 @@
 #include "statement-node.hpp"
 #include "expression-node.hpp"
 #include "../det/scope.hpp"
+#include "../det/type.hpp"
 #include <string>
 #include <vector>
 
@@ -14,6 +15,8 @@ namespace AltaCore {
         virtual const NodeType nodeType();
 
         std::shared_ptr<ExpressionNode> expression = nullptr;
+
+        std::shared_ptr<DET::Type> $functionReturnType = nullptr;
 
         ReturnDirectiveNode(std::shared_ptr<ExpressionNode> expression);
 

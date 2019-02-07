@@ -1,4 +1,5 @@
 #include "../../include/altacore/ast/return-directive-node.hpp"
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::ReturnDirectiveNode::nodeType() {
   return NodeType::ReturnDirectiveNode;
@@ -10,6 +11,8 @@ AltaCore::AST::ReturnDirectiveNode::ReturnDirectiveNode(std::shared_ptr<AltaCore
 
 void AltaCore::AST::ReturnDirectiveNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
   if (expression != nullptr) {
+    auto func = Util::getFunction(scope).lock();
+    $functionReturnType = func->returnType;
     return expression->detail(scope);
   }
 };
