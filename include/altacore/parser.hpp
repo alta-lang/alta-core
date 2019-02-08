@@ -51,6 +51,10 @@ namespace AltaCore {
         "ptr",
         "const",
         "ref",
+        "signed",
+        "unsigned",
+        "long",
+        "short",
       },
       {
         "public",

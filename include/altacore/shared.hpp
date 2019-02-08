@@ -10,6 +10,12 @@ namespace AltaCore {
       Pointer   = 1 << 0,
       Constant  = 1 << 1,
       Reference = 1 << 2,
+
+      // native-only modifiers
+      Signed    = 1 << 3,
+      Unsigned  = 1 << 4,
+      Long      = 1 << 5,
+      Short     = 1 << 6,
     };
 
     enum class Visibility {

@@ -101,6 +101,11 @@ ALTACORE_AST_VALIDATE_D(Type) {
       if (!name.empty()) ALTACORE_VALIDATION_ERROR("non-native type can't have a native type name");
       if (!lookup) ALTACORE_VALIDATION_ERROR("empty lookup for non-native type");
       lookup->validate(stack);
+      for (auto& mod: modifiers) {
+        if (mod >= (uint8_t)TypeModifierFlag::Signed) {
+          ALTACORE_VALIDATION_ERROR("only native types can be `signed`, `unsigned`, `long`, or `short`");
+        }
+      }
     }
   }
   ALTACORE_VS_E;

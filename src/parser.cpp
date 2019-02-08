@@ -483,6 +483,14 @@ namespace AltaCore {
             } else if (modifier == "ref") {
               bitFlag |= (uint8_t)AST::TypeModifierFlag::Reference;
               type->modifiers.push_back(0);
+            } else if (modifier == "signed") {
+              bitFlag |= (uint8_t)AST::TypeModifierFlag::Signed;
+            } else if (modifier == "unsigned") {
+              bitFlag |= (uint8_t)AST::TypeModifierFlag::Unsigned;
+            } else if (modifier == "long") {
+              bitFlag |= (uint8_t)AST::TypeModifierFlag::Long;
+            } else if (modifier == "short") {
+              bitFlag |= (uint8_t)AST::TypeModifierFlag::Short;
             }
           }
           if (type->modifiers.back() == 0) {
