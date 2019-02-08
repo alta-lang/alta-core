@@ -41,6 +41,16 @@ namespace AltaCore {
             return true;
           }
         } break;
+        case TokenType::SingleLineComment: {
+          if (first && character == '#') {
+            return true;
+          }
+          if (character == '\n') {
+            *ended = true;
+          } else if (!first) {
+            return true;
+          }
+        } break;
         default: {
           *contigious = true;
           auto string = TokenType_simpleCharacters[(int)rule];
@@ -92,6 +102,11 @@ namespace AltaCore {
         backlog.push_back(character);
       }
       lex();
+      for (size_t i = 0; i < tokens.size(); i++) {
+        if (tokens[i].type == TokenType::SingleLineComment) {
+          tokens.erase(tokens.begin() + i);
+        }
+      }
     };
     void Lexer::lex() {
       bool incrementTotal = false;

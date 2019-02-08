@@ -26,6 +26,7 @@ namespace AltaCore {
       None,
       
       // <special-rules>
+      SingleLineComment,
       Identifier,
       Integer,
       String,
@@ -70,6 +71,7 @@ namespace AltaCore {
       "",
       "",
       "",
+      "",
 
       "==",
       "&&",
@@ -104,6 +106,7 @@ namespace AltaCore {
     static const char* const TokenType_names[] = {
       "None",
 
+      "Single line comment",
       "Identifier",
       "Integer",
       "String",

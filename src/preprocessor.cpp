@@ -499,6 +499,31 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
     auto tokens = allTokens[k];
     auto untouchable = untouchableLines[k];
     auto lineStartIndex = lineStartIndexes[k];
+    auto strings = PreprocessorUtils::findStrings(line);
+    auto slCommentStart = line.find('#');
+    std::function<bool(size_t, size_t)> doComment = [](size_t, size_t) { return false; };
+    if (slCommentStart != -1) {
+      bool ok = true;
+      for (auto [start, end]: strings) {
+        if (start < slCommentStart && end > slCommentStart) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) {
+        doComment = [&](size_t idx, size_t nextStart) {
+          if (idx < slCommentStart) return false;
+          auto& target = (conditionals.size() > 0) ? conditionals.top() : result;
+          auto linesInTarget = std::count(target.begin(), target.end(), '\n');
+          auto lastTargetLine = target.substr(target.find_last_of('\n') + 1) + line.substr(nextStart);
+          auto comment = line.substr(slCommentStart);
+          locations.emplace_back(k + 1, slCommentStart + 1, linesInTarget + 1, lastTargetLine.find('#') + 1, comment.size());
+          locations.emplace_back(k + 1, line.size(), linesInTarget + 1, lastTargetLine.size(), 0);
+          //line = line.substr(0, slCommentStart);
+          return true;
+        };
+      }
+    }
     auto saveForLater = [&]() {
       // make sure we don't save the same chunk more than once
       if (lineCache.length() < chunk.length() || lineCache.substr(lineCache.length() - chunk.length(), chunk.length()) != chunk) {
@@ -679,7 +704,7 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
         auto& importRequest = imports[i];
         for (size_t j = 0; j < delimiters.size(); j++) {
           auto& [delimiterStart, delimiterEnd] = delimiters[j];
-          if (delimiterEnd + lineStartIndex < importStart) {
+          if (delimiterEnd + lineStartIndex < importStart && !doComment(delimiterEnd, nextStart)) {
             // [comment id: p.1]
             // TODO
             auto defName = line.substr(delimiterStart + 1, delimiterEnd - delimiterStart - 2);
@@ -717,30 +742,32 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
         fileReader(*this, pre, importRequest);
       }
       for (auto& [delimiterStart, delimiterEnd]: delimiters) {
-        // see comment p.1 above
-        auto defName = line.substr(delimiterStart + 2, delimiterEnd - delimiterStart - 2);
-        target += line.substr(nextStart, delimiterStart - nextStart);
-        if (definitions.find(defName) != definitions.end()) {
-          auto& val = definitions[defName];
-          std::string result = "";
-          if (val.type == ExpressionType::String) {
-            result = val.string;
-          } else if (val.type == ExpressionType::Boolean) {
-            result = (val.boolean) ? "true" : "false";
+        if (!doComment(delimiterEnd, nextStart)) {
+          // see comment p.1 above
+          auto defName = line.substr(delimiterStart + 2, delimiterEnd - delimiterStart - 2);
+          target += line.substr(nextStart, delimiterStart - nextStart);
+          if (definitions.find(defName) != definitions.end()) {
+            auto& val = definitions[defName];
+            std::string result = "";
+            if (val.type == ExpressionType::String) {
+              result = val.string;
+            } else if (val.type == ExpressionType::Boolean) {
+              result = (val.boolean) ? "true" : "false";
+            } else {
+              result = "";
+            }
+            auto linesInTarget = std::count(target.begin(), target.end(), '\n');
+            auto lastTargetLine = target.substr(target.find_last_of('\n') + 1);
+            locations.emplace_back(totalLines, delimiterStart + 1, linesInTarget + 1, lastTargetLine.size(), result.size());
+            target += result;
+            linesInTarget = std::count(target.begin(), target.end(), '\n');
+            lastTargetLine = target.substr(target.find_last_of('\n') + 1);
+            locations.emplace_back(totalLines, delimiterEnd + 1, linesInTarget + 1, lastTargetLine.size(), 0);
           } else {
-            result = "";
+            throw std::runtime_error("definition not found: " + defName);
           }
-          auto linesInTarget = std::count(target.begin(), target.end(), '\n');
-          auto lastTargetLine = target.substr(target.find_last_of('\n') + 1);
-          locations.emplace_back(totalLines, delimiterStart + 1, linesInTarget + 1, lastTargetLine.size(), result.size());
-          target += result;
-          linesInTarget = std::count(target.begin(), target.end(), '\n');
-          lastTargetLine = target.substr(target.find_last_of('\n') + 1);
-          locations.emplace_back(totalLines, delimiterEnd + 1, linesInTarget + 1, lastTargetLine.size(), 0);
-        } else {
-          throw std::runtime_error("definition not found: " + defName);
+          nextStart = delimiterEnd + 1;
         }
-        nextStart = delimiterEnd + 1;
       }
       delimiters.clear();
       target += line.substr(nextStart);
