@@ -40,5 +40,6 @@
 #include "ast/while-loop-statement.hpp"
 #include "ast/cast-expression.hpp"
 #include "ast/class-read-accessor-definition-statement.hpp"
+#include "ast/character-literal-node.hpp"
 
 #endif // ALTACORE_AST_HPP

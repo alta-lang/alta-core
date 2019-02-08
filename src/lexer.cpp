@@ -27,7 +27,7 @@ namespace AltaCore {
           }
         } break;
         case TokenType::String: {
-          if (character == '\\') {
+          if (!first && character == '\\') {
             consumeNext = true;
             return true;
           }
@@ -48,6 +48,24 @@ namespace AltaCore {
           if (character == '\n') {
             *ended = true;
           } else if (!first) {
+            return true;
+          }
+        } break;
+        case TokenType::Character: {
+          *contigious = true;
+          if (!first && character == '\\') {
+            consumeNext = true;
+            characterLiteralEscaped = true;
+            return true;
+          }
+          if (character == '\'') {
+            characterLiteralEscaped = false;
+            if (!first) {
+              *ended = true;
+            }
+            return true;
+          }
+          if (ruleIteration == 1 && !characterLiteralEscaped) {
             return true;
           }
         } break;

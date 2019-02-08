@@ -62,6 +62,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/while-loop-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/cast-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/class-read-accessor-definition-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/character-literal-node.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

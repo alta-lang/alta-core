@@ -879,6 +879,11 @@ namespace AltaCore {
         auto raw = expect(TokenType::String);
         if (!raw) return ALTACORE_NULLOPT;
         return std::make_shared<AST::StringLiteralNode>(Util::unescape(raw.token.raw.substr(1, raw.token.raw.length() - 2)));
+      } else if (rule == RuleType::Character) {
+        auto raw = expect(TokenType::Character);
+        if (!raw) return ALTACORE_NULLOPT;
+        auto cont = raw.token.raw.substr(1, raw.token.raw.length() - 2);
+        return std::make_shared<AST::CharacterLiteralNode>((cont.length() == 2) ? cont[1] : cont[0], cont.length() == 2);
       } else if (rule == RuleType::FunctionDeclaration) {
         if (state.internalIndex == 0) {
           if (!expectKeyword("declare")) return ALTACORE_NULLOPT;
@@ -980,6 +985,7 @@ namespace AltaCore {
             RuleType::IntegralLiteral,
             RuleType::BooleanLiteral,
             RuleType::String,
+            RuleType::Character,
           };
         } else {
           return exps.back().item;
@@ -1334,6 +1340,7 @@ namespace AltaCore {
               RuleType::BooleanLiteral,
               RuleType::IntegralLiteral,
               RuleType::String,
+              RuleType::Character,
               RuleType::Accessor,
             };
           }
@@ -1348,6 +1355,7 @@ namespace AltaCore {
               RuleType::BooleanLiteral,
               RuleType::IntegralLiteral,
               RuleType::String,
+              RuleType::Character,
               RuleType::Accessor,
             };
           }

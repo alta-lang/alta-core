@@ -76,6 +76,8 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (exprType == ExpressionType::CastExpression) {
     auto cast = dynamic_cast<AST::CastExpression*>(expression);
     return cast->type->$type;
+  } else if (exprType == ExpressionType::CharacterLiteralNode) {
+    return std::make_shared<Type>(NativeType::Byte, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   }
 
   return nullptr;

@@ -30,6 +30,7 @@ namespace AltaCore {
       Identifier,
       Integer,
       String,
+      Character,
       // </special-rules>
 
       // <multi-character-rules>
@@ -72,6 +73,7 @@ namespace AltaCore {
       "",
       "",
       "",
+      "",
 
       "==",
       "&&",
@@ -110,6 +112,7 @@ namespace AltaCore {
       "Identifier",
       "Integer",
       "String",
+      "Character",
 
       "Equality",
       "And",
@@ -161,6 +164,8 @@ namespace AltaCore {
         TokenType hangingRule = TokenType::None;
         size_t ruleIteration = 0;
         bool consumeNext = false;
+
+        bool characterLiteralEscaped = false;
 
         /**
          * this is where the majority of the actual lexer logic goes,

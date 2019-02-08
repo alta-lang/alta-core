@@ -104,6 +104,7 @@ namespace AltaCore {
       PointerOrDereference,
       WhileLoop,
       Cast,
+      Character,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {
