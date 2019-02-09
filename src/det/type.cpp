@@ -339,12 +339,14 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
 };
 
 AltaCore::DET::Type::Type(AltaCore::DET::NativeType _nativeTypeName, std::vector<uint8_t> _modifiers):
+  ScopeItem(""),
   isNative(true),
   isFunction(false),
   nativeTypeName(_nativeTypeName),
   modifiers(_modifiers)
   {};
 AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> _parameters, std::vector<uint8_t> _modifiers):
+  ScopeItem(""),
   isNative(true),
   isFunction(true),
   returnType(_returnType),
@@ -352,6 +354,7 @@ AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std:
   modifiers(_modifiers)
   {};
 AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Class> _klass, std::vector<uint8_t> _modifiers):
+  ScopeItem(""),
   isNative(false),
   isFunction(false),
   klass(_klass),

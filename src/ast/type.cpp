@@ -29,7 +29,33 @@ void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bo
     $type = std::make_shared<DET::Type>(returnType->$type, detParams, modifiers);
     if (hoist) scope->hoist($type);
   } else {
-    if (isAny) {
+    std::shared_ptr<DET::ScopeItem> item = nullptr;
+
+    if (lookup) {
+      lookup->detail(scope);
+      auto nodeT = lookup->nodeType();
+      std::shared_ptr<DET::Class> klass = nullptr;
+
+      if (nodeT == NodeType::Fetch) {
+        auto fetch = std::dynamic_pointer_cast<Fetch>(lookup);
+        if (!fetch->$narrowedTo) {
+          throw std::runtime_error("that's weird, classes should be narrowed");
+        }
+        item = fetch->$narrowedTo;
+      } else if (nodeT == NodeType::Accessor) {
+        auto acc = std::dynamic_pointer_cast<Accessor>(lookup);
+        if (!acc->$narrowedTo) {
+          throw std::runtime_error("that's weird, classes should be narrowed");
+        }
+        item = acc->$narrowedTo;
+      } else {
+        throw std::runtime_error("WTF NO DONT DO THAT");
+      }
+    }
+
+    if (item && item->nodeType() == DET::NodeType::Type) {
+      $type = std::dynamic_pointer_cast<DET::Type>(item);
+    } else if (isAny) {
       $type = std::make_shared<DET::Type>();
     } else if (isNative) {
       DET::NativeType nt;
@@ -46,23 +72,10 @@ void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bo
 
       $type = std::make_shared<DET::Type>(nt, modifiers);
     } else {
-      lookup->detail(scope);
-
-      auto nodeT = lookup->nodeType();
       std::shared_ptr<DET::Class> klass = nullptr;
 
-      if (nodeT == NodeType::Fetch) {
-        auto fetch = std::dynamic_pointer_cast<Fetch>(lookup);
-        if (!fetch->$narrowedTo) {
-          throw std::runtime_error("that's weird, classes should be narrowed");
-        }
-        klass = std::dynamic_pointer_cast<DET::Class>(fetch->$narrowedTo);
-      } else if (nodeT == NodeType::Accessor) {
-        auto acc = std::dynamic_pointer_cast<Accessor>(lookup);
-        if (!acc->$narrowedTo) {
-          throw std::runtime_error("that's weird, classes should be narrowed");
-        }
-        klass = std::dynamic_pointer_cast<DET::Class>(acc->$narrowedTo);
+      if (item) {
+        klass = std::dynamic_pointer_cast<DET::Class>(item);
       } else {
         throw std::runtime_error("WTF NO DONT DO THAT");
       }

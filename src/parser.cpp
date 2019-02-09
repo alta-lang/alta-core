@@ -220,6 +220,7 @@ namespace AltaCore {
             RuleType::Block,
             RuleType::ClassDefinition,
             RuleType::WhileLoop,
+            RuleType::TypeAlias,
             RuleType::Expression,
 
             // general attributes must come last because
@@ -1494,6 +1495,25 @@ namespace AltaCore {
           loop->body = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
 
           return loop;
+        }
+      } else if (rule == RuleType::TypeAlias) {
+        if (state.internalIndex == 0) {
+          auto mods = expectModifiers(ModifierTargetType::TypeAlias);
+          if (!expectKeyword("type")) return ALTACORE_NULLOPT;
+          auto name = expect(TokenType::Identifier);
+          if (!name) return ALTACORE_NULLOPT;
+          if (!expect(TokenType::EqualSign)) return ALTACORE_NULLOPT;
+          auto typeAlias = std::make_shared<AST::TypeAliasStatement>();
+          typeAlias->modifiers = mods;
+          typeAlias->name = name.token.raw;
+          state.internalValue = std::move(typeAlias);
+          state.internalIndex = 1;
+          return RuleType::Type;
+        } else {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          auto typeAlias = ALTACORE_ANY_CAST<std::shared_ptr<AST::TypeAliasStatement>>(state.internalValue);
+          typeAlias->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+          return typeAlias;
         }
       }
 

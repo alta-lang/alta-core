@@ -1,14 +1,14 @@
 #ifndef ALTACORE_DET_TYPE_HPP
 #define ALTACORE_DET_TYPE_HPP
 
-#include "node.hpp"
+#include "scope-item.hpp"
 #include "../ast/expression-node.hpp"
 #include <string>
 #include <vector>
 
 namespace AltaCore {
   namespace DET {
-    class Type: public Node {
+    class Type: public ScopeItem {
       private:
         bool commonCompatiblity(const Type& other);
       public:
@@ -72,6 +72,7 @@ namespace AltaCore {
         bool isCompatibleWith(const Type& other);
 
         Type():
+          ScopeItem(""),
           isAny(true)
           {};
         Type(NativeType nativeTypeName, std::vector<uint8_t> modifiers = {});

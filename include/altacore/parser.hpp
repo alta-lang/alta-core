@@ -32,6 +32,7 @@ namespace AltaCore {
       Type,
       ClassStatement,
       Class,
+      TypeAlias,
     };
     /**
      * Each entry here corresponds to a `ModifierTargetType`
@@ -62,6 +63,9 @@ namespace AltaCore {
       },
       {
         "literal",
+        "export",
+      },
+      {
         "export",
       },
     };
@@ -109,6 +113,7 @@ namespace AltaCore {
       WhileLoop,
       Cast,
       Character,
+      TypeAlias,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {
