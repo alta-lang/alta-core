@@ -8,6 +8,8 @@ namespace AltaCore {
     class StatementNode: public Node {
       public:
         virtual const NodeType nodeType();
+
+        ALTACORE_AST_AUTO_DETAIL(StatementNode);
     };
   };
 };

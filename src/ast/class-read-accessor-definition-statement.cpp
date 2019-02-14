@@ -8,21 +8,23 @@ AltaCore::AST::ClassReadAccessorDefinitionStatement::ClassReadAccessorDefinition
   visibilityModifier(_visibilityModifier)
 {};
 
-void AltaCore::AST::ClassReadAccessorDefinitionStatement::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  type->detail(scope);
-  $bodyScope = std::make_shared<DET::Scope>(scope);
-  body->detail($bodyScope);
+ALTACORE_AST_DETAIL_D(ClassReadAccessorDefinitionStatement) {
+  ALTACORE_MAKE_DH(ClassReadAccessorDefinitionStatement);
+  info->type = type->fullDetail(scope);
+  info->bodyScope = std::make_shared<DET::Scope>(scope);
+  info->body = body->fullDetail(info->bodyScope);
 
-  $function = DET::Function::create(scope, name, {}, type->$type);
-  $function->isAccessor = true;
+  info->function = DET::Function::create(scope, name, {}, info->type->type);
+  info->function->isAccessor = true;
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(ClassReadAccessorDefinitionStatement) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(ClassReadAccessorDefinitionStatement);
   if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for class read accessor definition statement");
   if (!type) ALTACORE_VALIDATION_ERROR("empty type for class read accessor definition statement");
   if (!body) ALTACORE_VALIDATION_ERROR("empty body for class read accessor definition statement");
-  type->validate(stack);
-  body->validate(stack);
+  type->validate(stack, info->type);
+  body->validate(stack, info->body);
   ALTACORE_VS_E;
 };

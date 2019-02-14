@@ -16,11 +16,9 @@ namespace AltaCore {
         std::string name;
         std::shared_ptr<Type> type = nullptr;
 
-        bool isExport = false;
-
         TypeAliasStatement() {};
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_DETAIL(TypeAliasStatement);
         ALTACORE_AST_VALIDATE;
     };
   };

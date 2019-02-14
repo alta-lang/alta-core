@@ -15,33 +15,35 @@ AltaCore::AST::VariableDefinitionExpression::VariableDefinitionExpression(
   initializationExpression(_initializationExpression)
   {};
 
-void AltaCore::AST::VariableDefinitionExpression::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  type->detail(scope);
+ALTACORE_AST_DETAIL_D(VariableDefinitionExpression) {
+  ALTACORE_MAKE_DH(VariableDefinitionExpression);
+  info->type = type->fullDetail(scope);
 
-  $variable = std::make_shared<DET::Variable>(name, type->$type, scope);
-  scope->items.push_back($variable);
+  info->variable = std::make_shared<DET::Variable>(name, info->type->type, scope);
+  scope->items.push_back(info->variable);
 
   if (initializationExpression != nullptr) {
-    initializationExpression->detail(scope);
+    info->initializationExpression = initializationExpression->fullDetail(scope);
   }
 
-  $variable->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
-  $variable->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
+  info->variable->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
+  info->variable->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
 
-  if ($variable->isExport) {
+  if (info->variable->isExport) {
     if (auto mod = Util::getModule(scope.get()).lock()) {
-      mod->exports->items.push_back($variable);
+      mod->exports->items.push_back(info->variable);
     }
   }
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(VariableDefinitionExpression) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(VariableDefinitionExpression);
   if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for variable definition");
   if (!type) ALTACORE_VALIDATION_ERROR("empty type for variable definition");
-  type->validate(stack);
+  type->validate(stack, info->type);
   if (initializationExpression) {
-    initializationExpression->validate(stack);
+    initializationExpression->validate(stack, info->initializationExpression);
   }
   for (auto& mod: modifiers) {
     if (mod.empty()) ALTACORE_VALIDATION_ERROR("empty modifer for variable definition");

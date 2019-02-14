@@ -18,38 +18,43 @@ AltaCore::AST::FunctionDeclarationNode::FunctionDeclarationNode(
   modifiers(_modifiers)
   {};
 
-void AltaCore::AST::FunctionDeclarationNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
+ALTACORE_AST_DETAIL_D(FunctionDeclarationNode) {
+  ALTACORE_MAKE_DH(FunctionDeclarationNode);
   std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
 
   for (auto& param: parameters) {
-    param->detail(scope);
-    params.push_back(std::make_tuple(param->name, param->type->$type, param->isVariable, param->id));
+    auto det = param->fullDetail(scope);
+    info->parameters.push_back(det);
+    params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
   }
 
-  returnType->detail(scope);
+  info->returnType = returnType->fullDetail(scope);
 
-  $function = DET::Function::create(scope, name, params, returnType->$type);
-  scope->items.push_back($function);
+  info->function = DET::Function::create(scope, name, params, info->returnType->type);
+  scope->items.push_back(info->function);
 
-  $function->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
-  $function->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
+  info->function->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
+  info->function->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
 
-  if ($function->isExport) {
+  if (info->function->isExport) {
     if (auto mod = Util::getModule(scope.get()).lock()) {
-      mod->exports->items.push_back($function);
+      mod->exports->items.push_back(info->function);
     }
   }
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(FunctionDeclarationNode) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(FunctionDeclarationNode);
   if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for function declaration");
-  for (auto& param: parameters) {
+  for (size_t i = 0; i < parameters.size(); i++) {
+    auto& param = parameters[i];
+    auto& paramDet = info->parameters[i];
     if (!param) ALTACORE_VALIDATION_ERROR("empty parameter for function declaration");
-    param->validate(stack);
+    param->validate(stack, paramDet);
   }
   if (!returnType) ALTACORE_VALIDATION_ERROR("empty return type for function declaration");
-  returnType->validate(stack);
+  returnType->validate(stack, info->returnType);
   for (auto& mod: modifiers) {
     if (mod.empty()) ALTACORE_VALIDATION_ERROR("empty modifier for function declaration");
   }

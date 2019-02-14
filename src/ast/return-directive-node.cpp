@@ -9,18 +9,20 @@ AltaCore::AST::ReturnDirectiveNode::ReturnDirectiveNode(std::shared_ptr<AltaCore
   expression(_expression)
   {};
 
-void AltaCore::AST::ReturnDirectiveNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
+ALTACORE_AST_DETAIL_D(ReturnDirectiveNode) {
+  ALTACORE_MAKE_DH(ReturnDirectiveNode);
   if (expression != nullptr) {
     auto func = Util::getFunction(scope).lock();
-    $functionReturnType = func->returnType;
-    return expression->detail(scope);
+    info->functionReturnType = func->returnType;
+    info->expression = expression->fullDetail(scope);
   }
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(ReturnDirectiveNode) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(ReturnDirectiveNode);
   if (expression) {
-    expression->validate(stack);
+    expression->validate(stack, info->expression);
   }
   ALTACORE_VS_E;
 };

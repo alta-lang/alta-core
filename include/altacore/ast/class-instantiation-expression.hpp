@@ -21,14 +21,9 @@ namespace AltaCore {
         std::shared_ptr<ExpressionNode> target;
         std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments;
 
-        std::shared_ptr<DET::Function> $constructor = nullptr;
-        std::shared_ptr<DET::Class> $klass = nullptr;
-        std::unordered_map<size_t, size_t> $argumentMap;
-        std::vector<ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>> $adjustedArguments;
-
         ClassInstantiationExpression() {};
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_DETAIL(ClassInstantiationExpression);
         ALTACORE_AST_VALIDATE;
     };
   };

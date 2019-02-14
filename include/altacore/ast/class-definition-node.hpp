@@ -18,15 +18,9 @@ namespace AltaCore {
         std::string name;
         std::vector<std::shared_ptr<ClassStatementNode>> statements;
 
-        bool isExport = false;
-        bool isLiteral = false;
-        bool $createDefaultConstructor = false;
-        std::shared_ptr<ClassSpecialMethodDefinitionStatement> $defaultConstructor = nullptr;
-        std::shared_ptr<DET::Class> $klass = nullptr;
-
         ClassDefinitionNode(std::string name);
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_DETAIL(ClassDefinitionNode);
         ALTACORE_AST_VALIDATE;
     };
   };

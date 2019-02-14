@@ -16,7 +16,7 @@ namespace AltaCore {
         ConditionalExpression() {};
         ConditionalExpression(std::shared_ptr<ExpressionNode> test, std::shared_ptr<ExpressionNode> primary, std::shared_ptr<ExpressionNode> secondary);
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_DETAIL(ConditionalExpression);
         ALTACORE_AST_VALIDATE;
     };
   };

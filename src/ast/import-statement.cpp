@@ -17,34 +17,36 @@ AltaCore::AST::ImportStatement::ImportStatement(std::string _request, std::strin
   alias(_alias)
   {};
 
-void AltaCore::AST::ImportStatement::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  $parentModule = Util::getModule(scope.get()).lock();
-  $importedAST = Modules::parseModule(request, $parentModule->path);
-  $importedModule = $importedAST->$module;
-  $parentModule->dependencies.push_back($importedModule);
-  $importedModule->dependents.push_back($parentModule);
+ALTACORE_AST_DETAIL_D(ImportStatement) {
+  ALTACORE_MAKE_DH(ImportStatement);
+  info->parentModule = Util::getModule(scope.get()).lock();
+  info->importedAST = Modules::parseModule(request, info->parentModule->path);
+  info->importedModule = info->importedAST->info->module;
+  info->parentModule->dependencies.push_back(info->importedModule);
+  info->importedModule->dependents.push_back(info->parentModule);
   if (isAliased) {
-    auto ns = std::make_shared<DET::Namespace>(alias, $parentModule->scope);
-    ns->scope = $importedModule->exports;
-    $parentModule->scope->items.push_back(ns);
+    auto ns = std::make_shared<DET::Namespace>(alias, info->parentModule->scope);
+    ns->scope = info->importedModule->exports;
+    info->parentModule->scope->items.push_back(ns);
   } else {
     for (auto& [imp, alias]: imports) {
-      auto items = $importedModule->exports->findAll(imp);
-      $importedItems.insert($importedItems.end(), items.begin(), items.end());
+      auto items = info->importedModule->exports->findAll(imp);
+      info->importedItems.insert(info->importedItems.end(), items.begin(), items.end());
       if (!alias.empty()) {
         for (auto& item: items) {
-          auto aliasItem = std::make_shared<DET::Alias>(alias, item, $parentModule->scope);
-          $parentModule->scope->items.push_back(aliasItem);
+          auto aliasItem = std::make_shared<DET::Alias>(alias, item, info->parentModule->scope);
+          info->parentModule->scope->items.push_back(aliasItem);
         }
       } else {
-        $parentModule->scope->items.insert($parentModule->scope->items.end(), items.begin(), items.end());
+        info->parentModule->scope->items.insert(info->parentModule->scope->items.end(), items.begin(), items.end());
       }
     }
   }
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(ImportStatement) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(ImportStatement);
   if (request.empty()) ALTACORE_VALIDATION_ERROR("empty request/query string for import statement");
   if (isAliased) {
     if (imports.size() > 0) ALTACORE_VALIDATION_ERROR("no individual imports should be present for aliased imports");
@@ -55,8 +57,8 @@ ALTACORE_AST_VALIDATE_D(ImportStatement) {
       if (imp.empty()) ALTACORE_VALIDATION_ERROR("empty individual import for non-alised import");
     }
   }
-  if (!$importedAST) ALTACORE_VALIDATION_ERROR("improperly detailed import statement: empty AST");
-  $importedAST->validate(stack);
+  if (!info->importedAST) ALTACORE_VALIDATION_ERROR("improperly detailed import statement: empty AST");
+  info->importedAST->validate(stack, nullptr);
   // TODO: validate the detailed information
   //       i'm too lazy right now
   ALTACORE_VS_E;

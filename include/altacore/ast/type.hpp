@@ -30,13 +30,14 @@ namespace AltaCore {
         bool isNative = true;
         std::shared_ptr<ExpressionNode> lookup = nullptr;
 
-        std::shared_ptr<DET::Type> $type = nullptr;
-
         Type() {};
         Type(std::string name, std::vector<uint8_t> modifiers);
         Type(std::shared_ptr<Type> returnType, std::vector<std::tuple<std::shared_ptr<Type>, bool, std::string>> parameters, std::vector<uint8_t> modifiers);
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope, bool hoist = true);
+        virtual std::shared_ptr<DH::Node> detail(std::shared_ptr<DET::Scope> scope, bool hoist = true);
+        std::shared_ptr<DH::Type> fullDetail(std::shared_ptr<DET::Scope> scope, bool hoist = true) {
+          return std::dynamic_pointer_cast<DH::Type>(detail(scope));
+        };
         ALTACORE_AST_VALIDATE;
     };
   };

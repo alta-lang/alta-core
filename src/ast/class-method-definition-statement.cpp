@@ -9,18 +9,20 @@ AltaCore::AST::ClassMethodDefinitionStatement::ClassMethodDefinitionStatement(Al
   visibilityModifier(_visibilityModifier)
   {};
 
-void AltaCore::AST::ClassMethodDefinitionStatement::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
+ALTACORE_AST_DETAIL_D(ClassMethodDefinitionStatement) {
+  ALTACORE_MAKE_DH(ClassMethodDefinitionStatement);
   if (funcDef == nullptr) throw std::runtime_error("stop that");
-  funcDef->detail(scope);
-  funcDef->$function->visibility = visibilityModifier;
-  funcDef->$function->isMethod = true;
+  info->funcDef = funcDef->fullDetail(scope);
+  info->funcDef->function->visibility = visibilityModifier;
+  info->funcDef->function->isMethod = true;
   auto klass = scope->parentClass.lock();
-  funcDef->$function->parentClassType = std::make_shared<DET::Type>(klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
+  info->funcDef->function->parentClassType = std::make_shared<DET::Type>(klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(ClassMethodDefinitionStatement) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(ClassMethodDefinitionStatement);
   if (!funcDef) ALTACORE_VALIDATION_ERROR("empty function definition for class method");
-  funcDef->validate(stack);
+  funcDef->validate(stack, info->funcDef);
   ALTACORE_VS_E;
 };

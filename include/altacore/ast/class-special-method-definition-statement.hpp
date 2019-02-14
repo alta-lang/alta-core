@@ -22,12 +22,9 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Parameter>> parameters;
         std::shared_ptr<BlockNode> body = nullptr;
 
-        std::shared_ptr<DET::Class> $klass = nullptr;
-        std::shared_ptr<DET::Function> $method = nullptr;
-
         ClassSpecialMethodDefinitionStatement(Visibility visibilityModifier, SpecialClassMethod type);
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_DETAIL(ClassSpecialMethodDefinitionStatement);
         ALTACORE_AST_VALIDATE;
     };
   };

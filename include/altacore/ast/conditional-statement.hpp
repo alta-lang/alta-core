@@ -17,14 +17,10 @@ namespace AltaCore {
         std::vector<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<StatementNode>>> alternatives;
         std::shared_ptr<StatementNode> finalResult = nullptr;
 
-        std::shared_ptr<DET::Scope> $primaryScope = nullptr;
-        std::vector<std::shared_ptr<DET::Scope>> $alternativeScopes;
-        std::shared_ptr<DET::Scope> $finalScope = nullptr;
-
         ConditionalStatement() {};
         ConditionalStatement(std::shared_ptr<ExpressionNode> test, std::shared_ptr<StatementNode> primary, std::vector<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<StatementNode>>> alternatives = {}, std::shared_ptr<StatementNode> finalResult = nullptr);
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_DETAIL(ConditionalStatement);
         ALTACORE_AST_VALIDATE;
     };
   };

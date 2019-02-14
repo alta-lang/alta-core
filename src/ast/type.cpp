@@ -18,45 +18,49 @@ AltaCore::AST::Type::Type(std::shared_ptr<AltaCore::AST::Type> _returnType, std:
   modifiers(_modifiers)
   {};
 
-void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bool hoist) {
+std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bool hoist) {
+  ALTACORE_MAKE_DH(Type);
   if (isFunction) {
     std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> detParams;
-    returnType->detail(scope);
+    info->returnType = returnType->fullDetail(scope);
     for (auto& [param, isVariable, id]: parameters) {
-      param->detail(scope);
-      detParams.push_back({ "", param->$type, isVariable, id });
+      auto det = param->fullDetail(scope);
+      info->parameters.push_back(det);
+      detParams.push_back({ "", det->type, isVariable, id });
     }
-    $type = std::make_shared<DET::Type>(returnType->$type, detParams, modifiers);
-    if (hoist) scope->hoist($type);
+    info->type = std::make_shared<DET::Type>(info->returnType->type, detParams, modifiers);
+    if (hoist) scope->hoist(info->type);
   } else {
     std::shared_ptr<DET::ScopeItem> item = nullptr;
 
     if (lookup) {
-      lookup->detail(scope);
+      info->lookup = lookup->fullDetail(scope);
       auto nodeT = lookup->nodeType();
       std::shared_ptr<DET::Class> klass = nullptr;
 
       if (nodeT == NodeType::Fetch) {
         auto fetch = std::dynamic_pointer_cast<Fetch>(lookup);
-        if (!fetch->$narrowedTo) {
+        auto fetchDet = std::dynamic_pointer_cast<DH::Fetch>(info->lookup);
+        if (!fetchDet->narrowedTo) {
           throw std::runtime_error("that's weird, classes should be narrowed");
         }
-        item = fetch->$narrowedTo;
+        item = fetchDet->narrowedTo;
       } else if (nodeT == NodeType::Accessor) {
         auto acc = std::dynamic_pointer_cast<Accessor>(lookup);
-        if (!acc->$narrowedTo) {
+        auto accDet = std::dynamic_pointer_cast<DH::Accessor>(info->lookup);
+        if (!accDet->narrowedTo) {
           throw std::runtime_error("that's weird, classes should be narrowed");
         }
-        item = acc->$narrowedTo;
+        item = accDet->narrowedTo;
       } else {
         throw std::runtime_error("WTF NO DONT DO THAT");
       }
     }
 
     if (item && item->nodeType() == DET::NodeType::Type) {
-      $type = std::dynamic_pointer_cast<DET::Type>(item);
+      info->type = std::dynamic_pointer_cast<DET::Type>(item);
     } else if (isAny) {
-      $type = std::make_shared<DET::Type>();
+      info->type = std::make_shared<DET::Type>();
     } else if (isNative) {
       DET::NativeType nt;
 
@@ -70,7 +74,7 @@ void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bo
         nt = DET::NativeType::Void;
       }
 
-      $type = std::make_shared<DET::Type>(nt, modifiers);
+      info->type = std::make_shared<DET::Type>(nt, modifiers);
     } else {
       std::shared_ptr<DET::Class> klass = nullptr;
 
@@ -84,20 +88,23 @@ void AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bo
         throw std::runtime_error("y du u du this");
       }
 
-      $type = std::make_shared<DET::Type>(klass, modifiers);
+      info->type = std::make_shared<DET::Type>(klass, modifiers);
     }
   }
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(Type) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(Type);
   if (isFunction) {
     if (isAny) ALTACORE_VALIDATION_ERROR("type can't be multiple kinds, only one of `function`, `any`, or `native`");
     if (!returnType) ALTACORE_VALIDATION_ERROR("empty return type for function type");
-    returnType->validate(stack);
-    for (auto& [type, isVariable, name]: parameters) {
+    returnType->validate(stack, info->returnType);
+    for (size_t i = 0; i < parameters.size(); i++) {
+      auto& [type, isVariable, name] = parameters[i];
+      auto& paramDet = info->parameters[i];
       if (!type) ALTACORE_VALIDATION_ERROR("empty type for parameter for function type");
-      type->validate(stack);
+      type->validate(stack, paramDet);
     }
   } else {
     if (returnType) ALTACORE_VALIDATION_ERROR("non-function types can't have return types");
@@ -113,7 +120,7 @@ ALTACORE_AST_VALIDATE_D(Type) {
     } else {
       if (!name.empty()) ALTACORE_VALIDATION_ERROR("non-native type can't have a native type name");
       if (!lookup) ALTACORE_VALIDATION_ERROR("empty lookup for non-native type");
-      lookup->validate(stack);
+      lookup->validate(stack, info->lookup);
       for (auto& mod: modifiers) {
         if (mod >= (uint8_t)TypeModifierFlag::Signed) {
           ALTACORE_VALIDATION_ERROR("only native types can be `signed`, `unsigned`, `long`, or `short`");

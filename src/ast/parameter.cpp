@@ -10,22 +10,25 @@ AltaCore::AST::Parameter::Parameter(std::string _name, std::shared_ptr<AltaCore:
   isVariable(_isVariable)
   {};
 
-void AltaCore::AST::Parameter::detail(std::shared_ptr<DET::Scope> scope, bool hoist) {
+std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Parameter::detail(std::shared_ptr<DET::Scope> scope, bool hoist) {
+  ALTACORE_MAKE_DH(Parameter);
   for (auto& attr: attributes) {
-    attr->target = shared_from_this();
-    attr->detail(scope);
+    info->attributes.push_back(attr->fullDetail(scope, shared_from_this(), info));
   }
-  return type->detail(scope, hoist);
+  info->type = type->fullDetail(scope, hoist);
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(Parameter) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(Parameter);
   if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for parameter");
   if (!type) ALTACORE_VALIDATION_ERROR("empty type for parameter");
-  type->validate(stack);
-  for (auto& attr: attributes) {
+  type->validate(stack, info->type);
+  for (size_t i = 0; i < attributes.size(); i++) {
+    auto& attr = attributes[i];
+    auto& attrDet = info->attributes[i];
     if (!attr) ALTACORE_VALIDATION_ERROR("empty attribute for parameter");
-    attr->validate(stack);
+    attr->validate(stack, attrDet);
   }
   ALTACORE_VS_E;
 };

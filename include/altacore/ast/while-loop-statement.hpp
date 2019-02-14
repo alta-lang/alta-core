@@ -16,11 +16,9 @@ namespace AltaCore {
         std::shared_ptr<ExpressionNode> test = nullptr;
         std::shared_ptr<StatementNode> body = nullptr;
 
-        std::shared_ptr<DET::Scope> $scope = nullptr;
-
         WhileLoopStatement() {};
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_DETAIL(WhileLoopStatement);
         ALTACORE_AST_VALIDATE;
     };
   };

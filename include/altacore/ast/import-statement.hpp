@@ -19,16 +19,11 @@ namespace AltaCore {
         std::vector<std::pair<std::string, std::string>> imports; // only available on non-alias imports
         std::string alias;                                        // only available on alias imports
 
-        std::shared_ptr<DET::Module> $parentModule = nullptr;
-        std::shared_ptr<DET::Module> $importedModule = nullptr;
-        std::shared_ptr<AST::RootNode> $importedAST = nullptr;
-        std::vector<std::shared_ptr<DET::ScopeItem>> $importedItems;
-
         ImportStatement() {};
         ImportStatement(std::string request, std::vector<std::pair<std::string, std::string>> imports);
         ImportStatement(std::string request, std::string alias);
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_DETAIL(ImportStatement);
         ALTACORE_AST_VALIDATE;
     };
   };

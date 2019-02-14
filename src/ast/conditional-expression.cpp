@@ -14,19 +14,21 @@ AltaCore::AST::ConditionalExpression::ConditionalExpression(
   secondaryResult(_secondary)
   {};
 
-void AltaCore::AST::ConditionalExpression::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  test->detail(scope);
-  primaryResult->detail(scope);
-  secondaryResult->detail(scope);
+ALTACORE_AST_DETAIL_D(ConditionalExpression) {
+  ALTACORE_MAKE_DH(ConditionalExpression);
+  info->test = test->fullDetail(scope);
+  info->primaryResult = primaryResult->fullDetail(scope);
+  info->secondaryResult = secondaryResult->fullDetail(scope);
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(ConditionalExpression) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(ConditionalExpression);
   if (!test) ALTACORE_VALIDATION_ERROR("empty test for conditional expression");
   if (!primaryResult) ALTACORE_VALIDATION_ERROR("empty primary result for conditional expression");
   if (!secondaryResult) ALTACORE_VALIDATION_ERROR("empty secondary result for conditional expression");
-  test->validate(stack);
-  primaryResult->validate(stack);
-  secondaryResult->validate(stack);
+  test->validate(stack, info->test);
+  primaryResult->validate(stack, info->primaryResult);
+  secondaryResult->validate(stack, info->secondaryResult);
   ALTACORE_VS_E;
 };

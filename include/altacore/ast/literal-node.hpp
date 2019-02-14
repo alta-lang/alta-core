@@ -13,6 +13,8 @@ namespace AltaCore {
         std::string raw;
 
         LiteralNode(std::string raw);
+
+        ALTACORE_AST_AUTO_DETAIL(LiteralNode);
     };
   };
 };

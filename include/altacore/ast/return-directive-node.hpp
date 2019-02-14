@@ -16,11 +16,9 @@ namespace AltaCore {
 
         std::shared_ptr<ExpressionNode> expression = nullptr;
 
-        std::shared_ptr<DET::Type> $functionReturnType = nullptr;
-
         ReturnDirectiveNode(std::shared_ptr<ExpressionNode> expression);
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_DETAIL(ReturnDirectiveNode);
         ALTACORE_AST_VALIDATE;
     };
   };

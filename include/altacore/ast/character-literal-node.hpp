@@ -13,6 +13,8 @@ namespace AltaCore {
         bool escaped;
 
         CharacterLiteralNode(char value, bool escaped = false);
+
+        ALTACORE_AST_AUTO_DETAIL(CharacterLiteralNode);
     };
   };
 };

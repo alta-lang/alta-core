@@ -16,9 +16,7 @@ namespace AltaCore {
 
         std::vector<std::shared_ptr<StatementNode>> statements;
 
-        std::shared_ptr<DET::Module> $module = nullptr;
-        std::vector<std::shared_ptr<AST::RootNode>> $dependencyASTs;
-        std::shared_ptr<RootNode> parent = nullptr;
+        std::shared_ptr<DH::RootNode> info;
 
         RootNode();
         RootNode(std::vector<std::shared_ptr<StatementNode>> statements);

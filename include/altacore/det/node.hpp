@@ -6,6 +6,11 @@
 #include <string>
 
 namespace AltaCore {
+  namespace DetailHandles {
+    class Node;
+    class ExpressionNode;
+  };
+  namespace DH = DetailHandles;
   namespace DET {
     class Node {
       public:

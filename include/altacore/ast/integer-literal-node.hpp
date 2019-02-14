@@ -10,6 +10,8 @@ namespace AltaCore {
         virtual const NodeType nodeType();
 
         IntegerLiteralNode(std::string raw);
+
+        ALTACORE_AST_AUTO_DETAIL(IntegerLiteralNode);
     };
   };
 };

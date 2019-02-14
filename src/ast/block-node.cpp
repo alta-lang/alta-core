@@ -9,17 +9,21 @@ AltaCore::AST::BlockNode::BlockNode(std::vector<std::shared_ptr<AltaCore::AST::S
   statements(_statements)
   {};
 
-void AltaCore::AST::BlockNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
+ALTACORE_AST_DETAIL_D(BlockNode) {
+  ALTACORE_MAKE_DH(BlockNode);
   for (auto& stmt: statements) {
-    stmt->detail(scope);
+    info->statements.push_back(stmt->fullDetail(scope));
   }
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(BlockNode) {
-  ALTACORE_VS_S;
-  for (auto& stmt: statements) {
-    if (!stmt) ALTACORE_VALIDATION_ERROR("Empty statement node in block node");
-    stmt->validate(stack);
+  ALTACORE_VS_S(BlockNode);
+  for (size_t i = 0; i < statements.size(); i++) {
+    auto& stmt = statements[i];
+    auto& stmtDet = info->statements[i];
+    if (!stmt || !stmtDet) ALTACORE_VALIDATION_ERROR("Empty statement node in block node");
+    stmt->validate(stack, stmtDet);
   }
   ALTACORE_VS_E;
 };

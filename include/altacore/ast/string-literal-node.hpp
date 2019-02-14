@@ -12,6 +12,8 @@ namespace AltaCore {
         std::string value;
 
         StringLiteralNode(std::string value);
+
+        ALTACORE_AST_AUTO_DETAIL(StringLiteralNode);
     };
   };
 };

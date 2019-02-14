@@ -23,7 +23,10 @@ namespace AltaCore {
         Parameter() {};
         Parameter(std::string name, std::shared_ptr<Type> type, bool isVariable = false);
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope, bool hoist = true);
+        virtual std::shared_ptr<DH::Node> detail(std::shared_ptr<DET::Scope> scope, bool hoist = true);
+        std::shared_ptr<DH::Parameter> fullDetail(std::shared_ptr<DET::Scope> scope, bool hoist = true) {
+          return std::dynamic_pointer_cast<DH::Parameter>(detail(scope));
+        };
         ALTACORE_AST_VALIDATE;
     };
   };

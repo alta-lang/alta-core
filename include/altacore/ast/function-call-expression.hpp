@@ -17,18 +17,12 @@ namespace AltaCore {
         std::shared_ptr<ExpressionNode> target = nullptr;
         std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments;
 
-        bool $isMethodCall = false;
-        std::shared_ptr<ExpressionNode> $methodClassTarget = nullptr;
-        std::shared_ptr<DET::Type> $targetType = nullptr;
-        std::unordered_map<size_t, size_t> $argumentMap;
-        std::vector<ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>> $adjustedArguments;
-
         FunctionCallExpression() {};
         FunctionCallExpression(std::shared_ptr<ExpressionNode> target, std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments = {});
 
-        static std::tuple<size_t, std::unordered_map<size_t, size_t>, std::vector<ALTACORE_VARIANT<std::shared_ptr<ExpressionNode>, std::vector<std::shared_ptr<ExpressionNode>>>>> findCompatibleCall(std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments, std::vector<std::shared_ptr<DET::Type>> funcTypes);
+        static std::tuple<size_t, std::unordered_map<size_t, size_t>, std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>, std::vector<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>>>>> findCompatibleCall(std::vector<std::tuple<std::string, std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>> arguments, std::vector<std::shared_ptr<DET::Type>> funcTypes);
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_DETAIL(FunctionCallExpression);
         ALTACORE_AST_VALIDATE;
     };
   };

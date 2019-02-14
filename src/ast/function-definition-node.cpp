@@ -20,55 +20,59 @@ AltaCore::AST::FunctionDefinitionNode::FunctionDefinitionNode(
   body(_body)
   {};
 
-void AltaCore::AST::FunctionDefinitionNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
+ALTACORE_AST_DETAIL_D(FunctionDefinitionNode) {
+  ALTACORE_MAKE_DH(FunctionDefinitionNode);
   std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
 
   for (auto& param: parameters) {
-    param->detail(scope, false);
-    params.push_back(std::make_tuple(param->name, param->type->$type, param->isVariable, param->id));
+    auto det = param->fullDetail(scope, false);
+    info->parameters.push_back(det);
+    params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
   }
 
-  returnType->detail(scope, false);
+  info->returnType = returnType->fullDetail(scope, false);
 
-  $function = DET::Function::create(scope, name, params, returnType->$type);
-  scope->items.push_back($function);
+  info->function = DET::Function::create(scope, name, params, info->returnType->type);
+  scope->items.push_back(info->function);
   
-  $function->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
-  $function->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
+  info->function->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
+  info->function->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
 
-  for (auto& stmt: body->statements) {
-    stmt->detail($function->scope);
-  }
+  info->body = body->fullDetail(info->function->scope);
 
   for (auto& attr: attributes) {
-    attr->target = shared_from_this();
-    attr->detail(scope);
+    info->attributes.push_back(attr->fullDetail(scope, shared_from_this(), info));
   }
 
-  if ($function->isExport) {
+  if (info->function->isExport) {
     if (auto mod = Util::getModule(scope.get()).lock()) {
-      mod->exports->items.push_back($function);
+      mod->exports->items.push_back(info->function);
     }
   }
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(FunctionDefinitionNode) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(FunctionDefinitionNode);
   if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for function definition");
-  for (auto& attr: attributes) {
+  for (size_t i = 0; i < attributes.size(); i++) {
+    auto& attr = attributes[i];
+    auto& attrDet = info->attributes[i];
     if (!attr) ALTACORE_VALIDATION_ERROR("empty attribute for parameter");
-    attr->validate(stack);
+    attr->validate(stack, attrDet);
   }
-  for (auto& param: parameters) {
+  for (size_t i = 0; i < parameters.size(); i++) {
+    auto& param = parameters[i];
+    auto& paramDet = info->parameters[i];
     if (!param) ALTACORE_VALIDATION_ERROR("empty parameter for function definition");
-    param->validate(stack);
+    param->validate(stack, paramDet);
   }
   if (!returnType) ALTACORE_VALIDATION_ERROR("empty return type for function definition");
-  returnType->validate(stack);
+  returnType->validate(stack, info->returnType);
   for (auto& mod: modifiers) {
     if (mod.empty()) ALTACORE_VALIDATION_ERROR("empty modifier for function definition");
   }
   if (!body) ALTACORE_VALIDATION_ERROR("empty body for function definition");
-  body->validate(stack);
+  body->validate(stack, info->body);
   ALTACORE_VS_E;
 };

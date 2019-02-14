@@ -10,20 +10,23 @@ AltaCore::AST::ClassDefinitionNode::ClassDefinitionNode(std::string _name):
   name(_name)
   {};
 
-void AltaCore::AST::ClassDefinitionNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  $klass = DET::Class::create(name, scope);
-  scope->items.push_back($klass);
+ALTACORE_AST_DETAIL_D(ClassDefinitionNode) {
+  ALTACORE_MAKE_DH(ClassDefinitionNode);
+  info->klass = DET::Class::create(name, scope);
+  scope->items.push_back(info->klass);
 
-  isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
-  isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
+  info->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
+  info->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
 
   auto loop = [&](std::vector<std::shared_ptr<ClassStatementNode>>& tgt) -> void {
     for (auto stmt: tgt) {
-      stmt->detail($klass->scope);
+      auto det = stmt->fullDetail(info->klass->scope);
+      info->statements.push_back(det);
       if (stmt->nodeType() == NodeType::ClassSpecialMethodDefinitionStatement) {
         auto special = std::dynamic_pointer_cast<ClassSpecialMethodDefinitionStatement>(stmt);
+        auto specialDet = std::dynamic_pointer_cast<DH::ClassSpecialMethodDefinitionStatement>(det);
         if (special->type == SpecialClassMethod::Constructor) {
-          $klass->constructors.push_back(special->$method);
+          info->klass->constructors.push_back(specialDet->method);
         } else {
           throw std::runtime_error("destructors aren't supported yet");
         }
@@ -33,31 +36,34 @@ void AltaCore::AST::ClassDefinitionNode::detail(std::shared_ptr<AltaCore::DET::S
 
   loop(statements);
 
-  if ($klass->constructors.size() == 0) {
-    $createDefaultConstructor = true;
-    $defaultConstructor = std::make_shared<ClassSpecialMethodDefinitionStatement>(Visibility::Public, SpecialClassMethod::Constructor);
-    $defaultConstructor->body = std::make_shared<BlockNode>();
-    $defaultConstructor->detail($klass->scope);
-    $klass->constructors.push_back($defaultConstructor->$method);
+  if (info->klass->constructors.size() == 0) {
+    info->createDefaultConstructor = true;
+    info->defaultConstructor = std::make_shared<ClassSpecialMethodDefinitionStatement>(Visibility::Public, SpecialClassMethod::Constructor);
+    info->defaultConstructor->body = std::make_shared<BlockNode>();
+    info->defaultConstructorDetail = info->defaultConstructor->fullDetail(info->klass->scope);
+    info->klass->constructors.push_back(info->defaultConstructorDetail->method);
   }
 
-  if (isExport) {
+  if (info->isExport) {
     if (auto mod = Util::getModule(scope.get()).lock()) {
-      mod->exports->items.push_back($klass);
+      mod->exports->items.push_back(info->klass);
     }
   }
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(ClassDefinitionNode) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(ClassDefinitionNode);
   for (auto& mod: modifiers) {
     if (mod.empty()) ALTACORE_VALIDATION_ERROR("empty modifier for class defintion");
   }
   if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for class definition");
-  for (auto& stmt: statements) {
+  for (size_t i = 0; i < statements.size(); i++) {
+    auto& stmt = statements[i];
+    auto& stmtDet = info->statements[i];
     if (!stmt) ALTACORE_VALIDATION_ERROR("empty class statement in class definition");
-    stmt->validate(stack);
+    stmt->validate(stack, stmtDet);
   }
-  if (!$klass) ALTACORE_VALIDATION_ERROR("class defintion not detailed properly, no DET class attached");
+  if (!info->klass) ALTACORE_VALIDATION_ERROR("class defintion not detailed properly, no DET class attached");
   ALTACORE_VS_E;
 };

@@ -4,13 +4,15 @@ const AltaCore::AST::NodeType AltaCore::AST::DereferenceExpression::nodeType() {
   return NodeType::DereferenceExpression;
 };
 
-void AltaCore::AST::DereferenceExpression::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  target->detail(scope);
+ALTACORE_AST_DETAIL_D(DereferenceExpression) {
+  ALTACORE_MAKE_DH(DereferenceExpression);
+  info->target = target->fullDetail(scope);
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(DereferenceExpression) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(DereferenceExpression);
   if (!target) ALTACORE_VALIDATION_ERROR("empty target for dereference expression");
-  target->validate(stack);
+  target->validate(stack, info->target);
   ALTACORE_VS_E;
 };

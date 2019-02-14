@@ -14,7 +14,7 @@ namespace AltaCore {
 
         DereferenceExpression() {};
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_DETAIL(DereferenceExpression);
         ALTACORE_AST_VALIDATE;
     };
   };

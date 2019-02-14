@@ -18,65 +18,44 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::copy() const {
   return std::make_shared<Type>(*this);
 };
 
-std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(AltaCore::AST::ExpressionNode* expression) {
-  using ExpressionType = AST::NodeType;
+std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(AltaCore::DH::ExpressionNode* expression) {
   using Modifier = AST::TypeModifierFlag;
-  ExpressionType exprType = expression->nodeType();
 
-  if (exprType == ExpressionType::IntegerLiteralNode) {
-    auto intLit = dynamic_cast<AST::IntegerLiteralNode*>(expression);
-    if (intLit == nullptr) throw std::runtime_error("wut da heck");
+  if (auto intLit = dynamic_cast<DH::IntegerLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Integer, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
-  } else if (exprType == ExpressionType::VariableDefinitionExpression) {
-    auto varDef = dynamic_cast<AST::VariableDefinitionExpression*>(expression);
-    if (varDef == nullptr) throw std::runtime_error("no.");
-    return std::dynamic_pointer_cast<Type>(varDef->$variable->type->clone())->reference();
-  } else if (exprType == ExpressionType::AssignmentExpression) {
-    auto assign = dynamic_cast<AST::AssignmentExpression*>(expression);
-    if (assign == nullptr) throw std::runtime_error("nuh-uh.");
+  } else if (auto varDef = dynamic_cast<DH::VariableDefinitionExpression*>(expression)) {
+    return std::dynamic_pointer_cast<Type>(varDef->variable->type->clone())->reference();
+  } else if (auto assign = dynamic_cast<DH::AssignmentExpression*>(expression)) {
     return getUnderlyingType(assign->target.get());
-  } else if (exprType == ExpressionType::Fetch) {
-    auto fetch = dynamic_cast<AST::Fetch*>(expression);
-    if (!fetch->$narrowedTo) {
+  } else if (auto fetch = dynamic_cast<DH::Fetch*>(expression)) {
+    if (!fetch->narrowedTo) {
       throw std::runtime_error("the given fetch has not been narrowed. either narrow it or use `AltaCore::DET::Type::getUnderlyingTypes` instead");
     }
-    return getUnderlyingType(fetch->$narrowedTo);
-  } else if (exprType == ExpressionType::BooleanLiteralNode) {
+    return getUnderlyingType(fetch->narrowedTo);
+  } else if (auto boolean = dynamic_cast<DH::BooleanLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
-  } else if (exprType == ExpressionType::BinaryOperation) {
-    auto binOp = dynamic_cast<AST::BinaryOperation*>(expression);
-    if (binOp == nullptr) throw std::runtime_error("wah.");
+  } else if (auto binOp = dynamic_cast<DH::BinaryOperation*>(expression)) {
     return getUnderlyingType(binOp->left.get());
-  } else if (exprType == ExpressionType::FunctionCallExpression) {
-    auto call = dynamic_cast<AST::FunctionCallExpression*>(expression);
-    if (call == nullptr) throw std::runtime_error("bro wut dah heck.");
-    return call->$targetType->returnType;
-  } else if (exprType == ExpressionType::Accessor) {
-    auto acc = dynamic_cast<AST::Accessor*>(expression);
-    if (!acc->$narrowedTo) {
+  } else if (auto call = dynamic_cast<DH::FunctionCallExpression*>(expression)) {
+    return call->targetType->returnType;
+  } else if (auto acc = dynamic_cast<DH::Accessor*>(expression)) {
+    if (!acc->narrowedTo) {
       throw std::runtime_error("the given accessor has not been narrowed. either narrow it or use `AltaCore::DET::Type::getUnderlyingTypes` instead");
     }
-    return getUnderlyingType(acc->$narrowedTo);
-  } else if (exprType == ExpressionType::StringLiteralNode) {
+    return getUnderlyingType(acc->narrowedTo);
+  } else if (auto str = dynamic_cast<DH::StringLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Byte, std::vector<uint8_t> { (uint8_t)Modifier::Constant | (uint8_t)Modifier::Pointer, (uint8_t)Modifier::Constant });
-  } else if (exprType == ExpressionType::ConditionalExpression) {
-    auto cond = dynamic_cast<AST::ConditionalExpression*>(expression);
-    if (cond == nullptr) throw std::runtime_error("nope");
+  } else if (auto cond = dynamic_cast<DH::ConditionalExpression*>(expression)) {
     return getUnderlyingType(cond->primaryResult.get());
-  } else if (exprType == ExpressionType::ClassInstantiationExpression) {
-    auto inst = dynamic_cast<AST::ClassInstantiationExpression*>(expression);
-    if (inst == nullptr) throw std::runtime_error("hMmmMmMM...");
-    return std::make_shared<Type>(inst->$klass);
-  } else if (exprType == ExpressionType::PointerExpression) {
-    auto ptr = dynamic_cast<AST::PointerExpression*>(expression);
+  } else if (auto inst = dynamic_cast<DH::ClassInstantiationExpression*>(expression)) {
+    return std::make_shared<Type>(inst->klass);
+  } else if (auto ptr = dynamic_cast<DH::PointerExpression*>(expression)) {
     return getUnderlyingType(ptr->target.get())->point();
-  } else if (exprType == ExpressionType::DereferenceExpression) {
-    auto deref = dynamic_cast<AST::DereferenceExpression*>(expression);
+  } else if (auto deref = dynamic_cast<DH::DereferenceExpression*>(expression)) {
     return getUnderlyingType(deref->target.get())->follow();
-  } else if (exprType == ExpressionType::CastExpression) {
-    auto cast = dynamic_cast<AST::CastExpression*>(expression);
-    return cast->type->$type;
-  } else if (exprType == ExpressionType::CharacterLiteralNode) {
+  } else if (auto cast = dynamic_cast<DH::CastExpression*>(expression)) {
+    return cast->type->type;
+  } else if (auto cast = dynamic_cast<DH::CharacterLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Byte, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   }
 
@@ -109,30 +88,22 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
     throw std::runtime_error("Only functions and variables have underlying types");
   }
 };
-std::vector<std::shared_ptr<AltaCore::DET::Type>> AltaCore::DET::Type::getUnderlyingTypes(AltaCore::AST::ExpressionNode* expression) {
-  using ExpressionType = AST::NodeType;
+std::vector<std::shared_ptr<AltaCore::DET::Type>> AltaCore::DET::Type::getUnderlyingTypes(AltaCore::DH::ExpressionNode* expression) {
   using Modifier = AST::TypeModifierFlag;
-  ExpressionType exprType = expression->nodeType();
 
-  if (exprType == ExpressionType::Fetch) {
-    auto fetch = dynamic_cast<AST::Fetch*>(expression);
-    if (fetch == nullptr) throw std::runtime_error("NOPE");
+  if (auto fetch = dynamic_cast<DH::Fetch*>(expression)) {
     std::vector<std::shared_ptr<Type>> types;
-    for (auto& item: fetch->$items) {
+    for (auto& item: fetch->items) {
       types.push_back(getUnderlyingType(item));
     }
     return types;
-  } else if (exprType == ExpressionType::Accessor) {
-    auto acc = dynamic_cast<AST::Accessor*>(expression);
-    if (acc == nullptr) throw std::runtime_error("expression invalidly identified as an AltaCore::AST::Accessor");
+  } else if (auto acc = dynamic_cast<DH::Accessor*>(expression)) {
     std::vector<std::shared_ptr<Type>> types;
-    for (auto& item: acc->$items) {
+    for (auto& item: acc->items) {
       types.push_back(getUnderlyingType(item));
     }
     return types;
-  } else if (exprType == ExpressionType::ConditionalExpression) {
-    auto cond = dynamic_cast<AST::ConditionalExpression*>(expression);
-    if (cond == nullptr) throw std::runtime_error("nope");
+  } else if (auto cond = dynamic_cast<DH::ConditionalExpression*>(expression)) {
     return getUnderlyingTypes(cond->primaryResult.get()); // for now; TODO: get a union of both results' types
   }
 

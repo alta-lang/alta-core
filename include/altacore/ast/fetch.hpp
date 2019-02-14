@@ -13,13 +13,11 @@ namespace AltaCore {
 
         std::string query;
 
-        std::vector<std::shared_ptr<DET::ScopeItem>> $items;
-        std::shared_ptr<DET::ScopeItem> $narrowedTo;
-
         Fetch(std::string query);
 
-        void narrowTo(std::shared_ptr<DET::Type> type);
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        void narrowTo(std::shared_ptr<DH::Fetch> info, std::shared_ptr<DET::Type> type);
+        
+        ALTACORE_AST_DETAIL(Fetch);
         ALTACORE_AST_VALIDATE;
     };
   };

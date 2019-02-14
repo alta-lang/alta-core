@@ -23,7 +23,7 @@ namespace AltaCore {
 
         ScopeItem(std::string name, std::shared_ptr<Scope> parentScope = nullptr);
 
-        static std::vector<std::shared_ptr<ScopeItem>> getUnderlyingItems(std::shared_ptr<AST::Node> node);
+        static std::vector<std::shared_ptr<ScopeItem>> getUnderlyingItems(std::shared_ptr<DH::Node> node);
     };
   };
 };

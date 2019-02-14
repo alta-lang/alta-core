@@ -14,16 +14,18 @@ AltaCore::AST::BinaryOperation::BinaryOperation(
   right(_right)
   {};
 
-void AltaCore::AST::BinaryOperation::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  left->detail(scope);
-  right->detail(scope);
+ALTACORE_AST_DETAIL_D(BinaryOperation) {
+  ALTACORE_MAKE_DH(BinaryOperation);
+  info->left = left->fullDetail(scope);
+  info->right = right->fullDetail(scope);
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(BinaryOperation) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(BinaryOperation);
   if (!left) ALTACORE_VALIDATION_ERROR("Binary operation must contain a left-hand node");
   if (!right) ALTACORE_VALIDATION_ERROR("Binary operation must contain a right-hand node");
-  left->validate(stack);
-  right->validate(stack);
+  left->validate(stack, info->left);
+  right->validate(stack, info->right);
   ALTACORE_VS_E;
 };

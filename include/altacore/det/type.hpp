@@ -2,11 +2,13 @@
 #define ALTACORE_DET_TYPE_HPP
 
 #include "scope-item.hpp"
-#include "../ast/expression-node.hpp"
 #include <string>
 #include <vector>
 
 namespace AltaCore {
+  namespace AST {
+    class ExpressionNode;
+  };
   namespace DET {
     class Type: public ScopeItem {
       private:
@@ -22,9 +24,9 @@ namespace AltaCore {
         // because it can return `nullptr` if it doesn't find an
         // underlying type for the given expression, whereas with a
         // constructor, we can't do that
-        static std::shared_ptr<Type> getUnderlyingType(AST::ExpressionNode* expression);
+        static std::shared_ptr<Type> getUnderlyingType(DH::ExpressionNode* expression);
         static std::shared_ptr<Type> getUnderlyingType(std::shared_ptr<ScopeItem> item);
-        static std::vector<std::shared_ptr<Type>> getUnderlyingTypes(AST::ExpressionNode* expression);
+        static std::vector<std::shared_ptr<Type>> getUnderlyingTypes(DH::ExpressionNode* expression);
 
         bool isAny = false;
         bool isNative = true;

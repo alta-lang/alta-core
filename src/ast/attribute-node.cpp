@@ -18,40 +18,47 @@ bool AltaCore::AST::AttributeNode::matches(std::vector<std::string> path) {
   return true;
 };
 
-void AltaCore::AST::AttributeNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  $module = Util::getModule(scope.get());
+std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::AttributeNode::detail(std::shared_ptr<AltaCore::DET::Scope> scope, std::shared_ptr<Node> target, std::shared_ptr<DH::Node> targetInfo) {
+  ALTACORE_MAKE_DH(AttributeNode);
+
+  info->target = target;
+  info->targetInfo = targetInfo;
+
+  info->module = Util::getModule(scope.get());
 
   for (auto& arg: arguments) {
-    arg->detail(scope);
+    info->arguments.push_back(arg->fullDetail(scope));
     if (arg->nodeType() == NodeType::StringLiteralNode) {
-      $arguments.emplace_back(std::dynamic_pointer_cast<AST::StringLiteralNode>(arg)->value);
+      info->attributeArguments.emplace_back(std::dynamic_pointer_cast<AST::StringLiteralNode>(arg)->value);
     } else if (arg->nodeType() == NodeType::IntegerLiteralNode) {
-      $arguments.emplace_back(std::stoi(std::dynamic_pointer_cast<AST::IntegerLiteralNode>(arg)->raw));
+      info->attributeArguments.emplace_back(std::stoi(std::dynamic_pointer_cast<AST::IntegerLiteralNode>(arg)->raw));
     } else if (arg->nodeType() == NodeType::BooleanLiteralNode) {
-      $arguments.emplace_back(std::dynamic_pointer_cast<AST::BooleanLiteralNode>(arg)->value);
+      info->attributeArguments.emplace_back(std::dynamic_pointer_cast<AST::BooleanLiteralNode>(arg)->value);
     } else {
       throw std::runtime_error("welp.");
     }
   }
 
-  findAttribute();
-  run(target);
+  findAttribute(info);
+  run(info, info->target, info->targetInfo);
+
+  return info;
 };
 
-void AltaCore::AST::AttributeNode::run(std::shared_ptr<AltaCore::AST::Node> target) {
-  if ($attribute) {
-    auto attr = *$attribute;
+void AltaCore::AST::AttributeNode::run(std::shared_ptr<DH::AttributeNode> info, std::shared_ptr<AltaCore::AST::Node> target, std::shared_ptr<AltaCore::DH::Node> tgtInfo) {
+  if (info->attribute) {
+    auto attr = *info->attribute;
     if (attr.callback) {
-      attr.callback(target ? target : $module.lock()->ast.lock(), $arguments);
+      attr.callback(target ? target : info->module.lock()->ast.lock(), tgtInfo, info->attributeArguments);
     }
   }
 };
 
-void AltaCore::AST::AttributeNode::findAttribute() {
-  $attribute = Attributes::findAttribute(
+void AltaCore::AST::AttributeNode::findAttribute(std::shared_ptr<DH::AttributeNode> info) {
+  info->attribute = Attributes::findAttribute(
     accessors,
-    target ? std::make_optional(target->nodeType()) : ALTACORE_NULLOPT,
-    $module.lock()->path.toString()
+    info->target ? std::make_optional(info->target->nodeType()) : ALTACORE_NULLOPT,
+    info->module.lock()->path.toString()
   );
 };
 
@@ -72,16 +79,18 @@ std::string AltaCore::AST::AttributeNode::id() const {
 };
 
 ALTACORE_AST_VALIDATE_D(AttributeNode) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(AttributeNode);
   for (auto acc: accessors) {
     if (acc.empty()) {
       ALTACORE_VALIDATION_ERROR("attribute node accessor component can't be empty");
     }
   }
 
-  for (auto arg: arguments) {
+  for (size_t i = 0; i < arguments.size(); i++) {
+    auto& arg = arguments[i];
+    auto& argDet = info->arguments[i];
     if (!arg) ALTACORE_VALIDATION_ERROR("empty argument in attribute node");
-    arg->validate(stack);
+    arg->validate(stack, argDet);
   }
   ALTACORE_VS_E;
 };

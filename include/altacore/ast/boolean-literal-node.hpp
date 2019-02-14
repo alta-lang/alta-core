@@ -12,6 +12,8 @@ namespace AltaCore {
         bool value;
 
         BooleanLiteralNode(bool value);
+
+        ALTACORE_AST_AUTO_DETAIL(BooleanLiteralNode);
     };
   };
 };

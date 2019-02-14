@@ -19,12 +19,9 @@ namespace AltaCore {
       std::shared_ptr<Type> type = nullptr;
       std::shared_ptr<BlockNode> body = nullptr;
 
-      std::shared_ptr<DET::Scope> $bodyScope = nullptr;
-      std::shared_ptr<DET::Function> $function = nullptr;
-
       ClassReadAccessorDefinitionStatement(Visibility visibilityModifier);
 
-      virtual void detail(std::shared_ptr<DET::Scope> scope);
+      ALTACORE_AST_DETAIL(ClassReadAccessorDefinitionStatement);
       ALTACORE_AST_VALIDATE;
     };
   };

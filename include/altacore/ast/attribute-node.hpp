@@ -25,22 +25,20 @@ namespace AltaCore {
 
         std::vector<std::string> accessors;
         std::vector<std::shared_ptr<LiteralNode>> arguments;
-        std::shared_ptr<AltaCore::AST::Node> target = nullptr;
-
-        std::weak_ptr<DET::Module> $module;
-        std::vector<Attributes::AttributeArgument> $arguments;
-        ALTACORE_OPTIONAL<Attributes::Attribute> $attribute = ALTACORE_NULLOPT;
 
         AttributeNode() {};
         AttributeNode(std::vector<std::string> accessors, std::vector<std::shared_ptr<LiteralNode>> arguments = {});
 
         bool matches(std::vector<std::string> path);
-        void findAttribute();
-        void run(std::shared_ptr<Node> target = nullptr);
+        void findAttribute(std::shared_ptr<DH::AttributeNode> info);
+        void run(std::shared_ptr<DH::AttributeNode> info, std::shared_ptr<Node> target = nullptr, std::shared_ptr<DH::Node> = nullptr);
 
         std::string id() const;
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        virtual std::shared_ptr<AltaCore::DH::Node> detail(std::shared_ptr<AltaCore::DET::Scope> scope, std::shared_ptr<Node> target = nullptr, std::shared_ptr<DH::Node> info = nullptr);
+          std::shared_ptr<AltaCore::DH::AttributeNode> fullDetail(std::shared_ptr<AltaCore::DET::Scope> scope, std::shared_ptr<Node> target = nullptr, std::shared_ptr<DH::Node> info = nullptr) {
+          return std::dynamic_pointer_cast<AltaCore::DH::AttributeNode>(detail(scope, target, info));
+        };
         ALTACORE_AST_VALIDATE;
     };
   };

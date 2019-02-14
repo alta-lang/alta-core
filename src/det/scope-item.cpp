@@ -21,16 +21,11 @@ AltaCore::DET::ScopeItem::ScopeItem(std::string _name, std::shared_ptr<AltaCore:
   parentScope(_parentScope)
   {};
 
-std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::ScopeItem::getUnderlyingItems(std::shared_ptr<AltaCore::AST::Node> node) {
-  using NT = AST::NodeType;
-  auto nt = node->nodeType();
-
-  if (nt == NT::Fetch) {
-    auto fetch = std::dynamic_pointer_cast<AST::Fetch>(node);
-    return fetch->$items;
-  } else if (nt == NT::Accessor) {
-    auto acc = std::dynamic_pointer_cast<AST::Accessor>(node);
-    return acc->$items;
+std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::ScopeItem::getUnderlyingItems(std::shared_ptr<AltaCore::DH::Node> node) {
+  if (auto fetch = std::dynamic_pointer_cast<DH::Fetch>(node)) {
+    return fetch->items;
+  } else if (auto acc = std::dynamic_pointer_cast<DH::Accessor>(node)) {
+    return acc->items;
   }
 
   return {};

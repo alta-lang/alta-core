@@ -23,7 +23,7 @@ AltaCore::Attributes::AttributeArgument::AttributeArgument(bool _boolean):
 AltaCore::Attributes::Attribute::Attribute(
   std::string _name,
   std::vector<AST::NodeType> _appliesTo,
-  std::function<void(std::shared_ptr<AltaCore::AST::Node>, std::vector<AltaCore::Attributes::AttributeArgument>)> _callback,
+  std::function<void(std::shared_ptr<AltaCore::AST::Node>, std::shared_ptr<DH::Node>, std::vector<AltaCore::Attributes::AttributeArgument>)> _callback,
   bool _isDomain
 ):
   name(_name),
@@ -40,7 +40,7 @@ bool AltaCore::Attributes::Attribute::checkIfAppliesTo(AltaCore::AST::NodeType t
   return false;
 };
 
-bool AltaCore::Attributes::registerAttribute(std::vector<std::string> fullDomainPath, std::vector<AltaCore::AST::NodeType> appliesTo, std::function<void(std::shared_ptr<AltaCore::AST::Node>, std::vector<AltaCore::Attributes::AttributeArgument>)> callback, std::string file) {
+bool AltaCore::Attributes::registerAttribute(std::vector<std::string> fullDomainPath, std::vector<AltaCore::AST::NodeType> appliesTo, std::function<void(std::shared_ptr<AltaCore::AST::Node>, std::shared_ptr<AltaCore::DH::Node>, std::vector<AltaCore::Attributes::AttributeArgument>)> callback, std::string file) {
   if (fullDomainPath.size() == 0) return false;
 
   std::vector<Attribute>* target = nullptr;

@@ -8,23 +8,25 @@ AltaCore::AST::Fetch::Fetch(std::string _query):
   query(_query)
   {};
 
-void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<AltaCore::DET::Type> type) {
+void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<DH::Fetch> info, std::shared_ptr<AltaCore::DET::Type> type) {
   size_t highestCompat = 0;
-  for (auto& item: $items) {
+  for (auto& item: info->items) {
     auto itemType = DET::Type::getUnderlyingType(item);
     auto compat = itemType->compatiblity(*type);
     if (compat > highestCompat) {
       highestCompat = compat;
-      $narrowedTo = item;
+      info->narrowedTo = item;
     }
   }
 };
 
-void AltaCore::AST::Fetch::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
+ALTACORE_AST_DETAIL_D(Fetch) {
+  ALTACORE_MAKE_DH(Fetch);
+
   auto items = scope->findAll(query, {}, true, scope);
 
   if (items.size() == 1) {
-    $narrowedTo = items[0];
+    info->narrowedTo = items[0];
   }
 
   if (items.size() < 1) {
@@ -37,12 +39,14 @@ void AltaCore::AST::Fetch::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
     throw std::runtime_error("OH NO! THERE'S NO `" + query + "` IN THE SCOPE!");
   }
 
-  $items = items;
+  info->items = items;
+
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(Fetch) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(Fetch);
   if (query.empty()) ALTACORE_VALIDATION_ERROR("empty query for fetch");
-  if ($items.size() < 1) ALTACORE_VALIDATION_ERROR("no items found for fetch");
+  if (info->items.size() < 1) ALTACORE_VALIDATION_ERROR("no items found for fetch");
   ALTACORE_VS_E;
 };

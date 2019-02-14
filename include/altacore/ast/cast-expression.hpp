@@ -16,7 +16,7 @@ namespace AltaCore {
 
       CastExpression();
 
-      virtual void detail(std::shared_ptr<DET::Scope> scope);
+      ALTACORE_AST_DETAIL(CastExpression);
       ALTACORE_AST_VALIDATE;
     };
   };

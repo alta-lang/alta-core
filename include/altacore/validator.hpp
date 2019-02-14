@@ -12,6 +12,10 @@ namespace AltaCore {
     // forward declaration
     class Node;
   };
+  namespace DetailHandles {
+    class Node;
+  };
+  namespace DH = DetailHandles;
   namespace Validator {
     class ValidationError: public std::exception {
       private:
@@ -24,7 +28,7 @@ namespace AltaCore {
         ValidationError(std::string message = "", size_t line = 1, size_t column = 1, Filesystem::Path file = Filesystem::Path());
         const char* what() const noexcept override;
     };
-    void validate(std::shared_ptr<AST::Node> target);
+    void validate(std::shared_ptr<AST::Node> target, std::shared_ptr<DH::Node> info = nullptr);
   };
 };
 

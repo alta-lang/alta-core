@@ -15,7 +15,7 @@ const char* AltaCore::Validator::ValidationError::what() const noexcept {
   return message.c_str();
 };
 
-void AltaCore::Validator::validate(std::shared_ptr<AltaCore::AST::Node> target) {
+void AltaCore::Validator::validate(std::shared_ptr<AltaCore::AST::Node> target, std::shared_ptr<AltaCore::DH::Node> info) {
   std::stack<AST::Node*> validationStack;
-  return target->validate(validationStack);
+  return target->validate(validationStack, info);
 };

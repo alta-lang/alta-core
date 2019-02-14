@@ -16,42 +16,47 @@ AltaCore::AST::ConditionalStatement::ConditionalStatement(
   finalResult(_finalResult)
   {};
 
-void AltaCore::AST::ConditionalStatement::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  primaryTest->detail(scope);
-  $primaryScope = std::make_shared<DET::Scope>(scope);
-  primaryResult->detail($primaryScope);
+ALTACORE_AST_DETAIL_D(ConditionalStatement) {
+  ALTACORE_MAKE_DH(ConditionalStatement);
+  info->primaryTest = primaryTest->fullDetail(scope);
+  info->primaryScope = std::make_shared<DET::Scope>(scope);
+  info->primaryResult = primaryResult->fullDetail(info->primaryScope);
 
   for (auto& [altTest, altResult]: alternatives) {
-    altTest->detail(scope);
-    auto& altScope = $alternativeScopes.emplace_back(scope);
-    altResult->detail(altScope);
+    auto testDet = altTest->fullDetail(scope);
+    auto& altScope = info->alternativeScopes.emplace_back(scope);
+    auto resDet = altResult->fullDetail(altScope);
+    info->alternatives.emplace_back(testDet, resDet);
   }
 
   if (finalResult) {
-    $finalScope = std::make_shared<DET::Scope>(scope);
-    finalResult->detail($finalScope);
+    info->finalScope = std::make_shared<DET::Scope>(scope);
+    info->finalResult = finalResult->fullDetail(info->finalScope);
   }
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(ConditionalStatement) {
-  ALTACORE_VS_S;
+  ALTACORE_VS_S(ConditionalStatement);
   if (!primaryTest) ALTACORE_VALIDATION_ERROR("empty primary test for conditional statement");
   if (!primaryResult) ALTACORE_VALIDATION_ERROR("empty primary result for conditional statement");
-  primaryTest->validate(stack);
-  primaryResult->validate(stack);
-  for (auto& [test, result]: alternatives) {
+  primaryTest->validate(stack, info->primaryTest);
+  primaryResult->validate(stack, info->primaryResult);
+  for (size_t i = 0; i < alternatives.size(); i++) {
+    auto& [test, result] = alternatives[i];
+    auto [testDet, resultDet] = info->alternatives[i];
     if (!test) ALTACORE_VALIDATION_ERROR("empty alternative test for conditional statement");
     if (!result) ALTACORE_VALIDATION_ERROR("empty alternative result conditional statement");
-    test->validate(stack);
-    result->validate(stack);
+    test->validate(stack, testDet);
+    result->validate(stack, resultDet);
   }
   if (finalResult) {
-    finalResult->validate(stack);
+    finalResult->validate(stack, info->finalResult);
   }
-  if (!$primaryScope) ALTACORE_VALIDATION_ERROR("improperly detailed primary scope for conditional statement");
-  for (auto& scope: $alternativeScopes) {
+  if (!info->primaryScope) ALTACORE_VALIDATION_ERROR("improperly detailed primary scope for conditional statement");
+  for (auto& scope: info->alternativeScopes) {
     if (!scope) ALTACORE_VALIDATION_ERROR("improperly detailed alternative scope for conditional statement");
   }
-  if (finalResult && !$finalScope) ALTACORE_VALIDATION_ERROR("improperly detailed final scope for conditional statement");
+  if (finalResult && !info->finalScope) ALTACORE_VALIDATION_ERROR("improperly detailed final scope for conditional statement");
   ALTACORE_VS_E;
 };

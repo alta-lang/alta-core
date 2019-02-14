@@ -18,12 +18,10 @@ namespace AltaCore {
         std::shared_ptr<ExpressionNode> initializationExpression = nullptr;
         std::vector<std::string> modifiers;
 
-        std::shared_ptr<DET::Variable> $variable = nullptr;
-
         VariableDefinitionExpression() {};
         VariableDefinitionExpression(std::string name, std::shared_ptr<Type> type, std::shared_ptr<ExpressionNode> initializationExpression);
 
-        virtual void detail(std::shared_ptr<DET::Scope> scope);
+        ALTACORE_AST_DETAIL(VariableDefinitionExpression);
         ALTACORE_AST_VALIDATE;
     };
   };

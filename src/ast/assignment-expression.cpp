@@ -10,18 +10,22 @@ AltaCore::AST::AssignmentExpression::AssignmentExpression(std::shared_ptr<AltaCo
   value(_value)
   {};
 
-void AltaCore::AST::AssignmentExpression::detail(std::shared_ptr<AltaCore::DET::Scope> scope) {
-  target->detail(scope);
-  value->detail(scope);
+ALTACORE_AST_DETAIL_D(AssignmentExpression) {
+  ALTACORE_MAKE_DH(AssignmentExpression);
+
+  info->target = target->fullDetail(scope);
+  info->value = value->fullDetail(scope);
+
+  return info;
 };
 
 ALTACORE_AST_VALIDATE_D(AssignmentExpression) {
-  ALTACORE_VS_S;
-  target->validate(stack);
-  value->validate(stack);
-  
-  auto targetType = DET::Type::getUnderlyingType(target.get());
-  auto valueType = DET::Type::getUnderlyingType(value.get());
+  ALTACORE_VS_S(AssignmentExpression);
+  target->validate(stack, info->target);
+  value->validate(stack, info->value);
+
+  auto targetType = DET::Type::getUnderlyingType(info->target.get());
+  auto valueType = DET::Type::getUnderlyingType(info->value.get());
   
   if (!targetType->isCompatibleWith(*valueType)) {
     ALTACORE_VALIDATION_ERROR("source type is not compatible with the destination type for assignment expression");

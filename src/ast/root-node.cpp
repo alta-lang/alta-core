@@ -12,35 +12,39 @@ AltaCore::AST::RootNode::RootNode(std::vector<std::shared_ptr<AltaCore::AST::Sta
   {};
 
 void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::string moduleName) {
-  Modules::PackageInfo info;
+  info = std::make_shared<DH::RootNode>();
+  
+  Modules::PackageInfo pkgInfo;
   if (moduleName == "") {
     // attempt to find the module name
     try {
-      info = Modules::getInfo(filePath);
-      auto relativeFilePath = filePath.relativeTo(info.root);
-      moduleName = info.name + '/' + (relativeFilePath.dirname() / relativeFilePath.filename()).toString("/");
+      pkgInfo = Modules::getInfo(filePath);
+      auto relativeFilePath = filePath.relativeTo(pkgInfo.root);
+      moduleName = pkgInfo.name + '/' + (relativeFilePath.dirname() / relativeFilePath.filename()).toString("/");
     } catch (const Modules::ModuleError&) {
       moduleName = (filePath.dirname() / filePath.filename()).uproot().toString("/");
-      info.main = filePath;
-      info.root = filePath.dirname();
+      pkgInfo.main = filePath;
+      pkgInfo.root = filePath.dirname();
     }
   } else {
     try {
-      info = Modules::getInfo(filePath);
+      pkgInfo = Modules::getInfo(filePath);
     } catch (...) {
-      info.main = filePath;
-      info.name = moduleName;
-      info.root = filePath.dirname();
+      pkgInfo.main = filePath;
+      pkgInfo.name = moduleName;
+      pkgInfo.root = filePath.dirname();
     }
   }
-  $module = DET::Module::create(moduleName, info, filePath);
-  $module->ast = shared_from_this();
+  info->module = DET::Module::create(moduleName, pkgInfo, filePath);
+  info->module->ast = shared_from_this();
 
   for (auto& stmt: statements) {
-    stmt->detail($module->scope);
+    auto det = stmt->fullDetail(info->module->scope);
+    info->statements.push_back(det);
     if (stmt->nodeType() == NodeType::ImportStatement) {
       auto import = std::dynamic_pointer_cast<ImportStatement>(stmt);
-      $dependencyASTs.push_back(import->$importedAST);
+      auto importDet = std::dynamic_pointer_cast<DH::ImportStatement>(det);
+      info->dependencyASTs.push_back(importDet->importedAST);
     }
   }
 };
@@ -49,10 +53,12 @@ void AltaCore::AST::RootNode::detail(std::string filePath, std::string moduleNam
 };
 
 ALTACORE_AST_VALIDATE_D(RootNode) {
-  ALTACORE_VS_S;
-  for (auto& stmt: statements) {
+  ALTACORE_VS_SS;
+  for (size_t i = 0; i< statements.size(); i++) {
+    auto& stmt = statements[i];
+    auto& stmtDet = info->statements[i];
     if (!stmt) ALTACORE_VALIDATION_ERROR("empty statement in root node");
-    stmt->validate(stack);
+    stmt->validate(stack, stmtDet);
   }
   ALTACORE_VS_E;
 };
