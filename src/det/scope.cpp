@@ -53,10 +53,8 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
 
   for (auto& item: items) {
     if (item->name == name) {
-      if (item->visibility == Visibility::Private) {
-        if (originScope && originScope->id != id && !originScope->hasParent(shared_from_this())) {
-          continue;
-        }
+      if (originScope && !originScope->canSee(item)) {
+        continue;
       }
       auto trueItem = item;
       while (trueItem->nodeType() == NodeType::Alias) {
@@ -192,4 +190,14 @@ bool AltaCore::DET::Scope::hasParent(std::shared_ptr<Scope> lookup) const {
     }
   }
   return false;
+};
+
+bool AltaCore::DET::Scope::canSee(std::shared_ptr<ScopeItem> item) const {
+  if (item->visibility == Visibility::Private) {
+    auto& itemScope = item->parentScope.lock();
+    if (itemScope && id != itemScope->id && !hasParent(itemScope)) {
+      return false;
+    }
+  }
+  return true;
 };

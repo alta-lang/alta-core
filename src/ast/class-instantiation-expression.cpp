@@ -31,7 +31,13 @@ ALTACORE_AST_DETAIL_D(ClassInstantiationExpression) {
   }
 
   std::vector<std::shared_ptr<DET::Type>> targetTypes;
-  for (auto& constr: info->klass->constructors) {
+  std::unordered_map<size_t, size_t> indexMap;
+  for (size_t i = 0; i < info->klass->constructors.size(); i++) {
+    auto& constr = info->klass->constructors[i];
+    if (!scope->canSee(constr)) {
+      continue;
+    }
+    indexMap[targetTypes.size()] = i;
     targetTypes.push_back(std::make_shared<DET::Type>(constr->returnType, constr->parameters));
   }
 
@@ -46,7 +52,7 @@ ALTACORE_AST_DETAIL_D(ClassInstantiationExpression) {
   auto [index, argMap, adjArgs] = FunctionCallExpression::findCompatibleCall(argsWithDet, targetTypes);
 
   if (index != SIZE_MAX) {
-    info->constructor = info->klass->constructors[index];
+    info->constructor = info->klass->constructors[indexMap[index]];
     info->adjustedArguments = adjArgs;
     info->argumentMap = argMap;
   } else {

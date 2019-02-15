@@ -41,6 +41,8 @@ namespace AltaCore {
         bool hasParent(std::shared_ptr<Scope> parent) const;
 
         static std::shared_ptr<Scope> getMemberScope(std::shared_ptr<ScopeItem> item);
+
+        bool canSee(std::shared_ptr<ScopeItem> item) const;
     };
   };
 };

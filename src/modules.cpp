@@ -5,9 +5,13 @@
 namespace AltaCore {
   namespace Modules {
     Filesystem::Path standardLibraryPath;
+    std::unordered_map<std::string, std::shared_ptr<AltaCore::AST::RootNode>> importCache;
     std::function<std::shared_ptr<AST::RootNode>(std::string importRequest, Filesystem::Path requestingModulePath)> parseModule = [](std::string importRequest, Filesystem::Path requestingModulePath) -> std::shared_ptr<AST::RootNode> {
       auto modPath = resolve(importRequest, requestingModulePath);
-      std::ifstream file(modPath.toString());
+      if (auto& imp = importCache[modPath.absolutify().toString()]) {
+        return imp;
+      }
+      std::ifstream file(modPath.absolutify().toString());
       std::string line;
       Lexer::Lexer lexer;
 
@@ -28,6 +32,8 @@ namespace AltaCore {
       parser.parse();
       auto root = std::dynamic_pointer_cast<AST::RootNode>(*parser.root);
       root->detail(modPath);
+
+      importCache[modPath.absolutify().toString()] = root;
 
       return root;
     };

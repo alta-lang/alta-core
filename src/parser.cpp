@@ -479,19 +479,26 @@ namespace AltaCore {
             if (modifier == "ptr") {
               bitFlag |= (uint8_t)AST::TypeModifierFlag::Pointer;
               type->modifiers.push_back(0);
-            } else if (modifier == "const") {
-              bitFlag |= (uint8_t)AST::TypeModifierFlag::Constant;
             } else if (modifier == "ref") {
               bitFlag |= (uint8_t)AST::TypeModifierFlag::Reference;
               type->modifiers.push_back(0);
-            } else if (modifier == "signed") {
-              bitFlag |= (uint8_t)AST::TypeModifierFlag::Signed;
-            } else if (modifier == "unsigned") {
-              bitFlag |= (uint8_t)AST::TypeModifierFlag::Unsigned;
-            } else if (modifier == "long") {
-              bitFlag |= (uint8_t)AST::TypeModifierFlag::Long;
-            } else if (modifier == "short") {
-              bitFlag |= (uint8_t)AST::TypeModifierFlag::Short;
+            } else {
+              uint8_t flag = 0;
+              if (modifier == "const") {
+                flag = (uint8_t)AST::TypeModifierFlag::Constant;
+              } else if (modifier == "signed") {
+                flag = (uint8_t)AST::TypeModifierFlag::Signed;
+              } else if (modifier == "unsigned") {
+                flag = (uint8_t)AST::TypeModifierFlag::Unsigned;
+              } else if (modifier == "long") {
+                flag = (uint8_t)AST::TypeModifierFlag::Long;
+              } else if (modifier == "short") {
+                flag = (uint8_t)AST::TypeModifierFlag::Short;
+              }
+              if (bitFlag & flag) {
+                type->modifiers.push_back(0);
+              }
+              type->modifiers.back() |= flag;
             }
           }
           if (type->modifiers.back() == 0) {
