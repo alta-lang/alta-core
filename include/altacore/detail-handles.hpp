@@ -320,6 +320,13 @@ namespace AltaCore {
       std::shared_ptr<DET::Scope> scope = nullptr;
     };
 
+    class SubscriptExpression: public ExpressionNode {
+      ALTACORE_DH_CTOR(SubscriptExpression, ExpressionNode);
+
+      std::shared_ptr<ExpressionNode> target = nullptr;
+      std::shared_ptr<ExpressionNode> index = nullptr;
+    };
+
     #undef ALTACORE_DH_CTOR
   };
   namespace DH = DetailHandles;

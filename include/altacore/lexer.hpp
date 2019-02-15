@@ -61,6 +61,8 @@ namespace AltaCore {
       OpeningAngleBracket,
       ClosingAngleBracket,
       Ampersand,
+      OpeningSquareBracket,
+      ClosingSquareBracket,
 
       LAST, // always keep this as last, it counts the number of items in the enum
     };
@@ -101,6 +103,8 @@ namespace AltaCore {
       "<",
       ">",
       "&",
+      "[",
+      "]",
 
       "",
     };
@@ -140,6 +144,8 @@ namespace AltaCore {
       "Opening angle bracket",
       "Closing angle bracket",
       "Ampersand",
+      "Opening square bracket",
+      "Closing sqaure bracket",
 
       "LAST", // shouldn't be necessary, but just in case ;)
     };

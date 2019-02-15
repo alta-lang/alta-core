@@ -89,7 +89,7 @@ namespace AltaCore {
       ModuleOnlyStatement,
       Import,
       BooleanLiteral,
-      FunctionCall,
+      FunctionCallOrSubscript,
       String,
       FunctionDeclaration,
       Attribute,

@@ -55,8 +55,10 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     return getUnderlyingType(deref->target.get())->follow();
   } else if (auto cast = dynamic_cast<DH::CastExpression*>(expression)) {
     return cast->type->type;
-  } else if (auto cast = dynamic_cast<DH::CharacterLiteralNode*>(expression)) {
+  } else if (auto chara = dynamic_cast<DH::CharacterLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Byte, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
+  } else if (auto subs = dynamic_cast<DH::SubscriptExpression*>(expression)) {
+    return getUnderlyingType(subs->target.get())->follow();
   }
 
   return nullptr;

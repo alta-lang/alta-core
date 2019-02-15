@@ -42,5 +42,6 @@
 #include "ast/class-read-accessor-definition-statement.hpp"
 #include "ast/character-literal-node.hpp"
 #include "ast/type-alias-statement.hpp"
+#include "ast/subscript-expression.hpp"
 
 #endif // ALTACORE_AST_HPP

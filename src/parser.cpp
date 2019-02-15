@@ -169,9 +169,9 @@ namespace AltaCore {
        * left-hand expression and pretend to succeed. this, however, is fine
        * because the parser doesn't really care what rules succeed or fail,
        * only the results of those rules. so if, for example, while trying to
-       * find an AdditionOrSubtraction expression we find a FunctionCall and
+       * find an AdditionOrSubtraction expression we find a FunctionCallOrSubscript and
        * then we don't find `+` or `-`, the AdditionOrSubtraction expression will
-       * simply return the FunctionCall result as if it were its own. the
+       * simply return the FunctionCallOrSubscript result as if it were its own. the
        * parser won't care that AdditionOrSubtraction is returning
        * an AST::FunctionCallExpression instead of a AST::BinaryOperation, only
        * that it did return a result, and it'll pass the result back to whatever
@@ -264,7 +264,7 @@ namespace AltaCore {
           } else {
             // precendence here is least to most
             // i.e. VariableDefinition has the least precedence,
-            //      FunctionCall has the most precedence
+            //      FunctionCallOrSubscript has the most precedence
 
             state.internalValue = currentState;
 
@@ -279,7 +279,7 @@ namespace AltaCore {
               RuleType::NonequalityRelationalOperation,
               RuleType::AdditionOrSubtraction,
               RuleType::MultiplicationOrDivision,
-              RuleType::FunctionCall,
+              RuleType::FunctionCallOrSubscript,
               // </front-recursive-rules>
 
               // <special>
@@ -810,7 +810,7 @@ namespace AltaCore {
         } else if (expectKeyword("false")) {
           return std::make_shared<AST::BooleanLiteralNode>(false);
         }
-      } else if (rule == RuleType::FunctionCall) {
+      } else if (rule == RuleType::FunctionCallOrSubscript) {
         if (state.internalIndex == 0) {
           state.internalIndex = 1;
           return std::initializer_list<ExpectationType> {
@@ -819,26 +819,39 @@ namespace AltaCore {
         } else if (state.internalIndex == 1) {
           if (!exps.back()) return ALTACORE_NULLOPT;
 
-          if (!expect(TokenType::OpeningParenthesis)) return exps.back().item;
+          bool isSubscript = false;
 
-          auto funcCall = std::make_shared<AST::FunctionCallExpression>();
-          funcCall->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+          if (expect(TokenType::OpeningSquareBracket)) isSubscript = true;
+          if (!isSubscript && !expect(TokenType::OpeningParenthesis)) return exps.back().item;
 
-          auto tmpState = currentState;
-          auto name = expect(TokenType::Identifier);
-          if (name && !expect(TokenType::Colon)) {
-            name = Expectation(); // constructs an invalid expectation
-            currentState = tmpState;
+          if (!isSubscript) {
+            auto funcCall = std::make_shared<AST::FunctionCallExpression>();
+            funcCall->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+            auto tmpState = currentState;
+            auto name = expect(TokenType::Identifier);
+            if (name && !expect(TokenType::Colon)) {
+              name = Expectation(); // constructs an invalid expectation
+              currentState = tmpState;
+            }
+            funcCall->arguments.push_back({
+              (name) ? name.token.raw : "",
+              nullptr,
+            });
+
+            state.internalValue = std::move(funcCall);
+            state.internalIndex = 2;
+
+            return RuleType::Expression;
+          } else {
+            auto subs = std::make_shared<AST::SubscriptExpression>();
+            subs->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+            state.internalValue = std::move(subs);
+            state.internalIndex = 3;
+            
+            return RuleType::Expression;
           }
-          funcCall->arguments.push_back({
-            (name) ? name.token.raw : "",
-            nullptr,
-          });
-
-          state.internalValue = std::move(funcCall);
-          state.internalIndex = 2;
-
-          return RuleType::Expression;
         } else if (state.internalIndex == 2) {
           auto callState = ALTACORE_ANY_CAST<std::shared_ptr<AST::FunctionCallExpression>>(state.internalValue);
 
@@ -880,9 +893,53 @@ namespace AltaCore {
             });
             state.internalValue = std::move(newCall);
             return RuleType::Expression;
+          } else if (expect(TokenType::OpeningSquareBracket)) {
+            auto subs = std::make_shared<AST::SubscriptExpression>();
+            subs->target = callState;
+            
+            state.internalValue = std::move(subs);
+            state.internalIndex = 3;
+
+            return RuleType::Expression;
           }
 
           return callState;
+        } else if (state.internalIndex == 3) {
+          auto subs = ALTACORE_ANY_CAST<std::shared_ptr<AST::SubscriptExpression>>(state.internalValue);
+
+          if (!exps.back()) return ALTACORE_NULLOPT; // TODO: error recovery
+
+          if (!expect(TokenType::ClosingSquareBracket)) return ALTACORE_NULLOPT;
+
+          subs->index = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+          if (expect(TokenType::OpeningParenthesis)) {
+            auto call = std::make_shared<AST::FunctionCallExpression>(subs);
+
+            auto tmpState = currentState;
+            auto name = expect(TokenType::Identifier);
+            if (name && !expect(TokenType::Colon)) {
+              name = Expectation(); // constructs an invalid expectation
+              currentState = tmpState;
+            }
+            call->arguments.push_back({
+              (name) ? name.token.raw : "",
+              nullptr,
+            });
+            state.internalValue = std::move(call);
+            state.internalIndex = 2;
+
+            return RuleType::Expression;
+          } else if (expect(TokenType::OpeningSquareBracket)) {
+            auto newSubs = std::make_shared<AST::SubscriptExpression>();
+            newSubs->target = subs;
+            
+            state.internalValue = std::move(newSubs);
+
+            return RuleType::Expression;
+          }
+
+          return subs;
         }
       } else if (rule == RuleType::String) {
         auto raw = expect(TokenType::String);
@@ -1450,7 +1507,7 @@ namespace AltaCore {
             state.internalIndex = 3;
           } else {
             state.internalIndex = 1;
-            return RuleType::FunctionCall;
+            return RuleType::FunctionCallOrSubscript;
           }
 
           return RuleType::PointerOrDereference;

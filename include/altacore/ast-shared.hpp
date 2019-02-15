@@ -50,6 +50,7 @@ namespace AltaCore {
       ClassReadAccessorDefinitionStatement,
       CharacterLiteralNode,
       TypeAliasStatement,
+      SubscriptExpression,
     };
 
     static const char* const NodeType_names[] = {
@@ -93,6 +94,7 @@ namespace AltaCore {
       "ClassReadAccessorDefinitionStatement",
       "CharacterLiteralNode",
       "TypeAliasStatement",
+      "SubscriptExpression",
     };
 
     enum class OperatorType {
