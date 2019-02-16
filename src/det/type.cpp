@@ -40,6 +40,9 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     return call->targetType->returnType;
   } else if (auto acc = dynamic_cast<DH::Accessor*>(expression)) {
     if (!acc->narrowedTo) {
+      if (acc->readAccessor) {
+        return acc->readAccessor->returnType;
+      }
       throw std::runtime_error("the given accessor has not been narrowed. either narrow it or use `AltaCore::DET::Type::getUnderlyingTypes` instead");
     }
     return getUnderlyingType(acc->narrowedTo);
