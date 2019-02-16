@@ -18,22 +18,37 @@ ALTACORE_AST_DETAIL_D(ClassDefinitionNode) {
   info->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
   info->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
 
-  auto loop = [&](std::vector<std::shared_ptr<ClassStatementNode>>& tgt) -> void {
-    for (auto stmt: tgt) {
-      auto det = stmt->fullDetail(info->klass->scope);
-      info->statements.push_back(det);
-      if (stmt->nodeType() == NodeType::ClassSpecialMethodDefinitionStatement) {
-        auto special = std::dynamic_pointer_cast<ClassSpecialMethodDefinitionStatement>(stmt);
-        auto specialDet = std::dynamic_pointer_cast<DH::ClassSpecialMethodDefinitionStatement>(det);
-        if (special->type == SpecialClassMethod::Constructor) {
-          info->klass->constructors.push_back(specialDet->method);
-        } else {
-          ALTACORE_DETAILING_ERROR("destructors aren't supported yet");
+  if (info->isExport) {
+    if (auto mod = Util::getModule(scope.get()).lock()) {
+      mod->exports->items.push_back(info->klass);
+    }
+  }
+
+  auto loop = [&](std::vector<std::shared_ptr<ClassStatementNode>>& tgt, bool noBodies = false) -> void {
+    if (noBodies) {
+      for (auto stmt: tgt) {
+        auto det = stmt->fullDetail(info->klass->scope, true);
+        info->statements.push_back(det);
+        if (stmt->nodeType() == NodeType::ClassSpecialMethodDefinitionStatement) {
+          auto special = std::dynamic_pointer_cast<ClassSpecialMethodDefinitionStatement>(stmt);
+          auto specialDet = std::dynamic_pointer_cast<DH::ClassSpecialMethodDefinitionStatement>(det);
+          if (special->type == SpecialClassMethod::Constructor) {
+            info->klass->constructors.push_back(specialDet->method);
+          } else {
+            ALTACORE_DETAILING_ERROR("destructors aren't supported yet");
+          }
         }
+      }
+    } else {
+      for (size_t i = 0; i < tgt.size(); i++) {
+        auto& stmt = tgt[i];
+        auto& det = info->statements[i];
+        stmt->detail(det, false);
       }
     }
   };
 
+  loop(statements, true);
   loop(statements);
 
   if (info->klass->constructors.size() == 0) {
@@ -44,11 +59,6 @@ ALTACORE_AST_DETAIL_D(ClassDefinitionNode) {
     info->klass->constructors.push_back(info->defaultConstructorDetail->method);
   }
 
-  if (info->isExport) {
-    if (auto mod = Util::getModule(scope.get()).lock()) {
-      mod->exports->items.push_back(info->klass);
-    }
-  }
   return info;
 };
 

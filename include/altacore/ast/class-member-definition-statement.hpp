@@ -15,7 +15,8 @@ namespace AltaCore {
 
         ClassMemberDefinitionStatement(Visibility visibilityModifier);
 
-        ALTACORE_AST_DETAIL(ClassMemberDefinitionStatement);
+        ALTACORE_AST_DETAIL_NO_BODY_OPT(ClassMemberDefinitionStatement);
+        ALTACORE_AST_INFO_DETAIL(ClassMemberDefinitionStatement);
         ALTACORE_AST_VALIDATE;
     };
   };

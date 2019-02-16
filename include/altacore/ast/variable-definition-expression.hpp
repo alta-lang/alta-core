@@ -21,7 +21,8 @@ namespace AltaCore {
         VariableDefinitionExpression() {};
         VariableDefinitionExpression(std::string name, std::shared_ptr<Type> type, std::shared_ptr<ExpressionNode> initializationExpression);
 
-        ALTACORE_AST_DETAIL(VariableDefinitionExpression);
+        ALTACORE_AST_DETAIL_NO_BODY_OPT(VariableDefinitionExpression);
+        ALTACORE_AST_INFO_DETAIL(VariableDefinitionExpression);
         ALTACORE_AST_VALIDATE;
     };
   };

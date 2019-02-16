@@ -8,15 +8,9 @@ AltaCore::AST::ClassReadAccessorDefinitionStatement::ClassReadAccessorDefinition
   visibilityModifier(_visibilityModifier)
 {};
 
-ALTACORE_AST_DETAIL_D(ClassReadAccessorDefinitionStatement) {
+ALTACORE_AST_DETAIL_NO_BODY_OPT_D(ClassReadAccessorDefinitionStatement) {
   ALTACORE_MAKE_DH(ClassReadAccessorDefinitionStatement);
-  info->type = type->fullDetail(scope);
-  info->bodyScope = std::make_shared<DET::Scope>(scope);
-  info->body = body->fullDetail(info->bodyScope);
-
-  info->function = DET::Function::create(scope, name, {}, info->type->type);
-  info->function->isAccessor = true;
-  return info;
+  return detail(info, noBody);
 };
 
 ALTACORE_AST_VALIDATE_D(ClassReadAccessorDefinitionStatement) {
@@ -27,4 +21,24 @@ ALTACORE_AST_VALIDATE_D(ClassReadAccessorDefinitionStatement) {
   type->validate(stack, info->type);
   body->validate(stack, info->body);
   ALTACORE_VS_E;
+};
+
+ALTACORE_AST_INFO_DETAIL_D(ClassReadAccessorDefinitionStatement) {
+  ALTACORE_CAST_DH(ClassReadAccessorDefinitionStatement);
+
+  if (!info->type) {
+    info->type = type->fullDetail(info->inputScope);
+  }
+  if (!info->bodyScope) {
+    info->bodyScope = std::make_shared<DET::Scope>(info->inputScope);
+  }
+  if (!info->function) {
+    info->function = DET::Function::create(info->inputScope, name, {}, info->type->type);
+    info->function->isAccessor = true;
+  }
+  if (!info->body && !noBody) {
+    info->body = body->fullDetail(info->bodyScope);
+  }
+
+  return info;
 };

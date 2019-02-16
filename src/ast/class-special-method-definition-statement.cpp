@@ -9,27 +9,9 @@ AltaCore::AST::ClassSpecialMethodDefinitionStatement::ClassSpecialMethodDefiniti
   type(_type)
   {};
 
-ALTACORE_AST_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
+ALTACORE_AST_DETAIL_NO_BODY_OPT_D(ClassSpecialMethodDefinitionStatement) {
   ALTACORE_MAKE_DH(ClassSpecialMethodDefinitionStatement);
-  info->klass = scope->parentClass.lock();
-  if (type == SpecialClassMethod::Constructor) {
-    std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> params;
-
-    for (auto& param: parameters) {
-      auto det = param->fullDetail(scope, false);
-      info->parameters.push_back(det);
-      params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
-    }
-
-    info->method = DET::Function::create(scope, "constructor", params, std::make_shared<DET::Type>(DET::NativeType::Void));
-
-    info->method->visibility = visibilityModifier;
-
-    info->body = body->fullDetail(info->method->scope);
-  } else {
-    ALTACORE_DETAILING_ERROR("destructors aren't supported yet");
-  }
-  return info;
+  return detail(info, noBody);
 };
 
 ALTACORE_AST_VALIDATE_D(ClassSpecialMethodDefinitionStatement) {
@@ -45,4 +27,32 @@ ALTACORE_AST_VALIDATE_D(ClassSpecialMethodDefinitionStatement) {
   if (!info->klass) ALTACORE_VALIDATION_ERROR("weird failure: class is empty for special class method (but that should be impossible)");
   if (!info->method) ALTACORE_VALIDATION_ERROR("failed to properly detail function for special class method");
   ALTACORE_VS_E;
+};
+
+ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
+  ALTACORE_CAST_DH(ClassSpecialMethodDefinitionStatement);
+  if (!info->klass) {
+    info->klass = info->inputScope->parentClass.lock();
+  }
+  if (type == SpecialClassMethod::Constructor) {
+    if (!info->method) {
+      std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> params;
+
+      for (auto& param: parameters) {
+        auto det = param->fullDetail(info->inputScope, false);
+        info->parameters.push_back(det);
+        params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
+      }
+
+      info->method = DET::Function::create(info->inputScope, "constructor", params, std::make_shared<DET::Type>(DET::NativeType::Void));
+
+      info->method->visibility = visibilityModifier;
+    }
+    if (!noBody && !info->body) {
+      info->body = body->fullDetail(info->method->scope);
+    }
+  } else {
+    ALTACORE_DETAILING_ERROR("destructors aren't supported yet");
+  }
+  return info;
 };

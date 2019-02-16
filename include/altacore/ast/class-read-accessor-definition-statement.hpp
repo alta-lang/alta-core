@@ -21,7 +21,8 @@ namespace AltaCore {
 
       ClassReadAccessorDefinitionStatement(Visibility visibilityModifier);
 
-      ALTACORE_AST_DETAIL(ClassReadAccessorDefinitionStatement);
+      ALTACORE_AST_DETAIL_NO_BODY_OPT(ClassReadAccessorDefinitionStatement);
+      ALTACORE_AST_INFO_DETAIL(ClassReadAccessorDefinitionStatement);
       ALTACORE_AST_VALIDATE;
     };
   };

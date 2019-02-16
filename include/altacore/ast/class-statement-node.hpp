@@ -11,7 +11,8 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
-        ALTACORE_AST_AUTO_DETAIL(ClassStatementNode);
+        ALTACORE_AST_AUTO_NO_BODY_OPT_DETAIL(ClassStatementNode);
+        ALTACORE_AST_AUTO_INFO_DETAIL(ClassStatementNode);
     };
   };
 };

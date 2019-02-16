@@ -20,36 +20,9 @@ AltaCore::AST::FunctionDefinitionNode::FunctionDefinitionNode(
   body(_body)
   {};
 
-ALTACORE_AST_DETAIL_D(FunctionDefinitionNode) {
+ALTACORE_AST_DETAIL_NO_BODY_OPT_D(FunctionDefinitionNode) {
   ALTACORE_MAKE_DH(FunctionDefinitionNode);
-  std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
-
-  for (auto& param: parameters) {
-    auto det = param->fullDetail(scope, false);
-    info->parameters.push_back(det);
-    params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
-  }
-
-  info->returnType = returnType->fullDetail(scope, false);
-
-  info->function = DET::Function::create(scope, name, params, info->returnType->type);
-  scope->items.push_back(info->function);
-  
-  info->function->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
-  info->function->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
-
-  info->body = body->fullDetail(info->function->scope);
-
-  for (auto& attr: attributes) {
-    info->attributes.push_back(attr->fullDetail(scope, shared_from_this(), info));
-  }
-
-  if (info->function->isExport) {
-    if (auto mod = Util::getModule(scope.get()).lock()) {
-      mod->exports->items.push_back(info->function);
-    }
-  }
-  return info;
+  return detail(info, noBody);
 };
 
 ALTACORE_AST_VALIDATE_D(FunctionDefinitionNode) {
@@ -75,4 +48,54 @@ ALTACORE_AST_VALIDATE_D(FunctionDefinitionNode) {
   if (!body) ALTACORE_VALIDATION_ERROR("empty body for function definition");
   body->validate(stack, info->body);
   ALTACORE_VS_E;
+};
+
+ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
+  ALTACORE_CAST_DH(FunctionDefinitionNode);
+
+  std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
+
+  if (info->parameters.size() != parameters.size()) {
+    for (auto& param: parameters) {
+      auto det = param->fullDetail(info->inputScope, false);
+      info->parameters.push_back(det);
+      params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
+    }
+  } else {
+    for (size_t i = 0; i < parameters.size(); i++) {
+      auto& param = parameters[i];
+      auto& det = info->parameters[i];
+      params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
+    }
+  }
+
+  if (!info->returnType) {
+    info->returnType = returnType->fullDetail(info->inputScope, false);
+  }
+
+  if (!info->function) {
+    info->function = DET::Function::create(info->inputScope, name, params, info->returnType->type);
+    info->inputScope->items.push_back(info->function);
+    
+    info->function->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
+    info->function->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
+
+    if (info->function->isExport) {
+      if (auto mod = Util::getModule(info->inputScope.get()).lock()) {
+        mod->exports->items.push_back(info->function);
+      }
+    }
+  }
+
+  if (info->attributes.size() != attributes.size()) {
+    for (auto& attr: attributes) {
+      info->attributes.push_back(attr->fullDetail(info->inputScope, shared_from_this(), info));
+    }
+  }
+
+  if (!info->body && !noBody) {
+    info->body = body->fullDetail(info->function->scope);
+  }
+
+  return info;
 };

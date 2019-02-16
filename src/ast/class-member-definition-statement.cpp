@@ -8,12 +8,9 @@ AltaCore::AST::ClassMemberDefinitionStatement::ClassMemberDefinitionStatement(Al
   visibilityModifier(_visibilityModifier)
   {};
 
-ALTACORE_AST_DETAIL_D(ClassMemberDefinitionStatement) {
+ALTACORE_AST_DETAIL_NO_BODY_OPT_D(ClassMemberDefinitionStatement) {
   ALTACORE_MAKE_DH(ClassMemberDefinitionStatement);
-  if (varDef == nullptr) throw std::runtime_error("bad computer. bad.");
-  info->varDef = varDef->fullDetail(scope);
-  info->varDef->variable->visibility = visibilityModifier;
-  return info;
+  return detail(info, noBody);
 };
 
 ALTACORE_AST_VALIDATE_D(ClassMemberDefinitionStatement) {
@@ -21,4 +18,20 @@ ALTACORE_AST_VALIDATE_D(ClassMemberDefinitionStatement) {
   if (!varDef) ALTACORE_VALIDATION_ERROR("empty variable definition for class member");
   varDef->validate(stack, info->varDef);
   ALTACORE_VS_E;
+};
+
+ALTACORE_AST_INFO_DETAIL_D(ClassMemberDefinitionStatement) {
+  ALTACORE_CAST_DH(ClassMemberDefinitionStatement);
+
+  if (varDef == nullptr) throw std::runtime_error("bad computer. bad.");
+
+  if (!info->varDef) {
+    info->varDef = varDef->fullDetail(info->inputScope, noBody);
+    info->varDef->variable->visibility = visibilityModifier;
+  }
+  if (!info->varDef->initializationExpression) {
+    info->varDef = varDef->fullDetail(info->varDef, noBody);
+  }
+
+  return info;
 };

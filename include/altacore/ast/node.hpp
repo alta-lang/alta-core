@@ -28,6 +28,13 @@
   std::shared_ptr<AltaCore::DH::x> fullDetail(std::shared_ptr<AltaCore::DET::Scope> scope) {\
     return std::dynamic_pointer_cast<AltaCore::DH::x>(detail(scope));\
   }
+#define ALTACORE_AST_DETAIL_NO_BODY_OPT(x) public: virtual std::shared_ptr<AltaCore::DH::Node> detail(std::shared_ptr<AltaCore::DET::Scope> scope, bool noBody);\
+  virtual std::shared_ptr<AltaCore::DH::Node> detail(std::shared_ptr<AltaCore::DET::Scope> scope) {\
+    return detail(scope, false);\
+  };\
+  std::shared_ptr<AltaCore::DH::x> fullDetail(std::shared_ptr<AltaCore::DET::Scope> scope, bool noBody = false) {\
+    return std::dynamic_pointer_cast<AltaCore::DH::x>(detail(scope, noBody));\
+  }
 #define ALTACORE_AST_MIN_DETAIL(x) std::shared_ptr<AltaCore::DH::x> fullDetail(std::shared_ptr<AltaCore::DET::Scope> scope) {\
     return std::dynamic_pointer_cast<AltaCore::DH::x>(detail(scope));\
   }
@@ -38,10 +45,33 @@
   std::shared_ptr<AltaCore::DH::x> fullDetail(std::shared_ptr<AltaCore::DET::Scope> scope) {\
     return std::dynamic_pointer_cast<AltaCore::DH::x>(detail(scope));\
   }
+#define ALTACORE_AST_AUTO_NO_BODY_OPT_DETAIL(x) virtual std::shared_ptr<AltaCore::DH::Node> detail(std::shared_ptr<AltaCore::DET::Scope> scope, bool noBody) {\
+    ALTACORE_MAKE_DH(x);\
+    return info;\
+  };\
+  virtual std::shared_ptr<AltaCore::DH::Node> detail(std::shared_ptr<AltaCore::DET::Scope> scope) {\
+    return detail(scope, false);\
+  };\
+  std::shared_ptr<AltaCore::DH::x> fullDetail(std::shared_ptr<AltaCore::DET::Scope> scope, bool noBody = false) {\
+    return std::dynamic_pointer_cast<AltaCore::DH::x>(detail(scope, noBody));\
+  }
 #define ALTACORE_AST_DETAIL_D(x) std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::x::detail(std::shared_ptr<AltaCore::DET::Scope> scope)
+#define ALTACORE_AST_DETAIL_NO_BODY_OPT_D(x) std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::x::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bool noBody)
+#define ALTACORE_AST_INFO_DETAIL(x) public: virtual std::shared_ptr<AltaCore::DH::Node> detail(std::shared_ptr<DH::Node> info, bool noBody = false);\
+  std::shared_ptr<AltaCore::DH::x> fullDetail(std::shared_ptr<DH::Node> info, bool noBody = false) {\
+    return std::dynamic_pointer_cast<AltaCore::DH::x>(detail(info, noBody));\
+  }
+#define ALTACORE_AST_AUTO_INFO_DETAIL(x) public: virtual std::shared_ptr<AltaCore::DH::Node> detail(std::shared_ptr<DH::Node> info, bool noBody = false) {\
+    return info;\
+  };\
+  std::shared_ptr<AltaCore::DH::x> fullDetail(std::shared_ptr<DH::Node> info, bool noBody = false) {\
+    return std::dynamic_pointer_cast<AltaCore::DH::x>(detail(info, noBody));\
+  }
+#define ALTACORE_AST_INFO_DETAIL_D(x) std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::x::detail(std::shared_ptr<AltaCore::DH::Node> _info, bool noBody)
 
 // DH = detail handle
 #define ALTACORE_MAKE_DH(x) auto info = std::make_shared<DH::x>(scope);
+#define ALTACORE_CAST_DH(x) auto info = std::dynamic_pointer_cast<DH::x>(_info);
 
 namespace AltaCore {
   namespace AST {
