@@ -104,11 +104,13 @@ namespace AltaCore {
     };
 
     class Preprocessor;
-    void defaultFileReader(Preprocessor& orig, Preprocessor& newPre, std::string importRequest);
+    Filesystem::Path defaultFileResolver(Preprocessor& orig, std::string importRequest);
+    void defaultFileReader(Preprocessor& orig, Preprocessor& newPre, Filesystem::Path path);
     class Preprocessor {
       private:
         std::string lineCache;
-        std::function<void(Preprocessor&, Preprocessor&, std::string)> fileReader;
+        std::function<Filesystem::Path(Preprocessor&, std::string)> fileResolver;
+        std::function<void(Preprocessor&, Preprocessor&, Filesystem::Path)> fileReader;
         const bool fallThrough() {
           return (lastConditionalResults.size() > 0) && (lastConditionalResults.top() == false);
         };
@@ -131,12 +133,14 @@ namespace AltaCore {
           std::map<std::string, Expression>& _defs,
           std::map<std::string, std::string>& _results,
           std::unordered_map<std::string, std::vector<Location>>& _locationMaps,
-          std::function<void(Preprocessor&, Preprocessor&, std::string)> _fileReader = defaultFileReader
+          std::function<Filesystem::Path(Preprocessor&, std::string)> _fileResolver = defaultFileResolver,
+          std::function<void(Preprocessor&, Preprocessor&, Filesystem::Path)> _fileReader = defaultFileReader
         ):
           filePath(_filePath),
           definitions(_defs),
           fileResults(_results),
           locationMaps(_locationMaps),
+          fileResolver(_fileResolver),
           fileReader(_fileReader)
           {};
     };

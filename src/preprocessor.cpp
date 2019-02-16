@@ -738,8 +738,12 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
             break;
           }
         }
-        Preprocessor pre(Filesystem::Path(), definitions, fileResults, locationMaps, fileReader);
-        fileReader(*this, pre, importRequest);
+        auto path = fileResolver(*this, importRequest);
+        // avoid duplicate importation
+        if (fileResults.find(path.absolutify().toString()) == fileResults.end()) {
+          Preprocessor pre(path, definitions, fileResults, locationMaps, fileResolver, fileReader);
+          fileReader(*this, pre, path);
+        }
       }
       for (auto& [delimiterStart, delimiterEnd]: delimiters) {
         if (!doComment(delimiterEnd, nextStart)) {
@@ -785,9 +789,11 @@ void AltaCore::Preprocessor::Preprocessor::done() {
   totalLines = 0;
 };
 
-void AltaCore::Preprocessor::defaultFileReader(AltaCore::Preprocessor::Preprocessor& orig, AltaCore::Preprocessor::Preprocessor& newPre, std::string importRequest) {
-  auto path = Modules::resolve(importRequest, orig.filePath);
-  newPre.filePath = path;
+AltaCore::Filesystem::Path AltaCore::Preprocessor::defaultFileResolver(Preprocessor& orig, std::string importRequest) {
+  return AltaCore::Modules::resolve(importRequest, orig.filePath);
+};
+
+void AltaCore::Preprocessor::defaultFileReader(AltaCore::Preprocessor::Preprocessor& orig, AltaCore::Preprocessor::Preprocessor& newPre, Filesystem::Path path) {
   std::ifstream file(path.toString());
   std::string line;
 
