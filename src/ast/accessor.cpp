@@ -21,7 +21,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
 
   if (targetAcc && targetAccDH->readAccessor) {
     if (targetAccDH->readAccessor->returnType->isNative) {
-      throw std::runtime_error("native types can't be accessed");
+      ALTACORE_DETAILING_ERROR("native types can't be accessed");
     }
     targetScope = targetAccDH->readAccessor->returnType->klass->scope;
   } else {
@@ -29,7 +29,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
 
     if (items.size() == 1) {
       if (items[0]->nodeType() == DET::NodeType::Function) {
-        throw std::runtime_error("can't access a function");
+        ALTACORE_DETAILING_ERROR("can't access a function");
       } else if (items[0]->nodeType() == DET::NodeType::Namespace) {
         info->accessesNamespace = true;
       }
@@ -40,18 +40,18 @@ ALTACORE_AST_DETAIL_D(Accessor) {
       }
       targetScope = DET::Scope::getMemberScope(items[0]);
     } else if (items.size() > 0) {
-      throw std::runtime_error("target must be narrowed before it can be accessed");
+      ALTACORE_DETAILING_ERROR("target must be narrowed before it can be accessed");
     } else {
       try {
         auto types = DET::Type::getUnderlyingTypes(info->target.get());
         if (types.size() == 1) {
           info->targetType = types[0];
           if (types[0]->isNative) {
-            throw std::runtime_error("native types can't be accessed");
+            ALTACORE_DETAILING_ERROR("native types can't be accessed");
           }
           targetScope = types[0]->klass->scope;
         } else if (items.size() > 0) {
-          throw std::runtime_error("target must be narrowed before it can be accessed");
+          ALTACORE_DETAILING_ERROR("target must be narrowed before it can be accessed");
         } else {
           // the `!targetScope` check will take care of this later
         }
@@ -62,7 +62,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
   }
 
   if (!targetScope) {
-    throw std::runtime_error("could not determine how to access the given target");
+    ALTACORE_DETAILING_ERROR("could not determine how to access the given target");
   }
 
   if (!targetScope->parentNamespace.expired()) {
@@ -77,19 +77,19 @@ ALTACORE_AST_DETAIL_D(Accessor) {
     if (item->nodeType() == DET::NodeType::Function && std::dynamic_pointer_cast<DET::Function>(item)->isAccessor) {
       auto acc = std::dynamic_pointer_cast<DET::Function>(item);
       if (acc->parameters.size() == 0) {
-        if (info->readAccessor) throw std::runtime_error("encountered two read accessors with the same name");
+        if (info->readAccessor) ALTACORE_DETAILING_ERROR("encountered two read accessors with the same name");
         info->readAccessor = acc;
       } else if (acc->parameters.size() == 1) {
-        if (info->writeAccessor) throw std::runtime_error("encountered two write accessors with the same name");
+        if (info->writeAccessor) ALTACORE_DETAILING_ERROR("encountered two write accessors with the same name");
         info->writeAccessor = acc;
       } else {
-        throw std::runtime_error("invalid accessor");
+        ALTACORE_DETAILING_ERROR("invalid accessor");
       }
     }
   }
 
   if (info->items.size() == 0) {
-    throw std::runtime_error("no items found for query in target");
+    ALTACORE_DETAILING_ERROR("no items found for `" + query + "` in target");
   } else if (info->items.size() == 1) {
     if (info->items[0]->nodeType() != DET::NodeType::Function || !std::dynamic_pointer_cast<DET::Function>(info->items[0])->isAccessor) {
       info->narrowedTo = info->items[0];

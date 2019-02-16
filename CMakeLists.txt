@@ -23,6 +23,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/attributes.cpp"
   "${PROJECT_SOURCE_DIR}/src/validator.cpp"
   "${PROJECT_SOURCE_DIR}/src/altacore.cpp"
+  "${PROJECT_SOURCE_DIR}/src/errors.cpp"
 
   # AST nodes
   "${PROJECT_SOURCE_DIR}/src/ast/node.cpp"

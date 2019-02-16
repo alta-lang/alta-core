@@ -36,7 +36,7 @@ ALTACORE_AST_DETAIL_D(Fetch) {
     //       a good logger for the whole core functionality (lexer, parser, AST,
     //       DET, module system, etc.). that way, we'll give users
     //       an easy to use commmon interface for handling our errors
-    throw std::runtime_error("OH NO! THERE'S NO `" + query + "` IN THE SCOPE!");
+    ALTACORE_DETAILING_ERROR("there's no `" + query + "` in the scope");
   }
 
   info->items = items;

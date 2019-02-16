@@ -27,7 +27,7 @@ ALTACORE_AST_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
 
     info->body = body->fullDetail(info->method->scope);
   } else {
-    throw std::runtime_error("destructors aren't supported yet");
+    ALTACORE_DETAILING_ERROR("destructors aren't supported yet");
   }
   return info;
 };

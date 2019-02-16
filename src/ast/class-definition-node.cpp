@@ -28,7 +28,7 @@ ALTACORE_AST_DETAIL_D(ClassDefinitionNode) {
         if (special->type == SpecialClassMethod::Constructor) {
           info->klass->constructors.push_back(specialDet->method);
         } else {
-          throw std::runtime_error("destructors aren't supported yet");
+          ALTACORE_DETAILING_ERROR("destructors aren't supported yet");
         }
       }
     }

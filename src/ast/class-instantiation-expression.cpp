@@ -14,20 +14,20 @@ ALTACORE_AST_DETAIL_D(ClassInstantiationExpression) {
 
   if (auto fetch = std::dynamic_pointer_cast<DH::Fetch>(info->target)) {
     if (!fetch->narrowedTo) {
-      throw std::runtime_error("the target must be narrowed before it can be instantiated");
+      ALTACORE_DETAILING_ERROR("the target must be narrowed before it can be instantiated");
     }
     info->klass = std::dynamic_pointer_cast<DET::Class>(fetch->narrowedTo);
   } else if (auto acc = std::dynamic_pointer_cast<DH::Accessor>(info->target)) {
     if (!acc->narrowedTo) {
-      throw std::runtime_error("the target must be narrowed before it can be instantiated");
+      ALTACORE_DETAILING_ERROR("the target must be narrowed before it can be instantiated");
     }
     info->klass = std::dynamic_pointer_cast<DET::Class>(acc->narrowedTo);
   } else {
-    throw std::runtime_error("invalid target retrieval node for class instantiation");
+    ALTACORE_DETAILING_ERROR("invalid target retrieval node for class instantiation");
   }
 
   if (!info->klass) {
-    throw std::runtime_error("invalid target for class instantiation. most likely, the target was not a class");
+    ALTACORE_DETAILING_ERROR("invalid target for class instantiation. most likely, the target was not a class");
   }
 
   std::vector<std::shared_ptr<DET::Type>> targetTypes;
@@ -56,7 +56,7 @@ ALTACORE_AST_DETAIL_D(ClassInstantiationExpression) {
     info->adjustedArguments = adjArgs;
     info->argumentMap = argMap;
   } else {
-    throw std::runtime_error("unable to find suitable constructor");
+    ALTACORE_DETAILING_ERROR("unable to find suitable constructor");
   }
   return info;
 };

@@ -42,14 +42,14 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Type::detail(std::shared_ptr<
         auto fetch = std::dynamic_pointer_cast<Fetch>(lookup);
         auto fetchDet = std::dynamic_pointer_cast<DH::Fetch>(info->lookup);
         if (!fetchDet->narrowedTo) {
-          throw std::runtime_error("that's weird, classes should be narrowed");
+          ALTACORE_DETAILING_ERROR("that's weird, classes should be narrowed");
         }
         item = fetchDet->narrowedTo;
       } else if (nodeT == NodeType::Accessor) {
         auto acc = std::dynamic_pointer_cast<Accessor>(lookup);
         auto accDet = std::dynamic_pointer_cast<DH::Accessor>(info->lookup);
         if (!accDet->narrowedTo) {
-          throw std::runtime_error("that's weird, classes should be narrowed");
+          ALTACORE_DETAILING_ERROR("that's weird, classes should be narrowed");
         }
         item = accDet->narrowedTo;
       } else {

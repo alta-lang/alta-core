@@ -207,15 +207,7 @@ ALTACORE_AST_DETAIL_D(FunctionCallExpression) {
   }
 
   if (index == SIZE_MAX) {
-    /*
-    if (possible) {
-      throw std::runtime_error("No functions matching the given arguments found in the given expression");
-    } else {
-    */
-      throw std::runtime_error("No functions found in the given expression");
-    /*
-    }
-    */
+    ALTACORE_DETAILING_ERROR("no functions found in the given expression");
   }
 
   info->adjustedArguments = adjArgs;

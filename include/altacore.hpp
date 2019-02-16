@@ -10,6 +10,7 @@
 #include "altacore/preprocessor.hpp"
 #include "altacore/attributes.hpp"
 #include "altacore/validator.hpp"
+#include "altacore/errors.hpp"
 
 namespace AltaCore {
   void registerGlobalAttributes();

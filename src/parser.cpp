@@ -150,7 +150,7 @@ namespace AltaCore {
           auto& ptr = **node;
           ptr->position.line = tokens[state.stateAtStart.currentPosition].line;
           ptr->position.column = tokens[state.stateAtStart.currentPosition].column;
-          ptr->file = filePath;
+          ptr->position.file = filePath;
         }
       }
       return result;
