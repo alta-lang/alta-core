@@ -1286,10 +1286,29 @@ namespace AltaCore {
           auto id = expect(TokenType::Identifier);
           if (!id) return ALTACORE_NULLOPT;
 
-          if (!expect(TokenType::OpeningBrace)) return ALTACORE_NULLOPT;
-
           auto def = std::make_shared<AST::ClassDefinitionNode>(id.token.raw);
           def->modifiers = mods;
+
+          if (expectKeyword("extends")) {
+            bool dot = false;
+            while (auto pid = expect(TokenType::Identifier)) {
+              if (dot) {
+                auto& back = def->parents.back();
+                back = std::make_shared<AST::Accessor>(back, pid.token.raw);
+              } else {
+                def->parents.push_back(std::make_shared<AST::Fetch>(pid.token.raw));
+              }
+              if (expect(TokenType::Dot)) {
+                dot = true;
+              } else if (!expect(TokenType::Comma)) {
+                break;
+              }
+            }
+            if (dot) return ALTACORE_NULLOPT;
+          }
+
+          if (!expect(TokenType::OpeningBrace)) return ALTACORE_NULLOPT;
+
           state.internalValue = std::move(def);
           state.internalIndex = 1;
           return RuleType::ClassStatement;

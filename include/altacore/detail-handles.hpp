@@ -42,7 +42,6 @@ namespace AltaCore {
     ALTACORE_DH_SIMPLE_ALIAS(ClassStatementNode, Node);
 
     ALTACORE_DH_SIMPLE_ALIAS(LiteralNode, ExpressionNode);
-    ALTACORE_DH_SIMPLE_ALIAS(RetrievalNode, ExpressionNode);
 
     ALTACORE_DH_SIMPLE_ALIAS(BooleanLiteralNode, LiteralNode);
     ALTACORE_DH_SIMPLE_ALIAS(IntegerLiteralNode, LiteralNode);
@@ -80,6 +79,13 @@ namespace AltaCore {
     class Type;
     class VariableDefinitionExpression;
     class WhileLoopStatement;
+    class RetrievalNode;
+
+    class RetrievalNode: public ExpressionNode {
+      ALTACORE_DH_CTOR(RetrievalNode, ExpressionNode);
+
+      std::vector<std::shared_ptr<DET::ScopeItem>> items;
+    };
 
     class Accessor: public RetrievalNode {
       ALTACORE_DH_CTOR(Accessor, RetrievalNode);
@@ -87,7 +93,6 @@ namespace AltaCore {
       std::shared_ptr<ExpressionNode> target = nullptr;
 
       bool accessesNamespace = false;
-      std::vector<std::shared_ptr<DET::ScopeItem>> items;
       std::shared_ptr<DET::Function> readAccessor = nullptr;
       std::shared_ptr<DET::Function> writeAccessor = nullptr;
       std::shared_ptr<DET::ScopeItem> narrowedTo = nullptr;
@@ -137,6 +142,7 @@ namespace AltaCore {
       ALTACORE_DH_CTOR(ClassDefinitionNode, StatementNode);
 
       std::vector<std::shared_ptr<ClassStatementNode>> statements;
+      std::vector<std::shared_ptr<RetrievalNode>> parents;
 
       bool isExport = false;
       bool isLiteral = false;
@@ -216,7 +222,6 @@ namespace AltaCore {
     class Fetch: public RetrievalNode {
       ALTACORE_DH_CTOR(Fetch, RetrievalNode);
 
-      std::vector<std::shared_ptr<DET::ScopeItem>> items;
       std::shared_ptr<DET::ScopeItem> narrowedTo;
     };
     class FunctionCallExpression: public ExpressionNode {

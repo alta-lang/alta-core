@@ -12,7 +12,18 @@ AltaCore::AST::ClassDefinitionNode::ClassDefinitionNode(std::string _name):
 
 ALTACORE_AST_DETAIL_D(ClassDefinitionNode) {
   ALTACORE_MAKE_DH(ClassDefinitionNode);
-  info->klass = DET::Class::create(name, scope);
+
+  std::vector<std::shared_ptr<DET::Class>> parentClasses;
+  for (auto& parent: parents) {
+    auto det = parent->fullDetail(scope);
+    info->parents.push_back(det);
+    if (det->items.size() != 1 || det->items.back()->nodeType() != DET::NodeType::Class) {
+      ALTACORE_DETAILING_ERROR("no class found for the given parent expression");
+    }
+    parentClasses.push_back(std::dynamic_pointer_cast<DET::Class>(det->items.back()));
+  }
+
+  info->klass = DET::Class::create(name, scope, parentClasses);
   scope->items.push_back(info->klass);
 
   info->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();

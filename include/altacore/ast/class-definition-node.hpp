@@ -5,6 +5,7 @@
 #include "class-statement-node.hpp"
 #include "class-special-method-definition-statement.hpp"
 #include "../det/class.hpp"
+#include "retrieval-node.hpp"
 #include <vector>
 #include <string>
 
@@ -17,6 +18,7 @@ namespace AltaCore {
         std::vector<std::string> modifiers;
         std::string name;
         std::vector<std::shared_ptr<ClassStatementNode>> statements;
+        std::vector<std::shared_ptr<RetrievalNode>> parents;
 
         ClassDefinitionNode(std::string name);
 
