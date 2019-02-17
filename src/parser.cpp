@@ -637,9 +637,15 @@ namespace AltaCore {
           if (!name) return ALTACORE_NULLOPT;
           varDef->name = name.token.raw;
 
-          if (!expect(TokenType::Colon)) return ALTACORE_NULLOPT;
-
           state.internalValue = std::move(varDef);
+
+          if (expect(TokenType::EqualSign)) {
+            state.internalIndex = 2;
+            return RuleType::Expression;
+          } else if (!expect(TokenType::Colon)) {
+            return ALTACORE_NULLOPT;
+          }
+
           state.internalIndex = 1;
           return RuleType::Type;
         } else if (state.internalIndex == 1) {

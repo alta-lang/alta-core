@@ -117,12 +117,12 @@ std::vector<std::shared_ptr<AltaCore::DET::Type>> AltaCore::DET::Type::getUnderl
   return { type };
 };
 
-std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::reference() {
+std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::reference() const {
   auto other = copy();
   other->modifiers.push_back((uint8_t)Shared::TypeModifierFlag::Reference);
   return other;
 };
-std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::dereference() {
+std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::dereference() const {
   auto other = copy();
   if (other->modifiers.size() > 0) {
     auto idx = other->modifiers.size() - 1;
@@ -135,12 +135,12 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::dereference() {
   }
   return other;
 };
-std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::point() {
+std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::point() const {
   auto other = copy();
   other->modifiers.push_back((uint8_t)Shared::TypeModifierFlag::Pointer);
   return other;
 };
-std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::follow() {
+std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::follow() const {
   auto other = copy();
   if (other->modifiers.size() > 0) {
     auto idx = other->modifiers.size() - 1;
@@ -151,12 +151,23 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::follow() {
   }
   return other;
 };
-std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::followBlindly() {
+std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::followBlindly() const {
   auto other = copy();
   if (other->modifiers.size() > 0) {
     auto idx = other->modifiers.size() - 1;
     other->modifiers[idx] &= ~((uint8_t)Shared::TypeModifierFlag::Reference | (uint8_t)Shared::TypeModifierFlag::Pointer);
     if (other->modifiers[idx] == 0) {
+      other->modifiers.pop_back();
+    }
+  }
+  return other;
+};
+std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::deconstify() const {
+  auto other = copy();
+  if (other->modifiers.size() > 0) {
+    auto& back = other->modifiers.back();
+    back &= ~(uint8_t)Shared::TypeModifierFlag::Constant;
+    if (back == 0) {
       other->modifiers.pop_back();
     }
   }

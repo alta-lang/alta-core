@@ -23,8 +23,8 @@ ALTACORE_AST_DETAIL_NO_BODY_OPT_D(VariableDefinitionExpression) {
 ALTACORE_AST_VALIDATE_D(VariableDefinitionExpression) {
   ALTACORE_VS_S(VariableDefinitionExpression);
   if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for variable definition");
-  if (!type) ALTACORE_VALIDATION_ERROR("empty type for variable definition");
-  type->validate(stack, info->type);
+  if (!type && !info->type) ALTACORE_VALIDATION_ERROR("empty type for variable definition");
+  if (type) type->validate(stack, info->type);
   if (initializationExpression) {
     initializationExpression->validate(stack, info->initializationExpression);
   }
@@ -37,8 +37,22 @@ ALTACORE_AST_VALIDATE_D(VariableDefinitionExpression) {
 ALTACORE_AST_INFO_DETAIL_D(VariableDefinitionExpression) {
   ALTACORE_CAST_DH(VariableDefinitionExpression);
 
+  if (initializationExpression != nullptr && (!noBody || !type) && !info->initializationExpression) {
+    info->initializationExpression = initializationExpression->fullDetail(info->inputScope);
+  }
+
   if (!info->type) {
-    info->type = type->fullDetail(info->inputScope);
+    if (!type && info->initializationExpression) {
+      info->type = std::make_shared<DH::Type>(info->inputScope);
+      info->type->type = DET::Type::getUnderlyingType(info->initializationExpression.get())->deconstify();
+      info->type->isAny = info->type->type->isAny;
+      info->type->isNative = info->type->type->isNative;
+      info->type->isFunction = info->type->type->isFunction;
+    } else if (type) {
+      info->type = type->fullDetail(info->inputScope);
+    } else {
+      ALTACORE_DETAILING_ERROR("variables must either have declared types or initializers (to infer their types)");
+    }
   }
 
   if (!info->variable) {
@@ -51,10 +65,6 @@ ALTACORE_AST_INFO_DETAIL_D(VariableDefinitionExpression) {
         mod->exports->items.push_back(info->variable);
       }
     }
-  }
-
-  if (initializationExpression != nullptr && !noBody && !info->initializationExpression) {
-    info->initializationExpression = initializationExpression->fullDetail(info->inputScope);
   }
 
   return info;

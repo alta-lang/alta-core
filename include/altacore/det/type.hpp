@@ -47,27 +47,32 @@ namespace AltaCore {
          * follows the same format as `AltaCore::AST::Type::modifiers`
          */
         std::vector<uint8_t> modifiers;
+
         /**
          * @brief Add a `ref` to this type
          */
-        std::shared_ptr<Type> reference();
+        std::shared_ptr<Type> reference() const;
         /**
          * @brief Remove a `ref` from this type (if present)
          */
-        std::shared_ptr<Type> dereference();
+        std::shared_ptr<Type> dereference() const;
         /**
          * @brief Add a `ptr` to this type
          */
-        std::shared_ptr<Type> point();
+        std::shared_ptr<Type> point() const;
         /**
          * @brief Remove a `ptr` from this type (if present)
          */
-        std::shared_ptr<Type> follow();
+        std::shared_ptr<Type> follow() const;
         /**
          * @brief Remove a `ref` or `ptr` from this type (if present)
          * Basically, decreases the indirection level by one, regardless of the kind of indirection
          */
-        std::shared_ptr<Type> followBlindly();
+        std::shared_ptr<Type> followBlindly() const;
+        /**
+         * Remove the rightmost (i.e. root) `const` modifier from this type (if present)
+         */
+        std::shared_ptr<Type> deconstify() const;
 
         size_t compatiblity(const Type& other);
         bool isExactlyCompatibleWith(const Type& other);
