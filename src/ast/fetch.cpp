@@ -5,7 +5,7 @@ const AltaCore::AST::NodeType AltaCore::AST::Fetch::nodeType() {
 };
 
 AltaCore::AST::Fetch::Fetch(std::string _query):
-  query(_query)
+  RetrievalNode(_query)
   {};
 
 void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<DH::Fetch> info, std::shared_ptr<AltaCore::DET::Type> type) {

@@ -1,17 +1,15 @@
 #ifndef ALTACORE_AST_FETCH_HPP
 #define ALTACORE_AST_FETCH_HPP
 
-#include "expression-node.hpp"
+#include "retrieval-node.hpp"
 #include "../det/scope-item.hpp"
 #include "../det/type.hpp"
 
 namespace AltaCore {
   namespace AST {
-    class Fetch: public ExpressionNode {
+    class Fetch: public RetrievalNode {
       public:
         virtual const NodeType nodeType();
-
-        std::string query;
 
         Fetch(std::string query);
 

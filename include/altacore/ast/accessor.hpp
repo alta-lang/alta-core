@@ -1,18 +1,17 @@
 #ifndef ALTACORE_AST_ACCESSOR_HPP
 #define ALTACORE_AST_ACCESSOR_HPP
 
-#include "expression-node.hpp"
+#include "retrieval-node.hpp"
 #include "../det/scope-item.hpp"
 #include "../det/function.hpp"
 
 namespace AltaCore {
   namespace AST {
-    class Accessor: public ExpressionNode {
+    class Accessor: public RetrievalNode {
       public:
         virtual const NodeType nodeType();
 
         std::shared_ptr<AST::ExpressionNode> target = nullptr;
-        std::string query;
 
         Accessor(std::shared_ptr<AST::ExpressionNode> target, std::string query);
 

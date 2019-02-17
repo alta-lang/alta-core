@@ -6,8 +6,8 @@ const AltaCore::AST::NodeType AltaCore::AST::Accessor::nodeType() {
 };
 
 AltaCore::AST::Accessor::Accessor(std::shared_ptr<AltaCore::AST::ExpressionNode> _target, std::string _query):
-  target(_target),
-  query(_query)
+  RetrievalNode(_query),
+  target(_target)
   {};
 
 ALTACORE_AST_DETAIL_D(Accessor) {

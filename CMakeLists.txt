@@ -66,6 +66,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/character-literal-node.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/type-alias-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/subscript-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/retrieval-node.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

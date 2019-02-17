@@ -42,6 +42,7 @@ namespace AltaCore {
     ALTACORE_DH_SIMPLE_ALIAS(ClassStatementNode, Node);
 
     ALTACORE_DH_SIMPLE_ALIAS(LiteralNode, ExpressionNode);
+    ALTACORE_DH_SIMPLE_ALIAS(RetrievalNode, ExpressionNode);
 
     ALTACORE_DH_SIMPLE_ALIAS(BooleanLiteralNode, LiteralNode);
     ALTACORE_DH_SIMPLE_ALIAS(IntegerLiteralNode, LiteralNode);
@@ -80,8 +81,8 @@ namespace AltaCore {
     class VariableDefinitionExpression;
     class WhileLoopStatement;
 
-    class Accessor: public ExpressionNode {
-      ALTACORE_DH_CTOR(Accessor, ExpressionNode);
+    class Accessor: public RetrievalNode {
+      ALTACORE_DH_CTOR(Accessor, RetrievalNode);
 
       std::shared_ptr<ExpressionNode> target = nullptr;
 
@@ -212,8 +213,8 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> expression = nullptr;
     };
-    class Fetch: public ExpressionNode {
-      ALTACORE_DH_CTOR(Fetch, ExpressionNode);
+    class Fetch: public RetrievalNode {
+      ALTACORE_DH_CTOR(Fetch, RetrievalNode);
 
       std::vector<std::shared_ptr<DET::ScopeItem>> items;
       std::shared_ptr<DET::ScopeItem> narrowedTo;
