@@ -45,6 +45,9 @@ ALTACORE_AST_DETAIL_D(ClassDefinitionNode) {
           auto specialDet = std::dynamic_pointer_cast<DH::ClassSpecialMethodDefinitionStatement>(det);
           if (special->type == SpecialClassMethod::Constructor) {
             info->klass->constructors.push_back(specialDet->method);
+            if (specialDet->method->parameters.size() == 0 || (specialDet->method->parameters.size() == 1 && std::get<2>(specialDet->method->parameters.front()))) {
+              info->klass->defaultConstructor = specialDet->method;
+            }
           } else {
             ALTACORE_DETAILING_ERROR("destructors aren't supported yet");
           }

@@ -93,9 +93,13 @@ namespace AltaCore {
       std::shared_ptr<ExpressionNode> target = nullptr;
 
       bool accessesNamespace = false;
+      std::unordered_map<size_t, std::vector<std::shared_ptr<DET::Class>>> parentClassAccessors;
       std::shared_ptr<DET::Function> readAccessor = nullptr;
+      size_t readAccessorIndex = 0;
       std::shared_ptr<DET::Function> writeAccessor = nullptr;
+      size_t writeAccessorIndex = 0;
       std::shared_ptr<DET::ScopeItem> narrowedTo = nullptr;
+      size_t narrowedToIndex = 0;
       std::shared_ptr<DET::Type> targetType = nullptr;
     };
 
