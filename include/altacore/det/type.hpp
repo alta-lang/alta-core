@@ -70,7 +70,7 @@ namespace AltaCore {
          */
         std::shared_ptr<Type> followBlindly() const;
         /**
-         * Remove the rightmost (i.e. root) `const` modifier from this type (if present)
+         * Remove the leftmost (i.e. root) `const` modifier from this type (if present)
          */
         std::shared_ptr<Type> deconstify() const;
 

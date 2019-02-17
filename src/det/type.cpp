@@ -125,12 +125,12 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::reference() const {
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::dereference() const {
   auto other = copy();
   if (other->modifiers.size() > 0) {
-    auto idx = other->modifiers.size() - 1;
-    other->modifiers[idx] &= ~(uint8_t)Shared::TypeModifierFlag::Reference;
+    auto& root = other->modifiers.front();
+    root &= ~(uint8_t)Shared::TypeModifierFlag::Reference;
     // `pop_back` if the modifier level is now empty
     // why keep around a useless entry in the vector?
-    if (other->modifiers[idx] == 0) {
-      other->modifiers.pop_back();
+    if (root == 0) {
+      other->modifiers.erase(other->modifiers.begin());
     }
   }
   return other;
@@ -143,10 +143,10 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::point() const {
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::follow() const {
   auto other = copy();
   if (other->modifiers.size() > 0) {
-    auto idx = other->modifiers.size() - 1;
-    other->modifiers[idx] &= ~(uint8_t)Shared::TypeModifierFlag::Pointer;
-    if (other->modifiers[idx] == 0) {
-      other->modifiers.pop_back();
+    auto& root = other->modifiers.front();
+    root &= ~(uint8_t)Shared::TypeModifierFlag::Pointer;
+    if (root == 0) {
+      other->modifiers.erase(other->modifiers.begin());
     }
   }
   return other;
@@ -154,10 +154,10 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::follow() const {
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::followBlindly() const {
   auto other = copy();
   if (other->modifiers.size() > 0) {
-    auto idx = other->modifiers.size() - 1;
-    other->modifiers[idx] &= ~((uint8_t)Shared::TypeModifierFlag::Reference | (uint8_t)Shared::TypeModifierFlag::Pointer);
-    if (other->modifiers[idx] == 0) {
-      other->modifiers.pop_back();
+    auto& root = other->modifiers.front();
+    root &= ~((uint8_t)Shared::TypeModifierFlag::Reference | (uint8_t)Shared::TypeModifierFlag::Pointer);
+    if (root == 0) {
+      other->modifiers.erase(other->modifiers.begin());
     }
   }
   return other;
@@ -165,10 +165,10 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::followBlindly() const 
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::deconstify() const {
   auto other = copy();
   if (other->modifiers.size() > 0) {
-    auto& back = other->modifiers.back();
-    back &= ~(uint8_t)Shared::TypeModifierFlag::Constant;
-    if (back == 0) {
-      other->modifiers.pop_back();
+    auto& root = other->modifiers.front();
+    root &= ~(uint8_t)Shared::TypeModifierFlag::Constant;
+    if (root == 0) {
+      other->modifiers.erase(other->modifiers.begin());
     }
   }
   return other;

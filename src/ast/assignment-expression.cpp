@@ -27,6 +27,10 @@ ALTACORE_AST_VALIDATE_D(AssignmentExpression) {
   auto targetType = DET::Type::getUnderlyingType(info->target.get());
   auto valueType = DET::Type::getUnderlyingType(info->value.get());
   
+  if (targetType->modifiers.size() > 0 && targetType->modifiers.front() & (uint8_t)Shared::TypeModifierFlag::Constant) {
+    ALTACORE_VALIDATION_ERROR("can't assign to a constant");
+  }
+
   if (!targetType->isCompatibleWith(*valueType)) {
     ALTACORE_VALIDATION_ERROR("source type is not compatible with the destination type for assignment expression");
   }
