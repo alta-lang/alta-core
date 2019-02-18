@@ -73,7 +73,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
 
   /*
    * search parent classes
-   * 
+   *
    * this isn't done as a recursive lambda beacause that could
    * lead to a stack overflow. granted, the number of parent classes
    * a class would have to have to cause that would be absurd, but
@@ -89,6 +89,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
     auto& idx = idxs.top();
     idx++;
     if (info->items.size() < 1 || (info->items.size() > 0 && info->items.front()->nodeType() == DET::NodeType::Function)) {
+      bool loopBack = false;
       for (size_t i = idx; i < pc->parents.size(); i++) {
         auto& parent = pc->parents[i];
         currentParents.push_back(parent);
@@ -99,7 +100,11 @@ ALTACORE_AST_DETAIL_D(Accessor) {
         }
         classStack.push(parent);
         idxs.push(-1);
+        loopBack = true;
         break;
+      }
+      if (loopBack) {
+        continue;
       }
     }
     classStack.pop();
