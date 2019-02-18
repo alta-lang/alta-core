@@ -114,6 +114,7 @@ namespace AltaCore {
       Cast,
       Character,
       TypeAlias,
+      SuperClassFetch,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {
@@ -243,7 +244,7 @@ namespace AltaCore {
         std::unordered_set<std::string> typesToIgnore;
         Filesystem::Path filePath;
 
-
+        bool blockInConstructor = false;
       protected:
         // > calls realRunRule and attaches extra info to nodes that it returns
         // i prefer the real runRule

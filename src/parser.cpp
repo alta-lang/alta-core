@@ -1421,8 +1421,10 @@ namespace AltaCore {
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
 
           state.internalIndex = 2;
+          blockInConstructor = true;
           return RuleType::Block;
         } else {
+          blockInConstructor = false;
           if (!exps.back()) return ALTACORE_NULLOPT;
 
           auto method = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement>>(state.internalValue);
@@ -1434,6 +1436,16 @@ namespace AltaCore {
         if (state.internalIndex == 0) {
           if (!expectKeyword("new")) {
             state.internalIndex = 4;
+            if (blockInConstructor) {
+              return std::initializer_list<ExpectationType> {
+                RuleType::SuperClassFetch,
+                RuleType::BooleanLiteral,
+                RuleType::IntegralLiteral,
+                RuleType::String,
+                RuleType::Character,
+                RuleType::Accessor,
+              };
+            }
             return std::initializer_list<ExpectationType> {
               RuleType::BooleanLiteral,
               RuleType::IntegralLiteral,
@@ -1603,6 +1615,89 @@ namespace AltaCore {
           auto typeAlias = ALTACORE_ANY_CAST<std::shared_ptr<AST::TypeAliasStatement>>(state.internalValue);
           typeAlias->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
           return typeAlias;
+        }
+      } else if (rule == RuleType::SuperClassFetch) {
+        if (state.internalIndex == 0) {
+          if (!expectKeyword("super")) return ALTACORE_NULLOPT;
+          auto sup = std::make_shared<AST::SuperClassFetch>();
+          if (expect(TokenType::OpeningAngleBracket)) {
+            if (auto lit = expect(TokenType::Integer)) {
+              sup->fetch = std::make_shared<AST::IntegerLiteralNode>(lit.token.raw);
+              if (!expect(TokenType::ClosingAngleBracket)) return ALTACORE_NULLOPT;
+            } else {
+              state.internalIndex = 1;
+              state.internalValue = std::move(sup);
+              return RuleType::StrictAccessor;
+            }
+          }
+
+          if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
+
+          auto tmpState = currentState;
+          auto name = expect(TokenType::Identifier);
+          if (name && !expect(TokenType::Colon)) {
+            name = Expectation(); // constructs an invalid expectation
+            currentState = tmpState;
+          }
+
+          sup->arguments.push_back({
+            (name) ? name.token.raw : "",
+            nullptr,
+          });
+
+          state.internalIndex = 2;
+          state.internalValue = std::move(sup);
+
+          return RuleType::Expression;
+        } else {
+          auto sup = ALTACORE_ANY_CAST<std::shared_ptr<AST::SuperClassFetch>>(state.internalValue);
+          if (state.internalIndex == 1) {
+            if (!exps.back()) return ALTACORE_NULLOPT;
+            sup->fetch = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            if (!expect(TokenType::ClosingAngleBracket)) return ALTACORE_NULLOPT;
+            if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
+
+            state.internalIndex = 2;
+
+            auto tmpState = currentState;
+            auto name = expect(TokenType::Identifier);
+            if (name && !expect(TokenType::Colon)) {
+              name = Expectation(); // constructs an invalid expectation
+              currentState = tmpState;
+            }
+
+            sup->arguments.push_back({
+              (name) ? name.token.raw : "",
+              nullptr,
+            });
+            
+            return RuleType::Expression;
+          }
+
+          if (exps.back()) {
+            sup->arguments.back().second = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            if (expect(TokenType::Comma)) {
+              auto tmpState = currentState;
+              auto name = expect(TokenType::Identifier);
+              if (name && !expect(TokenType::Colon)) {
+                name = Expectation(); // constructs an invalid expectation
+                currentState = tmpState;
+              }
+
+              sup->arguments.push_back({
+                (name) ? name.token.raw : "",
+                nullptr,
+              });
+
+              return RuleType::Expression;
+            }
+          } else {
+            sup->arguments.pop_back();
+          }
+
+          if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
+
+          return sup;
         }
       }
 

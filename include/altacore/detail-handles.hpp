@@ -80,6 +80,7 @@ namespace AltaCore {
     class VariableDefinitionExpression;
     class WhileLoopStatement;
     class RetrievalNode;
+    class SuperClassFetch;
 
     class RetrievalNode: public ExpressionNode {
       ALTACORE_DH_CTOR(RetrievalNode, ExpressionNode);
@@ -335,6 +336,18 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> target = nullptr;
       std::shared_ptr<ExpressionNode> index = nullptr;
+    };
+    class SuperClassFetch: public ExpressionNode {
+      ALTACORE_DH_CTOR(SuperClassFetch, ExpressionNode);
+
+      std::vector<std::shared_ptr<ExpressionNode>> arguments;
+
+      size_t parentClassIndex = 0;
+      std::shared_ptr<DET::Class> klass = nullptr;
+      std::shared_ptr<DET::Class> superclass = nullptr;
+      std::shared_ptr<DET::Function> constructor = nullptr;
+      std::unordered_map<size_t, size_t> argumentMap;
+      std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>, std::vector<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>>>> adjustedArguments;
     };
 
     #undef ALTACORE_DH_CTOR

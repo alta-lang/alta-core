@@ -67,6 +67,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/type-alias-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/subscript-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/retrieval-node.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/super-class-fetch.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

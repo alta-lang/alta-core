@@ -44,5 +44,6 @@
 #include "ast/type-alias-statement.hpp"
 #include "ast/subscript-expression.hpp"
 #include "ast/retrieval-node.hpp"
+#include "ast/super-class-fetch.hpp"
 
 #endif // ALTACORE_AST_HPP

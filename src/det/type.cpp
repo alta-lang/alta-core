@@ -62,6 +62,8 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     return std::make_shared<Type>(NativeType::Byte, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (auto subs = dynamic_cast<DH::SubscriptExpression*>(expression)) {
     return getUnderlyingType(subs->target.get())->follow();
+  } else if (auto sc = dynamic_cast<DH::SuperClassFetch*>(expression)) {
+    return std::make_shared<Type>(sc->superclass, std::vector<uint8_t> { (uint8_t)Shared::TypeModifierFlag::Reference });
   }
 
   return nullptr;
