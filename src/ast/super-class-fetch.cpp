@@ -57,6 +57,7 @@ ALTACORE_AST_DETAIL_D(SuperClassFetch) {
     ALTACORE_DETAILING_ERROR("invalid superclass fetch target");
   }
 
+  /*
   std::vector<std::shared_ptr<DET::Type>> targetTypes;
   std::unordered_map<size_t, size_t> indexMap;
   for (size_t i = 0; i < info->superclass->constructors.size(); i++) {
@@ -85,6 +86,7 @@ ALTACORE_AST_DETAIL_D(SuperClassFetch) {
   } else {
     ALTACORE_DETAILING_ERROR("unable to find suitable constructor");
   }
+  */
 
   return info;
 };

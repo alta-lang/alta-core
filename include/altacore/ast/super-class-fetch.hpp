@@ -12,7 +12,7 @@ namespace AltaCore {
         virtual const NodeType nodeType();
 
         std::shared_ptr<ExpressionNode> fetch = nullptr;
-        std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments;
+        //std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments;
 
         SuperClassFetch() {};
         
