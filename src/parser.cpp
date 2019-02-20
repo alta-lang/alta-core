@@ -1426,7 +1426,9 @@ namespace AltaCore {
 
           if (exps.back()) {
             method->parameters.push_back(std::dynamic_pointer_cast<AST::Parameter>(*exps.back().item));
-            return RuleType::Parameter;
+            if (expect(TokenType::Comma)) {
+              return RuleType::Parameter;
+            }
           }
 
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
