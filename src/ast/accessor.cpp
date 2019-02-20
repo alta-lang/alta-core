@@ -18,6 +18,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
   std::shared_ptr<DET::Scope> targetScope = nullptr;
   auto targetAcc = std::dynamic_pointer_cast<Accessor>(target);
   auto targetAccDH = std::dynamic_pointer_cast<DH::Accessor>(info->target);
+  bool notAccessingNamespace = false;
 
   if (targetAcc && targetAccDH->readAccessor) {
     if (targetAccDH->readAccessor->returnType->isNative) {
@@ -41,6 +42,9 @@ ALTACORE_AST_DETAIL_D(Accessor) {
       targetScope = DET::Scope::getMemberScope(items[0]);
     } else if (items.size() > 0) {
       ALTACORE_DETAILING_ERROR("target must be narrowed before it can be accessed");
+    } else if (auto sup = std::dynamic_pointer_cast<DH::SuperClassFetch>(info->target)) {
+      targetScope = sup->superclass->scope;
+      notAccessingNamespace = true;
     } else {
       try {
         auto types = DET::Type::getUnderlyingTypes(info->target.get());
@@ -65,7 +69,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
     ALTACORE_DETAILING_ERROR("could not determine how to access the given target");
   }
 
-  if (!targetScope->parentNamespace.expired()) {
+  if (!targetScope->parentNamespace.expired() && !notAccessingNamespace) {
     info->accessesNamespace = true;
   }
 
@@ -108,6 +112,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
       }
     }
     classStack.pop();
+    idxs.pop();
     if (currentParents.size() > 0) {
       currentParents.pop_back();
     }

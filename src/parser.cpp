@@ -677,10 +677,18 @@ namespace AltaCore {
       } else if (rule == RuleType::Accessor) {
         if (state.internalIndex == 0) {
           state.internalIndex = 1;
-          return std::initializer_list<ExpectationType> {
-            RuleType::Fetch,
-            RuleType::GroupedExpression,
-          };
+          if (inClass) {
+            return std::initializer_list<ExpectationType> {
+              RuleType::SuperClassFetch,
+              RuleType::Fetch,
+              RuleType::GroupedExpression,
+            };
+          } else {
+            return std::initializer_list<ExpectationType> {
+              RuleType::Fetch,
+              RuleType::GroupedExpression,
+            };
+          }
         } else {
           if (!exps.back()) return ALTACORE_NULLOPT;
 
@@ -1437,6 +1445,7 @@ namespace AltaCore {
         }
       } else if (rule == RuleType::ClassInstantiation) {
         if (state.internalIndex == 0) {
+          state.internalValue = currentState;
           if (!expectKeyword("new")) {
             state.internalIndex = 4;
             if (inClass) {
@@ -1454,7 +1463,6 @@ namespace AltaCore {
             };
           }
           state.internalIndex = 1;
-          state.internalValue = currentState;
           return RuleType::Accessor;
         } else if (state.internalIndex == 1 || state.internalIndex == 5) {
           if (!exps.back()) {
@@ -1474,6 +1482,7 @@ namespace AltaCore {
           auto inst = std::make_shared<AST::ClassInstantiationExpression>();
 
           inst->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+          bool isSuperclassFetch = inst->target->nodeType() == AST::NodeType::SuperClassFetch;
 
           if (expect(TokenType::OpeningParenthesis)) {
             auto tmpState = currentState;
@@ -1490,6 +1499,16 @@ namespace AltaCore {
             state.internalIndex = 2;
             state.internalValue = std::move(inst);
             return RuleType::Expression;
+          } else if (isSuperclassFetch) {
+            currentState = ALTACORE_ANY_CAST<decltype(currentState)>(state.internalValue);
+            state.internalIndex = 4;
+            return std::initializer_list<ExpectationType> {
+              RuleType::BooleanLiteral,
+              RuleType::IntegralLiteral,
+              RuleType::String,
+              RuleType::Character,
+              RuleType::Accessor,
+            };
           }
 
           return inst;
