@@ -13,6 +13,11 @@ namespace AltaCore {
         Filesystem::Path file = Filesystem::Path();
 
         Position() {};
+        Position(size_t _line, size_t _column, Filesystem::Path _file):
+          line(_line),
+          column(_column),
+          file(_file)
+          {};
     };
 
     class Error: public std::exception {
@@ -34,6 +39,12 @@ namespace AltaCore {
     class ValidationError: public Error {
       public:
         ValidationError(std::string message = "", Position position = Position()):
+          Error(message, position)
+          {};
+    };
+    class ParsingError: public Error {
+      public:
+        ParsingError(std::string message = "", Position position = Position()):
           Error(message, position)
           {};
     };

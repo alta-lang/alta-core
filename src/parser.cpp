@@ -206,7 +206,8 @@ namespace AltaCore {
         }
 
         if (currentState.currentPosition < tokens.size()) {
-          throw std::runtime_error("input not completely parsed; assuming failure");
+          auto& tok = tokens[farthestRule.currentState.currentPosition];
+          throw Errors::ParsingError("input not completely parsed; assuming failure", Errors::Position(tok.line, tok.column, filePath));
         }
         auto root = std::make_shared<AST::RootNode>(statements);
         return root;

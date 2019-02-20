@@ -179,10 +179,12 @@ namespace AltaCore {
         size_t iteration = 0;
         size_t internalIndex = 0;
         S stateAtStart;
+        S currentState;
         ALTACORE_ANY internalValue;
 
         GenericRuleState(S _stateAtStart):
-          stateAtStart(_stateAtStart)
+          stateAtStart(_stateAtStart),
+          currentState(_stateAtStart)
           {};
     };
 
@@ -205,6 +207,10 @@ namespace AltaCore {
         std::vector<Token> tokens;
         State currentState;
 
+      public:
+        RuleState farthestRule = RuleState(currentState);
+
+      protected:
         Expectation expect(std::vector<ExpectationType> expectations);
         Expectation expect(std::initializer_list<ExpectationType> expectations) {
           return expect(std::vector(expectations));
