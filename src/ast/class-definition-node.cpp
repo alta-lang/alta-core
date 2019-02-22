@@ -48,6 +48,9 @@ ALTACORE_AST_DETAIL_D(ClassDefinitionNode) {
             if (specialDet->method->parameters.size() == 0 || (specialDet->method->parameters.size() == 1 && std::get<2>(specialDet->method->parameters.front()))) {
               info->klass->defaultConstructor = specialDet->method;
             }
+            if (specialDet->isCopyConstructor) {
+              info->klass->copyConstructor = specialDet->method;
+            }
           } else {
             if (info->klass->destructor) {
               ALTACORE_VALIDATION_ERROR("can't have more than one destructor for a class");

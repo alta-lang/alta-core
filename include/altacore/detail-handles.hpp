@@ -192,9 +192,11 @@ namespace AltaCore {
 
       std::vector<std::shared_ptr<Parameter>> parameters;
       std::shared_ptr<BlockNode> body = nullptr;
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
 
       std::shared_ptr<DET::Class> klass = nullptr;
       std::shared_ptr<DET::Function> method = nullptr;
+      bool isCopyConstructor = false;
     };
     class ConditionalExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(ConditionalExpression, ExpressionNode);

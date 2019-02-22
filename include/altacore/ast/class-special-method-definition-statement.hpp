@@ -5,6 +5,7 @@
 #include "parameter.hpp"
 #include "block-node.hpp"
 #include "../det/function.hpp"
+#include "attribute-node.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -13,10 +14,11 @@ namespace AltaCore {
       Destructor,
     };
     
-    class ClassSpecialMethodDefinitionStatement: public ClassStatementNode {
+    class ClassSpecialMethodDefinitionStatement: public ClassStatementNode, public std::enable_shared_from_this<ClassSpecialMethodDefinitionStatement> {
       public:
         virtual const NodeType nodeType();
 
+        std::vector<std::shared_ptr<AttributeNode>> attributes;
         Visibility visibilityModifier = Visibility::Private;
         SpecialClassMethod type = SpecialClassMethod::Constructor;
         std::vector<std::shared_ptr<Parameter>> parameters;

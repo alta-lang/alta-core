@@ -1402,8 +1402,36 @@ namespace AltaCore {
         }
       } else if (rule == RuleType::ClassSpecialMethod) {
         if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          return RuleType::Attribute;
+        } else if (state.internalIndex == 1) {
+          if (exps.back()) {
+            return RuleType::Attribute;
+          } else {
+            exps.pop_back();
+          }
+
           auto visibilityMod = expectModifier(ModifierTargetType::ClassStatement);
           if (!visibilityMod) return ALTACORE_NULLOPT;
+
+          auto method = std::make_shared<AST::ClassSpecialMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod), AST::SpecialClassMethod::Constructor);
+
+          state.internalValue = std::move(method);
+          state.internalIndex = 2;
+
+          return RuleType::Attribute;
+        } else if (state.internalIndex == 2) {
+          if (exps.back()) {
+            return RuleType::Attribute;
+          } else {
+            exps.pop_back();
+          }
+
+          auto method = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement>>(state.internalValue);
+
+          for (auto& item: exps) {
+            method->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*item.item));
+          }
 
           auto kind = AST::SpecialClassMethod::Constructor;
           if (expectKeyword("constructor")) {
@@ -1414,14 +1442,13 @@ namespace AltaCore {
             return ALTACORE_NULLOPT;
           }
 
+          method->type = kind;
+
           if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
-
-          auto method = std::make_shared<AST::ClassSpecialMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod), kind);
-
-          state.internalValue = std::move(method);
-          state.internalIndex = 1;
+          
+          state.internalIndex = 3;
           return RuleType::Parameter;
-        } else if (state.internalIndex == 1) {
+        } else if (state.internalIndex == 3) {
           auto method = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement>>(state.internalValue);
 
           if (exps.back()) {
@@ -1433,7 +1460,7 @@ namespace AltaCore {
 
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
 
-          state.internalIndex = 2;
+          state.internalIndex = 4;
           inClass = true;
           return RuleType::Block;
         } else {

@@ -20,6 +20,7 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Function>> constructors;
         std::shared_ptr<Function> destructor = nullptr;
         std::vector<std::shared_ptr<Class>> parents;
+        std::shared_ptr<DET::Function> copyConstructor = nullptr;
         
         std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
 

@@ -70,5 +70,12 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
       info->body = body->fullDetail(info->method->scope);
     }
   }
+
+  if (info->attributes.size() != attributes.size()) {
+    for (auto& attr: attributes) {
+      info->attributes.push_back(attr->fullDetail(info->inputScope, shared_from_this(), info));
+    }
+  }
+
   return info;
 };
