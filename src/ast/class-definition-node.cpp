@@ -49,7 +49,10 @@ ALTACORE_AST_DETAIL_D(ClassDefinitionNode) {
               info->klass->defaultConstructor = specialDet->method;
             }
           } else {
-            ALTACORE_DETAILING_ERROR("destructors aren't supported yet");
+            if (info->klass->destructor) {
+              ALTACORE_VALIDATION_ERROR("can't have more than one destructor for a class");
+            }
+            info->klass->destructor = specialDet->method;
           }
         }
       }
