@@ -123,6 +123,8 @@ ALTACORE_AST_DETAIL_D(ClassDefinitionNode) {
 
     info->defaultCopyConstructor->parameters.push_back(std::make_shared<Parameter>("other", selfType));
     info->defaultCopyConstructorDetail = info->defaultCopyConstructor->fullDetail(info->klass->scope);
+    info->defaultCopyConstructorDetail->isCopyConstructor = true;
+    info->defaultCopyConstructorDetail->isDefaultCopyConstructor = true;
     info->klass->copyConstructor = info->defaultCopyConstructorDetail->method;
   }
 
