@@ -7,6 +7,8 @@
 
 namespace AltaCore {
   namespace DET {
+    class Variable; // forward declaration
+
     class Class: public ScopeItem {
       public:
         virtual const NodeType nodeType();
@@ -20,8 +22,10 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Function>> constructors;
         std::shared_ptr<Function> destructor = nullptr;
         std::vector<std::shared_ptr<Class>> parents;
-        std::shared_ptr<DET::Function> copyConstructor = nullptr;
-        
+        std::shared_ptr<Function> copyConstructor = nullptr;
+        std::vector<std::shared_ptr<Variable>> itemsToDestroy;
+        std::vector<std::shared_ptr<Variable>> itemsToCopy;
+
         std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
 
         Class(std::string name, std::shared_ptr<Scope> parentScope, std::vector<std::shared_ptr<Class>> parents = {});

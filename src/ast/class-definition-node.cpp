@@ -79,6 +79,53 @@ ALTACORE_AST_DETAIL_D(ClassDefinitionNode) {
     info->klass->constructors.push_back(info->defaultConstructorDetail->method);
   }
 
+  bool requiresDtor = false;
+  bool requiresCopyCtor = false;
+  for (auto& item: info->klass->scope->items) {
+    if (item->nodeType() != DET::NodeType::Variable) continue;
+    if (item->name == "this") continue;
+
+    auto& var = std::dynamic_pointer_cast<DET::Variable>(item);
+
+    if (var->type->isNative) continue;
+    if (var->type->indirectionLevel() > 0) continue;
+
+    if (var->type->klass->destructor) {
+      requiresDtor = true;
+      info->klass->itemsToDestroy.push_back(var);
+    }
+
+    if (var->type->klass->copyConstructor) {
+      requiresCopyCtor = true;
+      info->klass->itemsToCopy.push_back(var);
+    }
+  }
+
+  if (!info->klass->destructor && requiresDtor) {
+    info->createDefaultDestructor = true;
+    info->defaultDestructor = std::make_shared<ClassSpecialMethodDefinitionStatement>(Visibility::Public, SpecialClassMethod::Destructor);
+    info->defaultDestructor->body = std::make_shared<BlockNode>();
+    info->defaultDestructorDetail = info->defaultDestructor->fullDetail(info->klass->scope);
+    info->klass->destructor = info->defaultDestructorDetail->method;
+  }
+
+  if (!info->klass->copyConstructor && requiresCopyCtor) {
+    info->createDefaultCopyConstructor = true;
+    info->defaultCopyConstructor = std::make_shared<ClassSpecialMethodDefinitionStatement>(Visibility::Public, SpecialClassMethod::Constructor);
+    info->defaultCopyConstructor->body = std::make_shared<BlockNode>();
+
+    // this is very hacky and i don't like it
+    //
+    // looks like my own API design came and bit
+    // me in the butt
+    auto selfType = std::make_shared<Type>();
+    selfType->_injected_type = std::make_shared<DET::Type>(info->klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
+
+    info->defaultCopyConstructor->parameters.push_back(std::make_shared<Parameter>("other", selfType));
+    info->defaultCopyConstructorDetail = info->defaultCopyConstructor->fullDetail(info->klass->scope);
+    info->klass->copyConstructor = info->defaultCopyConstructorDetail->method;
+  }
+
   return info;
 };
 

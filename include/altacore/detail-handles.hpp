@@ -152,9 +152,15 @@ namespace AltaCore {
       bool isExport = false;
       bool isLiteral = false;
       bool createDefaultConstructor = false;
+      bool createDefaultDestructor = false;
+      bool createDefaultCopyConstructor = false;
       std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement> defaultConstructor = nullptr;
       std::shared_ptr<ClassSpecialMethodDefinitionStatement> defaultConstructorDetail = nullptr;
       std::shared_ptr<DET::Class> klass = nullptr;
+      std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement> defaultDestructor = nullptr;
+      std::shared_ptr<ClassSpecialMethodDefinitionStatement> defaultDestructorDetail = nullptr;
+      std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement> defaultCopyConstructor = nullptr;
+      std::shared_ptr<ClassSpecialMethodDefinitionStatement> defaultCopyConstructorDetail = nullptr;
     };
     class ClassInstantiationExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(ClassInstantiationExpression, ExpressionNode);
