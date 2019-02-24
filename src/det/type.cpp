@@ -197,6 +197,9 @@ const size_t AltaCore::DET::Type::pointerLevel() const {
     if (modLevel & (uint8_t)Shared::TypeModifierFlag::Pointer) {
       count++;
     }
+    if (modLevel & (uint8_t)Shared::TypeModifierFlag::Reference) {
+      break;
+    }
   }
 
   return count;
@@ -207,6 +210,9 @@ const size_t AltaCore::DET::Type::referenceLevel() const {
   for (auto& modLevel: modifiers) {
     if (modLevel & (uint8_t)Shared::TypeModifierFlag::Reference) {
       count++;
+    }
+    if (modLevel & (uint8_t)Shared::TypeModifierFlag::Pointer) {
+      break;
     }
   }
 
@@ -248,11 +254,15 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
       if (paramCompat == 0) return 0;
       compat += paramCompat;
     }
-  } else {
+  } else if (isNative) {
     if ((nativeTypeName == NativeType::Void) != (other.nativeTypeName == NativeType::Void)) {
       return 0;
     }
     if (nativeTypeName == other.nativeTypeName) {
+      compat++;
+    }
+  } else {
+    if (klass->id == other.klass->id) {
       compat++;
     }
   }
@@ -264,7 +274,7 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
   if (isAny || other.isAny) return true;
   if (isFunction != other.isFunction) return false;
   if (isNative != other.isNative) return false;
-  if (!isNative && klass->id != other.klass->id) return false;
+  if (!isNative && klass->id != other.klass->id && !other.klass->hasParent(klass)) return false;
   if (pointerLevel() != other.pointerLevel()) return false;
 
   /**
@@ -305,6 +315,8 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
     }
   } else if (isNative) {
     if (nativeTypeName != other.nativeTypeName) return false;
+  } else {
+    if (klass->id != other.klass->id) return false;
   }
 
   return true;

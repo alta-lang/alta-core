@@ -30,3 +30,11 @@ AltaCore::DET::Class::Class(std::string _name, std::shared_ptr<AltaCore::DET::Sc
   ScopeItem(_name, _parentScope),
   parents(_parents)
   {};
+
+bool AltaCore::DET::Class::hasParent(std::shared_ptr<Class> parent) const {
+  for (auto& myParent: parents) {
+    if (myParent->id == parent->id) return true;
+    if (myParent->hasParent(parent)) return true;
+  }
+  return false;
+};

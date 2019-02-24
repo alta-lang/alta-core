@@ -29,6 +29,8 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
 
         Class(std::string name, std::shared_ptr<Scope> parentScope, std::vector<std::shared_ptr<Class>> parents = {});
+
+        bool hasParent(std::shared_ptr<Class> parent) const;
     };
   };
 };
