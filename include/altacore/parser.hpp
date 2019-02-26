@@ -114,6 +114,8 @@ namespace AltaCore {
       Cast,
       Character,
       TypeAlias,
+      SuperClassFetch,
+      Instanceof,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {
@@ -178,10 +180,12 @@ namespace AltaCore {
         size_t iteration = 0;
         size_t internalIndex = 0;
         S stateAtStart;
+        S currentState;
         ALTACORE_ANY internalValue;
 
         GenericRuleState(S _stateAtStart):
-          stateAtStart(_stateAtStart)
+          stateAtStart(_stateAtStart),
+          currentState(_stateAtStart)
           {};
     };
 
@@ -204,6 +208,10 @@ namespace AltaCore {
         std::vector<Token> tokens;
         State currentState;
 
+      public:
+        RuleState farthestRule = RuleState(currentState);
+
+      protected:
         Expectation expect(std::vector<ExpectationType> expectations);
         Expectation expect(std::initializer_list<ExpectationType> expectations) {
           return expect(std::vector(expectations));
@@ -243,7 +251,7 @@ namespace AltaCore {
         std::unordered_set<std::string> typesToIgnore;
         Filesystem::Path filePath;
 
-
+        bool inClass = false;
       protected:
         // > calls realRunRule and attaches extra info to nodes that it returns
         // i prefer the real runRule

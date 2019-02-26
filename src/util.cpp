@@ -76,6 +76,32 @@ std::weak_ptr<AltaCore::DET::Function> AltaCore::Util::getFunction(std::shared_p
   return std::weak_ptr<AltaCore::DET::Function>();
 };
 
+std::weak_ptr<AltaCore::DET::Class> AltaCore::Util::getClass(std::shared_ptr<AltaCore::DET::Scope> scope) {
+  if (scope == nullptr) {
+    return std::weak_ptr<AltaCore::DET::Class>();
+  }
+  if (!scope->parentClass.expired()) {
+    return scope->parentClass;
+  }
+  if (!scope->parentModule.expired()) {
+    return std::weak_ptr<AltaCore::DET::Class>();
+  }
+  if (!scope->parent.expired()) {
+    return getClass(scope->parent.lock());
+  }
+  if (auto ns = scope->parentNamespace.lock()) {
+    if (auto parent = ns->parentScope.lock()) {
+      return getClass(parent);
+    }
+  }
+  if (auto func = scope->parentFunction.lock()) {
+    if (auto parent = func->parentScope.lock()) {
+      return getClass(parent);
+    }
+  }
+  return std::weak_ptr<AltaCore::DET::Class>();
+};
+
 std::string AltaCore::Util::unescape(const std::string& data) {
   std::string result;
 

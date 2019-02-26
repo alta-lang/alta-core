@@ -206,7 +206,8 @@ namespace AltaCore {
         }
 
         if (currentState.currentPosition < tokens.size()) {
-          throw std::runtime_error("input not completely parsed; assuming failure");
+          auto& tok = tokens[farthestRule.currentState.currentPosition];
+          throw Errors::ParsingError("input not completely parsed; assuming failure", Errors::Position(tok.line, tok.column, filePath));
         }
         auto root = std::make_shared<AST::RootNode>(statements);
         return root;
@@ -676,10 +677,18 @@ namespace AltaCore {
       } else if (rule == RuleType::Accessor) {
         if (state.internalIndex == 0) {
           state.internalIndex = 1;
-          return std::initializer_list<ExpectationType> {
-            RuleType::Fetch,
-            RuleType::GroupedExpression,
-          };
+          if (inClass) {
+            return std::initializer_list<ExpectationType> {
+              RuleType::SuperClassFetch,
+              RuleType::Fetch,
+              RuleType::GroupedExpression,
+            };
+          } else {
+            return std::initializer_list<ExpectationType> {
+              RuleType::Fetch,
+              RuleType::GroupedExpression,
+            };
+          }
         } else {
           if (!exps.back()) return ALTACORE_NULLOPT;
 
@@ -1249,7 +1258,7 @@ namespace AltaCore {
           return cond;
         }
       } else if (rule == RuleType::NonequalityRelationalOperation) {
-        return expectBinaryOperation(rule, RuleType::AdditionOrSubtraction, {
+        return expectBinaryOperation(rule, RuleType::Instanceof, {
           TokenType::OpeningAngleBracket,
           TokenType::ClosingAngleBracket,
           TokenType::LessThanOrEqualTo,
@@ -1286,10 +1295,29 @@ namespace AltaCore {
           auto id = expect(TokenType::Identifier);
           if (!id) return ALTACORE_NULLOPT;
 
-          if (!expect(TokenType::OpeningBrace)) return ALTACORE_NULLOPT;
-
           auto def = std::make_shared<AST::ClassDefinitionNode>(id.token.raw);
           def->modifiers = mods;
+
+          if (expectKeyword("extends")) {
+            bool dot = false;
+            while (auto pid = expect(TokenType::Identifier)) {
+              if (dot) {
+                auto& back = def->parents.back();
+                back = std::make_shared<AST::Accessor>(back, pid.token.raw);
+              } else {
+                def->parents.push_back(std::make_shared<AST::Fetch>(pid.token.raw));
+              }
+              if (expect(TokenType::Dot)) {
+                dot = true;
+              } else if (!expect(TokenType::Comma)) {
+                break;
+              }
+            }
+            if (dot) return ALTACORE_NULLOPT;
+          }
+
+          if (!expect(TokenType::OpeningBrace)) return ALTACORE_NULLOPT;
+
           state.internalValue = std::move(def);
           state.internalIndex = 1;
           return RuleType::ClassStatement;
@@ -1358,8 +1386,10 @@ namespace AltaCore {
 
           state.internalValue = std::make_pair(attrs, std::make_shared<AST::ClassMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod)));
           state.internalIndex = 2;
+          inClass = true;
           return RuleType::FunctionDefinition;
         } else {
+          inClass = false;
           if (!exps.back()) return ALTACORE_NULLOPT;
 
           auto [attrs, methodDef] = ALTACORE_ANY_CAST<std::pair<std::vector<std::shared_ptr<AST::AttributeNode>>, std::shared_ptr<AST::ClassMethodDefinitionStatement>>>(state.internalValue);
@@ -1372,8 +1402,36 @@ namespace AltaCore {
         }
       } else if (rule == RuleType::ClassSpecialMethod) {
         if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          return RuleType::Attribute;
+        } else if (state.internalIndex == 1) {
+          if (exps.back()) {
+            return RuleType::Attribute;
+          } else {
+            exps.pop_back();
+          }
+
           auto visibilityMod = expectModifier(ModifierTargetType::ClassStatement);
           if (!visibilityMod) return ALTACORE_NULLOPT;
+
+          auto method = std::make_shared<AST::ClassSpecialMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod), AST::SpecialClassMethod::Constructor);
+
+          state.internalValue = std::move(method);
+          state.internalIndex = 2;
+
+          return RuleType::Attribute;
+        } else if (state.internalIndex == 2) {
+          if (exps.back()) {
+            return RuleType::Attribute;
+          } else {
+            exps.pop_back();
+          }
+
+          auto method = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement>>(state.internalValue);
+
+          for (auto& item: exps) {
+            method->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*item.item));
+          }
 
           auto kind = AST::SpecialClassMethod::Constructor;
           if (expectKeyword("constructor")) {
@@ -1384,26 +1442,29 @@ namespace AltaCore {
             return ALTACORE_NULLOPT;
           }
 
+          method->type = kind;
+
           if (!expect(TokenType::OpeningParenthesis)) return ALTACORE_NULLOPT;
-
-          auto method = std::make_shared<AST::ClassSpecialMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod), kind);
-
-          state.internalValue = std::move(method);
-          state.internalIndex = 1;
+          
+          state.internalIndex = 3;
           return RuleType::Parameter;
-        } else if (state.internalIndex == 1) {
+        } else if (state.internalIndex == 3) {
           auto method = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement>>(state.internalValue);
 
           if (exps.back()) {
             method->parameters.push_back(std::dynamic_pointer_cast<AST::Parameter>(*exps.back().item));
-            return RuleType::Parameter;
+            if (expect(TokenType::Comma)) {
+              return RuleType::Parameter;
+            }
           }
 
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
 
-          state.internalIndex = 2;
+          state.internalIndex = 4;
+          inClass = true;
           return RuleType::Block;
         } else {
+          inClass = false;
           if (!exps.back()) return ALTACORE_NULLOPT;
 
           auto method = ALTACORE_ANY_CAST<std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement>>(state.internalValue);
@@ -1413,8 +1474,15 @@ namespace AltaCore {
         }
       } else if (rule == RuleType::ClassInstantiation) {
         if (state.internalIndex == 0) {
+          state.internalValue = currentState;
           if (!expectKeyword("new")) {
             state.internalIndex = 4;
+            if (inClass) {
+              state.internalIndex = 5;
+              return std::initializer_list<ExpectationType> {
+                RuleType::SuperClassFetch,
+              };
+            }
             return std::initializer_list<ExpectationType> {
               RuleType::BooleanLiteral,
               RuleType::IntegralLiteral,
@@ -1424,12 +1492,13 @@ namespace AltaCore {
             };
           }
           state.internalIndex = 1;
-          state.internalValue = currentState;
           return RuleType::Accessor;
-        } else if (state.internalIndex == 1) {
+        } else if (state.internalIndex == 1 || state.internalIndex == 5) {
           if (!exps.back()) {
+            if (state.internalIndex != 5) {
+              currentState = ALTACORE_ANY_CAST<decltype(currentState)>(state.internalValue);
+            }
             state.internalIndex = 4;
-            currentState = ALTACORE_ANY_CAST<decltype(currentState)>(state.internalValue);
             return std::initializer_list<ExpectationType> {
               RuleType::BooleanLiteral,
               RuleType::IntegralLiteral,
@@ -1442,6 +1511,7 @@ namespace AltaCore {
           auto inst = std::make_shared<AST::ClassInstantiationExpression>();
 
           inst->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+          bool isSuperclassFetch = inst->target->nodeType() == AST::NodeType::SuperClassFetch;
 
           if (expect(TokenType::OpeningParenthesis)) {
             auto tmpState = currentState;
@@ -1458,6 +1528,16 @@ namespace AltaCore {
             state.internalIndex = 2;
             state.internalValue = std::move(inst);
             return RuleType::Expression;
+          } else if (isSuperclassFetch) {
+            currentState = ALTACORE_ANY_CAST<decltype(currentState)>(state.internalValue);
+            state.internalIndex = 4;
+            return std::initializer_list<ExpectationType> {
+              RuleType::BooleanLiteral,
+              RuleType::IntegralLiteral,
+              RuleType::String,
+              RuleType::Character,
+              RuleType::Accessor,
+            };
           }
 
           return inst;
@@ -1488,7 +1568,7 @@ namespace AltaCore {
           if (!expect(TokenType::ClosingParenthesis)) return ALTACORE_NULLOPT;
 
           return inst;
-        } else {
+        } else if (state.internalIndex == 4) {
           return exps.back().item;
         }
       } else if (rule == RuleType::Cast) {
@@ -1584,6 +1664,49 @@ namespace AltaCore {
           auto typeAlias = ALTACORE_ANY_CAST<std::shared_ptr<AST::TypeAliasStatement>>(state.internalValue);
           typeAlias->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
           return typeAlias;
+        }
+      } else if (rule == RuleType::SuperClassFetch) {
+        if (state.internalIndex == 0) {
+          if (!expectKeyword("super")) return ALTACORE_NULLOPT;
+          auto sup = std::make_shared<AST::SuperClassFetch>();
+          if (expect(TokenType::OpeningAngleBracket)) {
+            if (auto lit = expect(TokenType::Integer)) {
+              sup->fetch = std::make_shared<AST::IntegerLiteralNode>(lit.token.raw);
+              if (!expect(TokenType::ClosingAngleBracket)) return ALTACORE_NULLOPT;
+            } else {
+              state.internalIndex = 1;
+              state.internalValue = std::move(sup);
+              return RuleType::StrictAccessor;
+            }
+          }
+
+          return sup;
+        } else {
+          auto sup = ALTACORE_ANY_CAST<std::shared_ptr<AST::SuperClassFetch>>(state.internalValue);
+
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          sup->fetch = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+          if (!expect(TokenType::ClosingAngleBracket)) return ALTACORE_NULLOPT;
+
+          return sup;
+        }
+      } else if (rule == RuleType::Instanceof) {
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          return RuleType::AdditionOrSubtraction;
+        } else if (state.internalIndex == 1) {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          if (!expectKeyword("instanceof")) return exps.back().item;
+          auto instOf = std::make_shared<AST::InstanceofExpression>();
+          instOf->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+          state.internalValue = std::move(instOf);
+          state.internalIndex = 2;
+          return RuleType::Type;
+        } else {
+          auto instOf = ALTACORE_ANY_CAST<std::shared_ptr<AST::InstanceofExpression>>(state.internalValue);
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          instOf->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+          return instOf;
         }
       }
 

@@ -123,6 +123,10 @@ namespace AltaCore {
       for (size_t i = 0; i < tokens.size(); i++) {
         if (tokens[i].type == TokenType::SingleLineComment) {
           tokens.erase(tokens.begin() + i);
+          // since our container size decreased by one,
+          // we have to make sure we look at this index
+          // again in the next iteration
+          i--;
         }
       }
     };

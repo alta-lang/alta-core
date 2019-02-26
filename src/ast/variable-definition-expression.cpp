@@ -31,6 +31,17 @@ ALTACORE_AST_VALIDATE_D(VariableDefinitionExpression) {
   for (auto& mod: modifiers) {
     if (mod.empty()) ALTACORE_VALIDATION_ERROR("empty modifer for variable definition");
   }
+  if (
+    // if it's not a native type
+    !info->type->type->isNative &&
+    // and the class has no default constructor
+    !info->type->type->klass->defaultConstructor &&
+    // and no initialization expression was provided
+    !initializationExpression
+  ) {
+    // then there's a problem...
+    ALTACORE_VALIDATION_ERROR("class has no default constructor; must be manually initialized");
+  }
   ALTACORE_VS_E;
 };
 

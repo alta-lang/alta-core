@@ -18,6 +18,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
   std::shared_ptr<DET::Scope> targetScope = nullptr;
   auto targetAcc = std::dynamic_pointer_cast<Accessor>(target);
   auto targetAccDH = std::dynamic_pointer_cast<DH::Accessor>(info->target);
+  bool notAccessingNamespace = false;
 
   if (targetAcc && targetAccDH->readAccessor) {
     if (targetAccDH->readAccessor->returnType->isNative) {
@@ -41,6 +42,9 @@ ALTACORE_AST_DETAIL_D(Accessor) {
       targetScope = DET::Scope::getMemberScope(items[0]);
     } else if (items.size() > 0) {
       ALTACORE_DETAILING_ERROR("target must be narrowed before it can be accessed");
+    } else if (auto sup = std::dynamic_pointer_cast<DH::SuperClassFetch>(info->target)) {
+      targetScope = sup->superclass->scope;
+      notAccessingNamespace = true;
     } else {
       try {
         auto types = DET::Type::getUnderlyingTypes(info->target.get());
@@ -65,23 +69,69 @@ ALTACORE_AST_DETAIL_D(Accessor) {
     ALTACORE_DETAILING_ERROR("could not determine how to access the given target");
   }
 
-  if (!targetScope->parentNamespace.expired()) {
+  if (!targetScope->parentNamespace.expired() && !notAccessingNamespace) {
     info->accessesNamespace = true;
   }
 
   info->items = targetScope->findAll(query, {}, false, scope);
 
+  /*
+   * search parent classes
+   *
+   * this isn't done as a recursive lambda beacause that could
+   * lead to a stack overflow. granted, the number of parent classes
+   * a class would have to have to cause that would be absurd, but
+   * nontheless possible. if we *can* handle it properly, why not?
+   */
+  std::vector<std::shared_ptr<DET::Class>> currentParents;
+  std::stack<std::shared_ptr<DET::Class>> classStack;
+  std::stack<size_t> idxs;
+  classStack.push(targetScope->parentClass.lock());
+  idxs.push(-1);
+  while (classStack.size() > 0 && classStack.top()) {
+    auto& pc = classStack.top();
+    auto& idx = idxs.top();
+    idx++;
+    if (info->items.size() < 1 || (info->items.size() > 0 && info->items.front()->nodeType() == DET::NodeType::Function)) {
+      bool loopBack = false;
+      for (size_t i = idx; i < pc->parents.size(); i++) {
+        auto& parent = pc->parents[i];
+        currentParents.push_back(parent);
+        auto stuff = parent->scope->findAll(query, {}, false, scope);
+        for (size_t j = 0; j < stuff.size(); j++) {
+          info->parentClassAccessors[info->items.size()] = currentParents;
+          info->items.push_back(stuff[j]);
+        }
+        classStack.push(parent);
+        idxs.push(-1);
+        loopBack = true;
+        break;
+      }
+      if (loopBack) {
+        continue;
+      }
+    }
+    classStack.pop();
+    idxs.pop();
+    if (currentParents.size() > 0) {
+      currentParents.pop_back();
+    }
+  }
+
   bool allAccessors = true;
 
-  for (auto& item: info->items) {
+  for (size_t i = 0; i < info->items.size(); i++) {
+    auto& item = info->items[i];
     if (item->nodeType() == DET::NodeType::Function && std::dynamic_pointer_cast<DET::Function>(item)->isAccessor) {
       auto acc = std::dynamic_pointer_cast<DET::Function>(item);
       if (acc->parameters.size() == 0) {
         if (info->readAccessor) ALTACORE_DETAILING_ERROR("encountered two read accessors with the same name");
         info->readAccessor = acc;
+        info->readAccessorIndex = i;
       } else if (acc->parameters.size() == 1) {
         if (info->writeAccessor) ALTACORE_DETAILING_ERROR("encountered two write accessors with the same name");
         info->writeAccessor = acc;
+        info->writeAccessorIndex = i;
       } else {
         ALTACORE_DETAILING_ERROR("invalid accessor");
       }
@@ -93,6 +143,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
   } else if (info->items.size() == 1) {
     if (info->items[0]->nodeType() != DET::NodeType::Function || !std::dynamic_pointer_cast<DET::Function>(info->items[0])->isAccessor) {
       info->narrowedTo = info->items[0];
+      info->narrowedToIndex = 0;
     }
   }
 
@@ -101,13 +152,15 @@ ALTACORE_AST_DETAIL_D(Accessor) {
 
 void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<DH::Accessor> info, std::shared_ptr<AltaCore::DET::Type> type) {
   size_t highestCompat = 0;
-  for (auto& item: info->items) {
+  for (size_t i = 0; i < info->items.size(); i++) {
+    auto& item = info->items[i];
     auto itemType = DET::Type::getUnderlyingType(item);
     auto compat = itemType->compatiblity(*type);
     if (compat > highestCompat) {
       if (item->nodeType() != DET::NodeType::Function || !std::dynamic_pointer_cast<DET::Function>(item)->isAccessor) {
         highestCompat = compat;
         info->narrowedTo = item;
+        info->narrowedToIndex = i;
       }
     }
   }

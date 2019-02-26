@@ -51,7 +51,11 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto cond = dynamic_cast<DH::ConditionalExpression*>(expression)) {
     return getUnderlyingType(cond->primaryResult.get());
   } else if (auto inst = dynamic_cast<DH::ClassInstantiationExpression*>(expression)) {
-    return std::make_shared<Type>(inst->klass);
+    if (inst->superclass) {
+      return getUnderlyingType(inst->target.get());
+    } else {
+      return std::make_shared<Type>(inst->klass);
+    }
   } else if (auto ptr = dynamic_cast<DH::PointerExpression*>(expression)) {
     return getUnderlyingType(ptr->target.get())->point();
   } else if (auto deref = dynamic_cast<DH::DereferenceExpression*>(expression)) {
@@ -62,6 +66,10 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     return std::make_shared<Type>(NativeType::Byte, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (auto subs = dynamic_cast<DH::SubscriptExpression*>(expression)) {
     return getUnderlyingType(subs->target.get())->follow();
+  } else if (auto sc = dynamic_cast<DH::SuperClassFetch*>(expression)) {
+    return std::make_shared<Type>(sc->superclass, std::vector<uint8_t> { (uint8_t)Shared::TypeModifierFlag::Reference });
+  } else if (auto instOf = dynamic_cast<DH::InstanceofExpression*>(expression)) {
+    return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Shared::TypeModifierFlag::Constant });
   }
 
   return nullptr;
@@ -191,6 +199,9 @@ const size_t AltaCore::DET::Type::pointerLevel() const {
     if (modLevel & (uint8_t)Shared::TypeModifierFlag::Pointer) {
       count++;
     }
+    if (modLevel & (uint8_t)Shared::TypeModifierFlag::Reference) {
+      break;
+    }
   }
 
   return count;
@@ -201,6 +212,9 @@ const size_t AltaCore::DET::Type::referenceLevel() const {
   for (auto& modLevel: modifiers) {
     if (modLevel & (uint8_t)Shared::TypeModifierFlag::Reference) {
       count++;
+    }
+    if (modLevel & (uint8_t)Shared::TypeModifierFlag::Pointer) {
+      break;
     }
   }
 
@@ -242,11 +256,15 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
       if (paramCompat == 0) return 0;
       compat += paramCompat;
     }
-  } else {
+  } else if (isNative) {
     if ((nativeTypeName == NativeType::Void) != (other.nativeTypeName == NativeType::Void)) {
       return 0;
     }
     if (nativeTypeName == other.nativeTypeName) {
+      compat++;
+    }
+  } else {
+    if (klass->id == other.klass->id) {
       compat++;
     }
   }
@@ -258,7 +276,7 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
   if (isAny || other.isAny) return true;
   if (isFunction != other.isFunction) return false;
   if (isNative != other.isNative) return false;
-  if (!isNative && klass->id != other.klass->id) return false;
+  if (!isNative && klass->id != other.klass->id && !other.klass->hasParent(klass)) return false;
   if (pointerLevel() != other.pointerLevel()) return false;
 
   /**
@@ -299,6 +317,8 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
     }
   } else if (isNative) {
     if (nativeTypeName != other.nativeTypeName) return false;
+  } else {
+    if (klass->id != other.klass->id) return false;
   }
 
   return true;

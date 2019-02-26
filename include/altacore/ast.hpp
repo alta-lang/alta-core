@@ -43,5 +43,8 @@
 #include "ast/character-literal-node.hpp"
 #include "ast/type-alias-statement.hpp"
 #include "ast/subscript-expression.hpp"
+#include "ast/retrieval-node.hpp"
+#include "ast/super-class-fetch.hpp"
+#include "ast/instanceof-expression.hpp"
 
 #endif // ALTACORE_AST_HPP

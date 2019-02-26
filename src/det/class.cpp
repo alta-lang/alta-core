@@ -16,8 +16,8 @@ std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Class::deepClone() {
   return self;
 };
 
-std::shared_ptr<AltaCore::DET::Class> AltaCore::DET::Class::create(std::string name, std::shared_ptr<AltaCore::DET::Scope> parentScope) {
-  auto klass = std::make_shared<Class>(name, parentScope);
+std::shared_ptr<AltaCore::DET::Class> AltaCore::DET::Class::create(std::string name, std::shared_ptr<AltaCore::DET::Scope> parentScope, std::vector<std::shared_ptr<Class>> parents) {
+  auto klass = std::make_shared<Class>(name, parentScope, parents);
   klass->scope = std::make_shared<Scope>(klass);
   auto thisType = std::make_shared<Type>(klass, std::vector<uint8_t> { (uint8_t)Shared::TypeModifierFlag::Reference });
 
@@ -26,6 +26,15 @@ std::shared_ptr<AltaCore::DET::Class> AltaCore::DET::Class::create(std::string n
   return klass;
 };
 
-AltaCore::DET::Class::Class(std::string _name, std::shared_ptr<AltaCore::DET::Scope> _parentScope):
-  ScopeItem(_name, _parentScope)
+AltaCore::DET::Class::Class(std::string _name, std::shared_ptr<AltaCore::DET::Scope> _parentScope, std::vector<std::shared_ptr<Class>> _parents):
+  ScopeItem(_name, _parentScope),
+  parents(_parents)
   {};
+
+bool AltaCore::DET::Class::hasParent(std::shared_ptr<Class> parent) const {
+  for (auto& myParent: parents) {
+    if (myParent->id == parent->id) return true;
+    if (myParent->hasParent(parent)) return true;
+  }
+  return false;
+};

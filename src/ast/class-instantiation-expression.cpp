@@ -22,6 +22,9 @@ ALTACORE_AST_DETAIL_D(ClassInstantiationExpression) {
       ALTACORE_DETAILING_ERROR("the target must be narrowed before it can be instantiated");
     }
     info->klass = std::dynamic_pointer_cast<DET::Class>(acc->narrowedTo);
+  } else if (auto sup = std::dynamic_pointer_cast<DH::SuperClassFetch>(info->target)) {
+    info->klass = sup->superclass;
+    info->superclass = true;
   } else {
     ALTACORE_DETAILING_ERROR("invalid target retrieval node for class instantiation");
   }

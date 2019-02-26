@@ -8,4 +8,11 @@ void AltaCore::registerGlobalAttributes() {
 
     info->function->isAccessor = true;
   });
+  Attributes::registerAttribute({ "copy" }, { AST::NodeType::ClassSpecialMethodDefinitionStatement }, [](std::shared_ptr<AST::Node> _target, std::shared_ptr<DH::Node> _info, std::vector<Attributes::AttributeArgument> args) -> void {
+    auto target = std::dynamic_pointer_cast<AST::ClassSpecialMethodDefinitionStatement>(_target);
+    auto info = std::dynamic_pointer_cast<DH::ClassSpecialMethodDefinitionStatement>(_info);
+    if (!target || !info) throw std::runtime_error("this isn't supposed to happen");
+
+    info->isCopyConstructor = true;
+  });
 };

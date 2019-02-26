@@ -42,7 +42,6 @@ namespace AltaCore {
     ALTACORE_DH_SIMPLE_ALIAS(ClassStatementNode, Node);
 
     ALTACORE_DH_SIMPLE_ALIAS(LiteralNode, ExpressionNode);
-    ALTACORE_DH_SIMPLE_ALIAS(RetrievalNode, ExpressionNode);
 
     ALTACORE_DH_SIMPLE_ALIAS(BooleanLiteralNode, LiteralNode);
     ALTACORE_DH_SIMPLE_ALIAS(IntegerLiteralNode, LiteralNode);
@@ -80,6 +79,14 @@ namespace AltaCore {
     class Type;
     class VariableDefinitionExpression;
     class WhileLoopStatement;
+    class RetrievalNode;
+    class SuperClassFetch;
+
+    class RetrievalNode: public ExpressionNode {
+      ALTACORE_DH_CTOR(RetrievalNode, ExpressionNode);
+
+      std::vector<std::shared_ptr<DET::ScopeItem>> items;
+    };
 
     class Accessor: public RetrievalNode {
       ALTACORE_DH_CTOR(Accessor, RetrievalNode);
@@ -87,10 +94,13 @@ namespace AltaCore {
       std::shared_ptr<ExpressionNode> target = nullptr;
 
       bool accessesNamespace = false;
-      std::vector<std::shared_ptr<DET::ScopeItem>> items;
+      std::unordered_map<size_t, std::vector<std::shared_ptr<DET::Class>>> parentClassAccessors;
       std::shared_ptr<DET::Function> readAccessor = nullptr;
+      size_t readAccessorIndex = 0;
       std::shared_ptr<DET::Function> writeAccessor = nullptr;
+      size_t writeAccessorIndex = 0;
       std::shared_ptr<DET::ScopeItem> narrowedTo = nullptr;
+      size_t narrowedToIndex = 0;
       std::shared_ptr<DET::Type> targetType = nullptr;
     };
 
@@ -137,13 +147,20 @@ namespace AltaCore {
       ALTACORE_DH_CTOR(ClassDefinitionNode, StatementNode);
 
       std::vector<std::shared_ptr<ClassStatementNode>> statements;
+      std::vector<std::shared_ptr<RetrievalNode>> parents;
 
       bool isExport = false;
       bool isLiteral = false;
       bool createDefaultConstructor = false;
+      bool createDefaultDestructor = false;
+      bool createDefaultCopyConstructor = false;
       std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement> defaultConstructor = nullptr;
       std::shared_ptr<ClassSpecialMethodDefinitionStatement> defaultConstructorDetail = nullptr;
       std::shared_ptr<DET::Class> klass = nullptr;
+      std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement> defaultDestructor = nullptr;
+      std::shared_ptr<ClassSpecialMethodDefinitionStatement> defaultDestructorDetail = nullptr;
+      std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement> defaultCopyConstructor = nullptr;
+      std::shared_ptr<ClassSpecialMethodDefinitionStatement> defaultCopyConstructorDetail = nullptr;
     };
     class ClassInstantiationExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(ClassInstantiationExpression, ExpressionNode);
@@ -151,6 +168,7 @@ namespace AltaCore {
       std::shared_ptr<ExpressionNode> target = nullptr;
       std::vector<std::shared_ptr<ExpressionNode>> arguments;
 
+      bool superclass = false;
       std::shared_ptr<DET::Function> constructor = nullptr;
       std::shared_ptr<DET::Class> klass = nullptr;
       std::unordered_map<size_t, size_t> argumentMap;
@@ -180,9 +198,12 @@ namespace AltaCore {
 
       std::vector<std::shared_ptr<Parameter>> parameters;
       std::shared_ptr<BlockNode> body = nullptr;
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
 
       std::shared_ptr<DET::Class> klass = nullptr;
       std::shared_ptr<DET::Function> method = nullptr;
+      bool isCopyConstructor = false;
+      bool isDefaultCopyConstructor = false;
     };
     class ConditionalExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(ConditionalExpression, ExpressionNode);
@@ -216,7 +237,6 @@ namespace AltaCore {
     class Fetch: public RetrievalNode {
       ALTACORE_DH_CTOR(Fetch, RetrievalNode);
 
-      std::vector<std::shared_ptr<DET::ScopeItem>> items;
       std::shared_ptr<DET::ScopeItem> narrowedTo;
     };
     class FunctionCallExpression: public ExpressionNode {
@@ -326,6 +346,26 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> target = nullptr;
       std::shared_ptr<ExpressionNode> index = nullptr;
+    };
+    class SuperClassFetch: public ExpressionNode {
+      ALTACORE_DH_CTOR(SuperClassFetch, ExpressionNode);
+
+      //std::vector<std::shared_ptr<ExpressionNode>> arguments;
+
+      size_t parentClassIndex = 0;
+      std::shared_ptr<DET::Class> klass = nullptr;
+      std::shared_ptr<DET::Class> superclass = nullptr;
+      /*
+      std::shared_ptr<DET::Function> constructor = nullptr;
+      std::unordered_map<size_t, size_t> argumentMap;
+      std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>, std::vector<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>>>> adjustedArguments;
+      */
+    };
+    class InstanceofExpression: public ExpressionNode {
+      ALTACORE_DH_CTOR(InstanceofExpression, ExpressionNode);
+
+      std::shared_ptr<ExpressionNode> target = nullptr;
+      std::shared_ptr<Type> type = nullptr;
     };
 
     #undef ALTACORE_DH_CTOR

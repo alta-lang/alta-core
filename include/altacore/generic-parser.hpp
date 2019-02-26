@@ -153,6 +153,10 @@ namespace AltaCore {
             }
 #endif
             tmp = runRule(nextRule.rule, newRuleState, newRuleExps);
+            newRuleState.currentState = currentState;
+            if (newRuleState.currentState.currentPosition > farthestRule.currentState.currentPosition) {
+              farthestRule = newRuleState;
+            }
           }
 
           if (finalVal) {

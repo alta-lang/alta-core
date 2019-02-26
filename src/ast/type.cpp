@@ -30,7 +30,7 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Type::detail(std::shared_ptr<
     }
     info->type = std::make_shared<DET::Type>(info->returnType->type, detParams, modifiers);
     if (hoist) scope->hoist(info->type);
-  } else {
+  } else if (!_injected_type) {
     std::shared_ptr<DET::ScopeItem> item = nullptr;
 
     if (lookup) {
@@ -90,6 +90,8 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Type::detail(std::shared_ptr<
 
       info->type = std::make_shared<DET::Type>(klass, modifiers);
     }
+  } else {
+    info->type = _injected_type;
   }
   return info;
 };
