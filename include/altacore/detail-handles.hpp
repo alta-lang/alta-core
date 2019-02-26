@@ -361,6 +361,12 @@ namespace AltaCore {
       std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>, std::vector<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>>>> adjustedArguments;
       */
     };
+    class InstanceofExpression: public ExpressionNode {
+      ALTACORE_DH_CTOR(InstanceofExpression, ExpressionNode);
+
+      std::shared_ptr<ExpressionNode> target = nullptr;
+      std::shared_ptr<Type> type = nullptr;
+    };
 
     #undef ALTACORE_DH_CTOR
   };

@@ -115,6 +115,7 @@ namespace AltaCore {
       Character,
       TypeAlias,
       SuperClassFetch,
+      Instanceof,
     };
 
     template<typename RT, typename TT> struct GenericExpectationType {

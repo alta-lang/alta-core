@@ -1258,7 +1258,7 @@ namespace AltaCore {
           return cond;
         }
       } else if (rule == RuleType::NonequalityRelationalOperation) {
-        return expectBinaryOperation(rule, RuleType::AdditionOrSubtraction, {
+        return expectBinaryOperation(rule, RuleType::Instanceof, {
           TokenType::OpeningAngleBracket,
           TokenType::ClosingAngleBracket,
           TokenType::LessThanOrEqualTo,
@@ -1689,6 +1689,24 @@ namespace AltaCore {
           if (!expect(TokenType::ClosingAngleBracket)) return ALTACORE_NULLOPT;
 
           return sup;
+        }
+      } else if (rule == RuleType::Instanceof) {
+        if (state.internalIndex == 0) {
+          state.internalIndex = 1;
+          return RuleType::AdditionOrSubtraction;
+        } else if (state.internalIndex == 1) {
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          if (!expectKeyword("instanceof")) return exps.back().item;
+          auto instOf = std::make_shared<AST::InstanceofExpression>();
+          instOf->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+          state.internalValue = std::move(instOf);
+          state.internalIndex = 2;
+          return RuleType::Type;
+        } else {
+          auto instOf = ALTACORE_ANY_CAST<std::shared_ptr<AST::InstanceofExpression>>(state.internalValue);
+          if (!exps.back()) return ALTACORE_NULLOPT;
+          instOf->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+          return instOf;
         }
       }
 
