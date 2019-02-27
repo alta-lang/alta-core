@@ -85,7 +85,7 @@ ALTACORE_AST_DETAIL_D(ClassDefinitionNode) {
     if (item->nodeType() != DET::NodeType::Variable) continue;
     if (item->name == "this") continue;
 
-    auto& var = std::dynamic_pointer_cast<DET::Variable>(item);
+    auto var = std::dynamic_pointer_cast<DET::Variable>(item);
 
     if (var->type->isNative) continue;
     if (var->type->indirectionLevel() > 0) continue;

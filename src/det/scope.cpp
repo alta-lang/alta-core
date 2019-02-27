@@ -194,7 +194,7 @@ bool AltaCore::DET::Scope::hasParent(std::shared_ptr<Scope> lookup) const {
 
 bool AltaCore::DET::Scope::canSee(std::shared_ptr<ScopeItem> item) const {
   if (item->visibility == Visibility::Private) {
-    auto& itemScope = item->parentScope.lock();
+    auto itemScope = item->parentScope.lock();
     if (itemScope && id != itemScope->id && !hasParent(itemScope)) {
       return false;
     }
