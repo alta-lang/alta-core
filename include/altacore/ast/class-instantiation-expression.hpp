@@ -4,7 +4,7 @@
 #include "expression-node.hpp"
 #include "../det/class.hpp"
 #include <string>
-#include <unordered_map>
+#include "../simple-map.hpp"
 #include "../variant.hpp"
 
 namespace AltaCore {

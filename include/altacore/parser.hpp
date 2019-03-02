@@ -1,19 +1,10 @@
 #ifndef ALTACORE_PARSER_HPP
 #define ALTACORE_PARSER_HPP
 
-#if defined(__has_include) && __has_include(<optional>)
-#include <optional>
-#define ALTACORE_OPTIONAL std::optional
-#define ALTACORE_NULLOPT std::nullopt
-#else
-#include <optional.hpp>
-#define ALTACORE_OPTIONAL tl::optional
-#define ALTACORE_NULLOPT tl::nullopt
-#endif
-
+#include "optional.hpp"
 #include "variant.hpp"
 #include "any.hpp"
-#include <unordered_map>
+#include "simple-map.hpp"
 #include <unordered_set>
 #include <vector>
 #include <functional>

@@ -1,19 +1,10 @@
 #ifndef ALTACORE_ATTRIBUTES_HPP
 #define ALTACORE_ATTRIBUTES_HPP
 
-#if defined(__has_include) && __has_include(<optional>)
-#include <optional>
-#define ALTACORE_OPTIONAL std::optional
-#define ALTACORE_NULLOPT std::nullopt
-#else
-#include <optional.hpp>
-#define ALTACORE_OPTIONAL tl::optional
-#define ALTACORE_NULLOPT tl::nullopt
-#endif
-
+#include "simple-map.hpp"
+#include "optional.hpp"
 #include <vector>
 #include <string>
-#include <map>
 #include <functional>
 #include "ast-shared.hpp"
 
@@ -58,7 +49,7 @@ namespace AltaCore {
     };
 
     extern std::vector<Attribute> registeredGlobalAttributes;
-    extern std::map<std::string, std::vector<Attribute>> registeredFileAttributes;
+    extern ALTACORE_MAP<std::string, std::vector<Attribute>> registeredFileAttributes;
 
     bool registerAttribute(std::vector<std::string> fullDomainPath, std::vector<AST::NodeType> appliesTo = {}, std::function<void(std::shared_ptr<AST::Node>, std::shared_ptr<DH::Node>, std::vector<AttributeArgument>)> callback = nullptr, std::string file = "");
     ALTACORE_OPTIONAL<Attribute> findAttribute(std::vector<std::string> fullDomainPath, ALTACORE_OPTIONAL<AST::NodeType> appliesTo = ALTACORE_NULLOPT, std::string file = "");
