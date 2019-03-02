@@ -13,6 +13,8 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <dirent.h>
+#include <string.h>
 #endif
 
 bool AltaCore::Filesystem::exists(AltaCore::Filesystem::Path path) {
@@ -105,7 +107,21 @@ std::vector<AltaCore::Filesystem::Path> AltaCore::Filesystem::getDirectoryListin
 
   FindClose(findHandle);
 #else
+  auto stringifiedPath = directory.toString('/');
 
+  // thanks, Peter Parker (https://stackoverflow.com/a/612176)
+  DIR* dir = NULL;
+  struct dirent* ent = NULL;
+  if ((dir = opendir(stringifiedPath.c_str())) != NULL) {
+    while ((ent = readdir(dir)) != NULL) {
+      if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
+        results.push_back(Path(ent->d_name).absolutify(directory));
+      }
+    }
+    closedir(dir);
+  } else {
+    throw std::runtime_error("failed to open directory");
+  }
 #endif
 
   if (recursive) {

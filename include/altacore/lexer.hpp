@@ -145,7 +145,7 @@ namespace AltaCore {
       "Closing angle bracket",
       "Ampersand",
       "Opening square bracket",
-      "Closing sqaure bracket",
+      "Closing square bracket",
 
       "LAST", // shouldn't be necessary, but just in case ;)
     };
@@ -158,6 +158,11 @@ namespace AltaCore {
       size_t originalColumn;
       size_t line;
       size_t column;
+      bool valid = false;
+
+      explicit operator bool() const {
+        return valid;
+      }
     };
 
     /**

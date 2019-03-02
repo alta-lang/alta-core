@@ -23,6 +23,22 @@ namespace AltaCore {
       return true;
     };
 
+    template<typename RT, typename TT, class T> Token GenericParser<RT, TT, T>::expect(std::vector<typename GenericParser<RT, TT, T>::TokenType> expectations) {
+      Token tok;
+      tok.valid = false;
+
+      if (currentState.currentPosition >= tokens.size()) return tok;
+
+      for (auto& expectation: expectations) {
+        if (tokens[currentState.currentPosition].type == expectation) {
+          return tokens[currentState.currentPosition++];
+        }
+      }
+
+      return tok;
+    };
+
+    /*
     template<typename RT, typename TT, class T> auto GenericParser<RT, TT, T>::expect(std::vector<typename GenericParser<RT, TT, T>::ExpectationType> expectations) -> Expectation {
       Expectation ret; // by default, Expectations are invalid
       const auto stateAtStart = currentState;
@@ -193,18 +209,16 @@ namespace AltaCore {
 
       return ret;
     };
-    template<typename RT, typename TT, class T> auto GenericParser<RT, TT, T>::expectAnyToken() -> Expectation {
-      Expectation ret;
+    */
 
+    template<typename RT, typename TT, class T> Token GenericParser<RT, TT, T>::expectAnyToken() {
       if (tokens.size() > currentState.currentPosition) {
-        ret.valid = true;
-        ret.token = tokens[currentState.currentPosition];
-        ret.type.isToken = true;
-        ret.type.token = ret.token.type;
-        currentState.currentPosition++;
+        return tokens[currentState.currentPosition++];
       }
 
-      return ret;
+      Token tok;
+      tok.valid = false;
+      return tok;
     };
   };
 };

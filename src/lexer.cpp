@@ -98,6 +98,7 @@ namespace AltaCore {
       token.originalColumn = currentOriginalColumn;
       token.type = rule;
       token.raw = std::string(1, character);
+      token.valid = true;
       tokens.push_back(token);
       if (setHanging) hangingRule = rule;
       return tokens.back();
@@ -111,6 +112,7 @@ namespace AltaCore {
       token.originalColumn = currentOriginalColumn;
       token.type = rule;
       token.raw = data;
+      token.valid = true;
       tokens.push_back(token);
       if (setHanging) hangingRule = rule;
       return tokens.back();

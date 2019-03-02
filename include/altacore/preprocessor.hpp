@@ -78,8 +78,6 @@ namespace AltaCore {
         // <builtin-macros>
         Expression defined(std::vector<Expression> targets);
         // </builtin-macros>
-
-        virtual RuleReturn runRule(RuleType, RuleState&, std::vector<Expectation>&);
       public:
         void parse();
 

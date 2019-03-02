@@ -141,13 +141,12 @@ namespace AltaCore {
         {};
       bool operator ==(const GenericExpectationType<RT, TT>& other);
     };
-    template<typename RT, typename TT, typename T> struct GenericExpectation {
-      using ExpectationType = GenericExpectationType<RT, TT>;
+    template<typename RT, typename T> struct GenericExpectation {
+      using ExpectationType = RT;
 
       bool valid = false;
       ExpectationType type;
       ALTACORE_OPTIONAL<T> item = ALTACORE_NULLOPT;
-      Token token;
 
       GenericExpectation():
         valid(false)
@@ -156,11 +155,6 @@ namespace AltaCore {
         valid(true),
         type(_type),
         item(_item)
-        {};
-      GenericExpectation(ExpectationType _type, Token _token):
-        valid(true),
-        type(_type),
-        token(_token)
         {};
 
       explicit operator bool() const {
@@ -195,37 +189,30 @@ namespace AltaCore {
         using TokenType = TT;
         using NodeType = T;
 
-        using Expectation = GenericExpectation<RuleType, TokenType, NodeType>;
+        using Expectation = GenericExpectation<RuleType, NodeType>;
         using ExpectationType = GenericExpectationType<RuleType, TokenType>;
         using State = GenericState<RuleType>;
         using RuleState = GenericRuleState<State>;
         using RuleReturn = ALTACORE_VARIANT<ExpectationType, std::initializer_list<ExpectationType>, ALTACORE_OPTIONAL<NodeType>>;
-      private:
-#ifdef ALTACORE_GENERIC_PARSER_USE_FAILED
-        std::unordered_map<size_t, std::unordered_set<RuleType>> failed;
-#endif
+
+        using RuleStackElement = std::tuple<RuleType, std::stack<RuleType>, RuleState, std::vector<Expectation>>;
+
       protected:
         std::vector<Token> tokens;
         State currentState;
 
-      public:
-        RuleState farthestRule = RuleState(currentState);
-
-      protected:
-        Expectation expect(std::vector<ExpectationType> expectations);
-        Expectation expect(std::initializer_list<ExpectationType> expectations) {
+        Token expect(std::vector<TokenType> expectations);
+        Token expect(std::initializer_list<TokenType> expectations) {
           return expect(std::vector(expectations));
         };
-        Expectation expect(ExpectationType expectation) {
+        Token expect(TokenType expectation) {
           return expect({ expectation });
         };
-        Expectation expectAnyToken();
+        Token expectAnyToken();
 
-        virtual RuleReturn runRule(RuleType, RuleState&, std::vector<Expectation>&) {
-          return ALTACORE_NULLOPT;
-        };
       public:
         ALTACORE_OPTIONAL<NodeType> root;
+        RuleState farthestRule = RuleState(currentState);
 
         virtual void parse() {};
         void reset() {
@@ -240,28 +227,29 @@ namespace AltaCore {
 
     class Parser: public GenericParser<RuleType, TokenType, std::shared_ptr<AST::Node>> {
       private:
+        using NextFunctionType = std::function<void(bool, std::vector<RuleType>, NodeType)>;
+
         // <helper-functions>
         ALTACORE_OPTIONAL<std::string> expectModifier(ModifierTargetType mtt);
         std::vector<std::string> expectModifiers(ModifierTargetType mtt);
         bool expectKeyword(std::string keyword);
         std::vector<std::shared_ptr<AST::AttributeNode>> expectAttributes();
-        RuleReturn expectBinaryOperation(RuleType rule, RuleType nextHigherPrecedentRule, std::vector<ExpectationType> operatorTokens, std::vector<AST::OperatorType> operatorTypes, RuleState& state, std::vector<Expectation>& expectations);
+        bool expectBinaryOperation(
+          RuleType rule,
+          RuleType nextHigherPrecedentRule,
+          std::vector<TokenType> operatorTokens,
+          std::vector<AST::OperatorType> operatorTypes,
+          RuleState& state,
+          std::vector<Expectation>& expectations,
+          NextFunctionType next
+        );
         // </helper-functions>
 
         std::unordered_set<std::string> typesToIgnore;
         Filesystem::Path filePath;
 
         bool inClass = false;
-      protected:
-        // > calls realRunRule and attaches extra info to nodes that it returns
-        // i prefer the real runRule
-        virtual RuleReturn runRule(RuleType, RuleState&, std::vector<Expectation>&);
 
-      private:
-        // i said the *real* runRule
-        RuleReturn realRunRule(RuleType, RuleState&, std::vector<Expectation>&);
-
-        // unfortunately, there's no third runRule so i can't finish the meme
       public:
         void parse();
 
