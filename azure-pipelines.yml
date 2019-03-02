@@ -1,8 +1,10 @@
 trigger:
-- master
-- staging-*
-- dev-*
-- refs/tags/*
+  branches:
+    include:
+    - *
+  tags:
+    include:
+    - *
 
 jobs:
 - job: Linux
