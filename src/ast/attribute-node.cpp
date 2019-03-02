@@ -57,7 +57,7 @@ void AltaCore::AST::AttributeNode::run(std::shared_ptr<DH::AttributeNode> info, 
 void AltaCore::AST::AttributeNode::findAttribute(std::shared_ptr<DH::AttributeNode> info) {
   info->attribute = Attributes::findAttribute(
     accessors,
-    info->target ? std::make_optional(info->target->nodeType()) : ALTACORE_NULLOPT,
+    info->target ? ALTACORE_MAKE_OPTIONAL(info->target->nodeType()) : ALTACORE_NULLOPT,
     info->module.lock()->path.toString()
   );
 };

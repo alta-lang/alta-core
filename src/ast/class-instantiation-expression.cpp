@@ -3,6 +3,7 @@
 #include "../../include/altacore/ast/accessor.hpp"
 #include "../../include/altacore/det/function.hpp"
 #include "../../include/altacore/ast/function-call-expression.hpp"
+#include "../../include/altacore/simple-map.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::ClassInstantiationExpression::nodeType() {
   return NodeType::ClassInstantiationExpression;
