@@ -1,12 +1,12 @@
 #ifndef ALTACORE_LEXER_HPP
 #define ALTACORE_LEXER_HPP
 
+#include "simple-map.hpp"
 #include <stdexcept>
 #include <string>
 #include <vector>
 #include <tuple>
 #include <deque>
-#include <unordered_map>
 #include <unordered_set>
 #include <functional>
 #include <utility>
@@ -171,7 +171,7 @@ namespace AltaCore {
     class Lexer {
       private:
         std::deque<char> backlog;
-        std::unordered_map<size_t, std::unordered_set<TokenType>> fails;
+        ALTACORE_MAP<size_t, std::unordered_set<TokenType>> fails;
         TokenType hangingRule = TokenType::None;
         size_t ruleIteration = 0;
         bool consumeNext = false;

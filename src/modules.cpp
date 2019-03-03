@@ -5,7 +5,7 @@
 namespace AltaCore {
   namespace Modules {
     Filesystem::Path standardLibraryPath;
-    std::unordered_map<std::string, std::shared_ptr<AltaCore::AST::RootNode>> importCache;
+    ALTACORE_MAP<std::string, std::shared_ptr<AltaCore::AST::RootNode>> importCache;
     std::function<std::shared_ptr<AST::RootNode>(std::string importRequest, Filesystem::Path requestingModulePath)> parseModule = [](std::string importRequest, Filesystem::Path requestingModulePath) -> std::shared_ptr<AST::RootNode> {
       auto modPath = resolve(importRequest, requestingModulePath);
       if (auto& imp = importCache[modPath.absolutify().toString()]) {

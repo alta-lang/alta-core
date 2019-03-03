@@ -1,10 +1,9 @@
 #ifndef ALTACORE_PREPROCESSOR_HPP
 #define ALTACORE_PREPROCESSOR_HPP
 
+#include "simple-map.hpp"
 #include <string>
 #include <functional>
-#include <map>
-#include <unordered_map>
 #include <stack>
 #include "fs.hpp"
 #include "parser.hpp"
@@ -72,7 +71,7 @@ namespace AltaCore {
     };
     class ExpressionParser: public Parser::GenericParser<RuleType, Lexer::TokenType, Expression> {
       protected:
-        std::map<std::string, Expression>& definitions;
+        ALTACORE_MAP<std::string, Expression>& definitions;
         bool evaluateExpressions = true; // for short-circuit evaluation in && and ||
 
         // <builtin-macros>
@@ -81,7 +80,7 @@ namespace AltaCore {
       public:
         void parse();
 
-        ExpressionParser(std::vector<Lexer::Token> tokens, std::map<std::string, Expression>& definitions);
+        ExpressionParser(std::vector<Lexer::Token> tokens, ALTACORE_MAP<std::string, Expression>& definitions);
     };
 
     struct Location {
@@ -120,17 +119,17 @@ namespace AltaCore {
         bool canSaveForLater = true;
       public:
         Filesystem::Path filePath;
-        std::map<std::string, Expression>& definitions;
-        std::map<std::string, std::string>& fileResults;
-        std::unordered_map<std::string, std::vector<Location>>& locationMaps;
+        ALTACORE_MAP<std::string, Expression>& definitions;
+        ALTACORE_MAP<std::string, std::string>& fileResults;
+        ALTACORE_MAP<std::string, std::vector<Location>>& locationMaps;
         void feed(std::string chunk);
         void done();
 
         Preprocessor(
           Filesystem::Path _filePath,
-          std::map<std::string, Expression>& _defs,
-          std::map<std::string, std::string>& _results,
-          std::unordered_map<std::string, std::vector<Location>>& _locationMaps,
+          ALTACORE_MAP<std::string, Expression>& _defs,
+          ALTACORE_MAP<std::string, std::string>& _results,
+          ALTACORE_MAP<std::string, std::vector<Location>>& _locationMaps,
           std::function<Filesystem::Path(Preprocessor&, std::string)> _fileResolver = defaultFileResolver,
           std::function<void(Preprocessor&, Preprocessor&, Filesystem::Path)> _fileReader = defaultFileReader
         ):

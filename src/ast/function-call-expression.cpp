@@ -2,7 +2,7 @@
 #include "../../include/altacore/det/type.hpp"
 #include "../../include/altacore/ast/fetch.hpp"
 #include "../../include/altacore/ast/accessor.hpp"
-#include <unordered_map>
+#include "../../include/altacore/simple-map.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::FunctionCallExpression::nodeType() {
   return NodeType::FunctionCallExpression;
@@ -13,24 +13,24 @@ AltaCore::AST::FunctionCallExpression::FunctionCallExpression(std::shared_ptr<Al
   arguments(_arguments)
   {};
 
-std::tuple<size_t, std::unordered_map<size_t, size_t>, std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<AltaCore::AST::ExpressionNode>, std::shared_ptr<AltaCore::DH::ExpressionNode>>, std::vector<std::pair<std::shared_ptr<AltaCore::AST::ExpressionNode>, std::shared_ptr<AltaCore::DH::ExpressionNode>>>>>> AltaCore::AST::FunctionCallExpression::findCompatibleCall(std::vector<std::tuple<std::string, std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>> arguments, std::vector<std::shared_ptr<DET::Type>> targetTypes) {
+std::tuple<size_t, ALTACORE_MAP<size_t, size_t>, std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<AltaCore::AST::ExpressionNode>, std::shared_ptr<AltaCore::DH::ExpressionNode>>, std::vector<std::pair<std::shared_ptr<AltaCore::AST::ExpressionNode>, std::shared_ptr<AltaCore::DH::ExpressionNode>>>>>> AltaCore::AST::FunctionCallExpression::findCompatibleCall(std::vector<std::tuple<std::string, std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>> arguments, std::vector<std::shared_ptr<DET::Type>> targetTypes) {
   if (targetTypes.size() < 1) {
     throw std::runtime_error("Can't call an unknown expression like a function");
   }
 
   bool found = false; // whether we found the right function
   bool possible = false; // whether we found any function at all
-  std::vector<std::tuple<size_t, std::vector<size_t>, std::shared_ptr<DET::Type>, std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>, std::vector<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>>>>, std::unordered_map<size_t, size_t>>> compatibles;
+  std::vector<std::tuple<size_t, std::vector<size_t>, std::shared_ptr<DET::Type>, std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>, std::vector<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>>>>, ALTACORE_MAP<size_t, size_t>>> compatibles;
   for (size_t index = 0; index < targetTypes.size(); index++) {
     auto& targetType = targetTypes[index];
     if (!targetType->isFunction) continue;
     possible = true;
     //if (targetType->parameters.size() != arguments.size()) continue;
-    std::unordered_map<size_t, std::pair<std::string, ALTACORE_VARIANT<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>, std::vector<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>>>>> argumentsInOrder;
+    ALTACORE_MAP<size_t, std::pair<std::string, ALTACORE_VARIANT<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>, std::vector<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>>>>> argumentsInOrder;
     std::vector<size_t> compatiblities(targetType->parameters.size(), 0);
     size_t funcArgIndex = 0;
     bool ok = arguments.size() >= targetType->requiredArgumentCount();
-    std::unordered_map<size_t, size_t> argMap;
+    ALTACORE_MAP<size_t, size_t> argMap;
     for (size_t i = 0; i < arguments.size(); i++) {
       if (!ok) break;
       auto& [argName, argExpr, argDet] = arguments[i];
@@ -131,7 +131,7 @@ std::tuple<size_t, std::unordered_map<size_t, size_t>, std::vector<ALTACORE_VARI
   std::vector<size_t> mostCompatibleCompatiblities;
   std::shared_ptr<DET::Type> mostCompatibleType = nullptr;
   std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>, std::vector<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>>>> mostCompatibleArguments;
-  std::unordered_map<size_t, size_t> mostCompatibleArgMap;
+  ALTACORE_MAP<size_t, size_t> mostCompatibleArgMap;
   for (auto& [index, compatabilities, type, args, argMap]: compatibles) {
     if (mostCompatibleIndex != SIZE_MAX) {
       size_t numberGreater = 0;

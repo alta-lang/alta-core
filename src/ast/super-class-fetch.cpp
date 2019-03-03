@@ -59,7 +59,7 @@ ALTACORE_AST_DETAIL_D(SuperClassFetch) {
 
   /*
   std::vector<std::shared_ptr<DET::Type>> targetTypes;
-  std::unordered_map<size_t, size_t> indexMap;
+  ALTACORE_MAP<size_t, size_t> indexMap;
   for (size_t i = 0; i < info->superclass->constructors.size(); i++) {
     auto& constr = info->superclass->constructors[i];
     if (!scope->canSee(constr)) {

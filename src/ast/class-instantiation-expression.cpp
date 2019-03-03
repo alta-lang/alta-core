@@ -3,6 +3,7 @@
 #include "../../include/altacore/ast/accessor.hpp"
 #include "../../include/altacore/det/function.hpp"
 #include "../../include/altacore/ast/function-call-expression.hpp"
+#include "../../include/altacore/simple-map.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::ClassInstantiationExpression::nodeType() {
   return NodeType::ClassInstantiationExpression;
@@ -34,7 +35,7 @@ ALTACORE_AST_DETAIL_D(ClassInstantiationExpression) {
   }
 
   std::vector<std::shared_ptr<DET::Type>> targetTypes;
-  std::unordered_map<size_t, size_t> indexMap;
+  ALTACORE_MAP<size_t, size_t> indexMap;
   for (size_t i = 0; i < info->klass->constructors.size(); i++) {
     auto& constr = info->klass->constructors[i];
     if (!scope->canSee(constr)) {

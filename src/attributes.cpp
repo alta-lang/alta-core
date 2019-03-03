@@ -1,9 +1,10 @@
 #include "../include/altacore/attributes.hpp"
+#include "../include/altacore/simple-map.hpp"
 
 namespace AltaCore {
   namespace Attributes {
     std::vector<Attribute> registeredGlobalAttributes;
-    std::map<std::string, std::vector<Attribute>> registeredFileAttributes;
+    ALTACORE_MAP<std::string, std::vector<Attribute>> registeredFileAttributes;
   };
 };
 

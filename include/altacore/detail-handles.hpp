@@ -1,16 +1,8 @@
 #ifndef ALTACORE_DETAIL_HANDLES_HPP
 #define ALTACORE_DETAIL_HANDLES_HPP
 
-#if defined(__has_include) && __has_include(<optional>)
-#include <optional>
-#define ALTACORE_OPTIONAL std::optional
-#define ALTACORE_NULLOPT std::nullopt
-#else
-#include <optional.hpp>
-#define ALTACORE_OPTIONAL tl::optional
-#define ALTACORE_NULLOPT tl::nullopt
-#endif
-
+#include "simple-map.hpp"
+#include "optional.hpp"
 #include "det.hpp"
 #include "variant.hpp"
 #include "attributes.hpp"
@@ -94,7 +86,7 @@ namespace AltaCore {
       std::shared_ptr<ExpressionNode> target = nullptr;
 
       bool accessesNamespace = false;
-      std::unordered_map<size_t, std::vector<std::shared_ptr<DET::Class>>> parentClassAccessors;
+      ALTACORE_MAP<size_t, std::vector<std::shared_ptr<DET::Class>>> parentClassAccessors;
       std::shared_ptr<DET::Function> readAccessor = nullptr;
       size_t readAccessorIndex = 0;
       std::shared_ptr<DET::Function> writeAccessor = nullptr;
@@ -171,7 +163,7 @@ namespace AltaCore {
       bool superclass = false;
       std::shared_ptr<DET::Function> constructor = nullptr;
       std::shared_ptr<DET::Class> klass = nullptr;
-      std::unordered_map<size_t, size_t> argumentMap;
+      ALTACORE_MAP<size_t, size_t> argumentMap;
       std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>, std::vector<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>>>> adjustedArguments;
     };
     class ClassMemberDefinitionStatement: public ClassStatementNode {
@@ -249,7 +241,7 @@ namespace AltaCore {
       std::shared_ptr<AST::ExpressionNode> methodClassTarget = nullptr;
       std::shared_ptr<ExpressionNode> methodClassTargetInfo = nullptr;
       std::shared_ptr<DET::Type> targetType = nullptr;
-      std::unordered_map<size_t, size_t> argumentMap;
+      ALTACORE_MAP<size_t, size_t> argumentMap;
       std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>, std::vector<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>>>> adjustedArguments;
     };
     class FunctionDeclarationNode: public StatementNode {
@@ -357,7 +349,7 @@ namespace AltaCore {
       std::shared_ptr<DET::Class> superclass = nullptr;
       /*
       std::shared_ptr<DET::Function> constructor = nullptr;
-      std::unordered_map<size_t, size_t> argumentMap;
+      ALTACORE_MAP<size_t, size_t> argumentMap;
       std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>, std::vector<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>>>> adjustedArguments;
       */
     };

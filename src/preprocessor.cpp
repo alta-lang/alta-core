@@ -251,7 +251,7 @@ AltaCore::Preprocessor::Expression AltaCore::Preprocessor::ExpressionParser::def
   return true;
 };
 
-AltaCore::Preprocessor::ExpressionParser::ExpressionParser(std::vector<Lexer::Token> _tokens, std::map<std::string, Expression>& _definitions):
+AltaCore::Preprocessor::ExpressionParser::ExpressionParser(std::vector<Lexer::Token> _tokens, ALTACORE_MAP<std::string, Expression>& _definitions):
   GenericParser(_tokens),
   definitions(_definitions)
   {};
