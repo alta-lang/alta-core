@@ -169,11 +169,8 @@ namespace AltaCore {
       {};
 
     void Parser::parse() {
-      /*
-      Expectation exp = expect(RuleType::Root);
-      if (!exp.valid) return;
-      root = exp.item;
-      */
+      auto absoluteFilePath = filePath.absolutify();
+      Timing::parseTimes[absoluteFilePath].start();
       std::stack<RuleStackElement> ruleStack;
 
       ruleStack.emplace(
@@ -1728,6 +1725,9 @@ namespace AltaCore {
 
         next();
       }
+
+      
+      Timing::parseTimes[absoluteFilePath].stop();
     };
 
     #undef ACP_NOT_OK

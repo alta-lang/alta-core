@@ -133,6 +133,9 @@ namespace AltaCore {
       }
     };
     void Lexer::lex() {
+      auto absoluteFilePath = filePath.absolutify();
+      Timing::lexTimes[absoluteFilePath].start();
+
       bool incrementTotal = false;
       while (!backlog.empty()) {
         if (!incrementTotal) {
@@ -234,6 +237,8 @@ namespace AltaCore {
           absences.push_back(std::tuple<size_t, size_t>(currentLine, currentColumn));
         }
       }
+
+      Timing::lexTimes[absoluteFilePath].stop();
     };
   };
 };

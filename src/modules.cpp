@@ -13,7 +13,7 @@ namespace AltaCore {
       }
       std::ifstream file(modPath.absolutify().toString());
       std::string line;
-      Lexer::Lexer lexer;
+      Lexer::Lexer lexer(modPath);
 
       if (!file.is_open()) {
         throw std::runtime_error("oh no.");

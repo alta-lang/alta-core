@@ -13,6 +13,21 @@
 
 namespace AltaCore {
   namespace Filesystem {
+    class Path;
+  };
+};
+
+namespace std {
+  // create a `std::hash` specialization to allow `AltaCore::Filesystem::Path`s
+  // to be used as keys in `std::unordered_map`s
+  template<> struct hash<AltaCore::Filesystem::Path> {
+    public:
+      std::size_t operator()(const AltaCore::Filesystem::Path& path) const;
+  };
+};
+
+namespace AltaCore {
+  namespace Filesystem {
     /**
      * The platform default separator
      */
@@ -26,6 +41,8 @@ namespace AltaCore {
     std::string cwd();
 
     class Path {
+      friend std::size_t std::hash<Path>::operator()(const Path&) const;
+
       private:
         bool hasRoot = false;
         std::string root;
@@ -83,6 +100,7 @@ namespace AltaCore {
         Path operator /(const std::string& rhs) const;
         Path operator +(const std::string& rhs) const;
         bool operator ==(const Path& rhs) const;
+        bool operator <(const Path& rhs) const;
         explicit operator bool() const;
     };
     

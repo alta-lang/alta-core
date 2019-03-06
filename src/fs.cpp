@@ -425,9 +425,11 @@ AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator /(const AltaCore
   newPath.components.insert(newPath.components.end(), rhs.components.begin(), rhs.components.end());
   return newPath;
 };
+
 AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator /(const std::string& rhs) const {
   return *this / Path(rhs);
 };
+
 AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator +(const std::string& rhs) const {
   auto newPath = Path(*this);
   if (!newPath.hasComponents()) {
@@ -438,6 +440,7 @@ AltaCore::Filesystem::Path AltaCore::Filesystem::Path::operator +(const std::str
   }
   return newPath;
 };
+
 bool AltaCore::Filesystem::Path::operator ==(const AltaCore::Filesystem::Path& rhs) const {
   if (hasRoot != rhs.hasRoot) return false;
   if (root != rhs.root) return false;
@@ -447,6 +450,45 @@ bool AltaCore::Filesystem::Path::operator ==(const AltaCore::Filesystem::Path& r
   }
   return true;
 };
+
 AltaCore::Filesystem::Path::operator bool() const {
   return isValid();
+};
+
+bool AltaCore::Filesystem::Path::operator <(const AltaCore::Filesystem::Path& rhs) const {
+  if (hasRoot != rhs.hasRoot && hasRoot) return false;
+
+  if (hasRoot) {
+    auto comp = root.compare(rhs.root);
+    if (comp < 0) return true;
+    if (comp > 0) return false;
+  }
+
+  if (components.size() > rhs.components.size()) return false;
+
+  for (size_t i = 0; i < components.size(); i++) {
+    auto& comp1 = components[i];
+    auto& comp2 = rhs.components[i];
+
+    auto comparison = comp1.compare(comp2);
+    if (comparison < 0) return true;
+    if (comparison > 0) return false;
+  }
+
+  // at this point, they're equal, so return false
+  return false;
+};
+
+// create a `std::hash` specialization to allow `AltaCore::Filesystem::Path`s
+// to be used as keys in `std::unordered_map`s
+std::size_t std::hash<AltaCore::Filesystem::Path>::operator()(const AltaCore::Filesystem::Path& path) const {
+  // effective hasing method according to
+  // https://stackoverflow.com/a/17017281
+  size_t res = 17;
+  res = (res * 31) + hash<bool>()(path.hasRoot);
+  res = (res * 31) + hash<std::string>()(path.root);
+  for (auto& component: path.components) {
+    res = (res * 31) + hash<std::string>()(component);
+  }
+  return res;
 };

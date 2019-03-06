@@ -509,7 +509,7 @@ void AltaCore::Preprocessor::ExpressionParser::parse() {
 };
 
 AltaCore::Preprocessor::Expression AltaCore::Preprocessor::Preprocessor::evaluateExpression(std::string expressionString) {
-  Lexer::Lexer lexer;
+  Lexer::Lexer lexer(filePath);
   lexer.feed(expressionString);
 
   ExpressionParser parser(lexer.tokens, definitions);
@@ -523,6 +523,8 @@ AltaCore::Preprocessor::Expression AltaCore::Preprocessor::Preprocessor::evaluat
 };
 
 void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
+  auto absoluteFilePath = filePath.absolutify();
+  Timing::preprocessTimes[absoluteFilePath].start();
   auto& result = fileResults[filePath.toString()];
   auto& locations = locationMaps[filePath.toString()];
 
@@ -810,7 +812,9 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
         // avoid duplicate importation
         if (fileResults.find(path.absolutify().toString()) == fileResults.end()) {
           Preprocessor pre(path, definitions, fileResults, locationMaps, fileResolver, fileReader);
+          Timing::preprocessTimes[absoluteFilePath].stop();
           fileReader(*this, pre, path);
+          Timing::preprocessTimes[absoluteFilePath].start();
         }
       }
       for (auto& [delimiterStart, delimiterEnd]: delimiters) {
@@ -848,6 +852,7 @@ void AltaCore::Preprocessor::Preprocessor::feed(std::string chunk) {
   }
 
   lineCache = lines[lines.size() - 1];
+  Timing::preprocessTimes[absoluteFilePath].stop();
 };
 
 void AltaCore::Preprocessor::Preprocessor::done() {

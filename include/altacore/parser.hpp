@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include "lexer.hpp"
 #include "ast.hpp"
+#include "timing.hpp"
 
 namespace AltaCore {
   namespace Parser {

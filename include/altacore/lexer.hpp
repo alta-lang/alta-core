@@ -10,6 +10,7 @@
 #include <unordered_set>
 #include <functional>
 #include <utility>
+#include "timing.hpp"
 
 namespace AltaCore {
   namespace Lexer {
@@ -196,8 +197,10 @@ namespace AltaCore {
         size_t currentOriginalLine = 1;
         size_t currentOriginalColumn = 0;
         std::function<std::pair<size_t, size_t>(size_t line, size_t column)> locationLookupFunction = nullptr;
+        Filesystem::Path filePath;
 
-        Lexer(std::function<std::pair<size_t, size_t>(size_t line, size_t column)> _locationLookupFunction = nullptr):
+        Lexer(Filesystem::Path _filePath, std::function<std::pair<size_t, size_t>(size_t line, size_t column)> _locationLookupFunction = nullptr):
+          filePath(_filePath),
           locationLookupFunction(_locationLookupFunction)
           {};
 

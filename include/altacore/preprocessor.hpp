@@ -7,6 +7,7 @@
 #include <stack>
 #include "fs.hpp"
 #include "parser.hpp"
+#include "timing.hpp"
 
 // this thing is a mess. but it works. so don't touch it too much.
 // it *should* be rewritten so it can be properly maintained, but
