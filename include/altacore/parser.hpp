@@ -12,11 +12,61 @@
 #include "lexer.hpp"
 #include "ast.hpp"
 #include "timing.hpp"
+#include "modules.hpp"
 
 namespace AltaCore {
   namespace Parser {
     using Lexer::TokenType;
     using Lexer::Token;
+
+    enum class PrepoExpressionType {
+      Boolean,
+      String,
+      Null,
+      Undefined,
+    };
+
+    class PrepoExpression {
+      public:
+        PrepoExpressionType type;
+        bool defined;
+        bool boolean;
+        std::string string;
+        std::nullptr_t null;
+
+        PrepoExpression(bool _boolean):
+          type(PrepoExpressionType::Boolean),
+          boolean(_boolean),
+          defined(true)
+          {};
+        PrepoExpression(const char* _string):
+          type(PrepoExpressionType::String),
+          string(_string),
+          defined(true)
+          {};
+        PrepoExpression(std::string _string):
+          type(PrepoExpressionType::String),
+          string(_string),
+          defined(true)
+          {};
+        PrepoExpression(std::nullptr_t):
+          type(PrepoExpressionType::Null),
+          null(nullptr),
+          defined(true)
+          {};
+        PrepoExpression():
+          type(PrepoExpressionType::Undefined),
+          null(nullptr),
+          defined(false)
+          {};
+
+        bool operator ==(const PrepoExpression& right);
+        explicit operator bool();
+    };
+
+    namespace Prepo {
+      PrepoExpression defined(std::vector<PrepoExpression> targets);
+    };
 
     enum class ModifierTargetType: uint8_t {
       Function,
@@ -26,6 +76,7 @@ namespace AltaCore {
       Class,
       TypeAlias,
     };
+
     /**
      * Each entry here corresponds to a `ModifierTargetType`
      * Thus, if `ModifierTargetType::Function == 0`,
@@ -110,6 +161,19 @@ namespace AltaCore {
       Instanceof,
     };
 
+    enum class PrepoRuleType {
+      Expression,
+      Equality,
+      String,
+      Retrieval,
+      MacroCall,
+      BooleanLiteral,
+      And,
+      Or,
+      Wrapped,
+      AnyLiteral,
+    };
+
     template<typename RT, typename TT> struct GenericExpectationType {
       bool valid = false;
       bool isToken; // if true, it's a token, otherwise, it's a parser rule
@@ -133,6 +197,7 @@ namespace AltaCore {
         {};
       bool operator ==(const GenericExpectationType<RT, TT>& other);
     };
+
     template<typename RT, typename T> struct GenericExpectation {
       using ExpectationType = RT;
 
@@ -201,6 +266,7 @@ namespace AltaCore {
           return expect({ expectation });
         };
         Token expectAnyToken();
+        Token peek(size_t lookahead = 0, bool lookbehind = false);
 
       public:
         ALTACORE_OPTIONAL<NodeType> root;
@@ -221,6 +287,14 @@ namespace AltaCore {
       private:
         using NextFunctionType = std::function<void(bool, std::vector<RuleType>, NodeType)>;
 
+        using PrepoState = GenericState<PrepoRuleType>;
+        using PrepoRuleState = GenericRuleState<PrepoState>;
+        using PrepoExpectation = GenericExpectation<PrepoRuleType, PrepoExpression>;
+        using PrepoRuleStackElement = std::tuple<PrepoRuleType, std::stack<PrepoRuleType>, PrepoRuleState, std::vector<PrepoExpectation>>;
+
+        PrepoState prepoState;
+        bool evaluateExpressions = true;
+
         // <helper-functions>
         ALTACORE_OPTIONAL<std::string> expectModifier(ModifierTargetType mtt);
         std::vector<std::string> expectModifiers(ModifierTargetType mtt);
@@ -235,17 +309,19 @@ namespace AltaCore {
           std::vector<Expectation>& expectations,
           NextFunctionType next
         );
+        ALTACORE_OPTIONAL<PrepoExpression> expectPrepoExpression();
         // </helper-functions>
 
         std::unordered_set<std::string> typesToIgnore;
         Filesystem::Path filePath;
 
         bool inClass = false;
-
       public:
+        ALTACORE_MAP<std::string, PrepoExpression>& definitions;
+
         void parse();
 
-        Parser(std::vector<Token> tokens, Filesystem::Path filePath = Filesystem::Path());
+        Parser(std::vector<Token> tokens, ALTACORE_MAP<std::string, PrepoExpression>& definitions, Filesystem::Path filePath = Filesystem::Path());
     };
   };
 };

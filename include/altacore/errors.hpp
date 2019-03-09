@@ -48,6 +48,12 @@ namespace AltaCore {
           Error(message, position)
           {};
     };
+    class LexingError: public Error {
+      public:
+        LexingError(std::string message = "", Position position = Position()):
+          Error(message, position)
+          {};
+    };
   };
 };
 

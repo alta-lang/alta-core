@@ -3,12 +3,6 @@
 
 namespace AltaCore {
   namespace Lexer {
-    LexerError::LexerError(size_t _line, size_t _column):
-      std::runtime_error(std::string("LexerError: Failed to lex input at ") + std::to_string(_line) + ":" + std::to_string(_column)),
-      line(_line),
-      column(_column)
-      {};
-
     bool Lexer::runRule(const TokenType rule, const char character, bool first, bool* ended, bool* contigious) {
       switch (rule) {
         case TokenType::Identifier: {
@@ -69,6 +63,43 @@ namespace AltaCore {
             return true;
           }
         } break;
+        case TokenType::PreprocessorDirective: {
+          if (first && tokens.size() > 0 && tokens.back().line == currentLine) {
+            return false;
+          }
+
+          if (first || ruleIteration == 1) {
+            *contigious = true;
+            return character == '#';
+          }
+
+          if ((character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z')) {
+            return true;
+          }
+        } break;
+        case TokenType::PreprocessorSubstitution: {
+          *contigious = true;
+          if (first) {
+            return character == '@';
+          }
+
+          if (ruleIteration == 1) {
+            return character == '[';
+          }
+
+          if (character == ']') {
+            *ended = true;
+            return true;
+          }
+
+          if (
+            (character >= 'a' && character <= 'z') ||
+            (character <= 'A' && character >= 'Z') ||
+            (ruleIteration > 2 && character >= '0' && character <= '9')
+          ) {
+            return true;
+          }
+        } break;
         default: {
           *contigious = true;
           auto string = TokenType_simpleCharacters[(int)rule];
@@ -94,8 +125,8 @@ namespace AltaCore {
       token.position = totalCount;
       token.line = currentLine;
       token.column = currentColumn;
-      token.originalLine = currentOriginalLine;
-      token.originalColumn = currentOriginalColumn;
+      //token.originalLine = currentOriginalLine;
+      //token.originalColumn = currentOriginalColumn;
       token.type = rule;
       token.raw = std::string(1, character);
       token.valid = true;
@@ -108,8 +139,8 @@ namespace AltaCore {
       token.position = totalCount;
       token.line = currentLine;
       token.column = currentColumn;
-      token.originalLine = currentOriginalLine;
-      token.originalColumn = currentOriginalColumn;
+      //token.originalLine = currentOriginalLine;
+      //token.originalColumn = currentOriginalColumn;
       token.type = rule;
       token.raw = data;
       token.valid = true;
@@ -137,6 +168,7 @@ namespace AltaCore {
       Timing::lexTimes[absoluteFilePath].start();
 
       bool incrementTotal = false;
+      bool finalIncrement = backlog.size() > 0;
       while (!backlog.empty()) {
         if (!incrementTotal) {
           incrementTotal = true;
@@ -145,12 +177,9 @@ namespace AltaCore {
         }
 
         currentColumn++;
-        currentOriginalColumn++;
-        if (locationLookupFunction) {
-          auto [newLine, newColumn] = locationLookupFunction(currentOriginalLine, currentOriginalColumn);
-          currentLine = newLine;
-          currentColumn = newColumn;
-        }
+        //currentOriginalColumn++;
+        //currentLine = currentOriginalLine;
+        //currentColumn = currentOriginalColumn;
 
         const char character = backlog.front();
 
@@ -187,8 +216,8 @@ namespace AltaCore {
               totalCount = back.position;
               currentLine = back.line;
               currentColumn = back.column - 1;
-              currentOriginalLine = back.originalLine;
-              currentOriginalColumn = back.originalColumn - 1;
+              //currentOriginalLine = back.originalLine;
+              //currentOriginalColumn = back.originalColumn - 1;
               fails[totalCount].insert(back.type);
               tokens.pop_back();
               incrementTotal = false;
@@ -220,8 +249,8 @@ namespace AltaCore {
         if (character == '\n') {
           currentLine++;
           currentColumn = 0;
-          currentOriginalLine++;
-          currentOriginalColumn = 0;
+          //currentOriginalLine++;
+          //currentOriginalColumn = 0;
           backlog.pop_front();
           continue;
         }
@@ -232,10 +261,14 @@ namespace AltaCore {
         }
 
         if (throwOnAbsence) {
-          throw LexerError(currentLine, currentColumn);
+          throw Errors::LexingError("", Errors::Position(currentLine, currentColumn, filePath));
         } else {
-          absences.push_back(std::tuple<size_t, size_t>(currentLine, currentColumn));
+          absences.emplace_back(currentLine, currentColumn);
         }
+      }
+
+      if (finalIncrement) {
+        totalCount++;
       }
 
       Timing::lexTimes[absoluteFilePath].stop();

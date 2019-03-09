@@ -11,27 +11,22 @@
 #include <functional>
 #include <utility>
 #include "timing.hpp"
+#include "errors.hpp"
 
 namespace AltaCore {
   namespace Lexer {
-    class LexerError: public std::runtime_error {
-      public:
-        size_t line;
-        size_t column;
-
-        LexerError(size_t line, size_t column);
-    };
-
     // btw, order matters here
     enum class TokenType {
       None,
       
       // <special-rules>
+      PreprocessorDirective,
       SingleLineComment,
       Identifier,
       Integer,
       String,
       Character,
+      PreprocessorSubstitution,
       // </special-rules>
 
       // <multi-character-rules>
@@ -77,6 +72,8 @@ namespace AltaCore {
       "",
       "",
       "",
+      "",
+      "",
 
       "==",
       "&&",
@@ -113,11 +110,13 @@ namespace AltaCore {
     static const char* const TokenType_names[] = {
       "None",
 
+      "Preprocessor directive",
       "Single line comment",
       "Identifier",
       "Integer",
       "String",
       "Character",
+      "Preprocessor substitution",
 
       "Equality",
       "And",
@@ -188,20 +187,18 @@ namespace AltaCore {
         Token& appendNewToken(const TokenType rule, const char character, bool setHanging = true);
         Token& appendNewToken(const TokenType rule, std::string data, bool setHanging = true);
       public:
-        bool throwOnAbsence = false;
+        bool throwOnAbsence = true;
         std::vector<Token> tokens;
-        std::vector<std::tuple<size_t, size_t>> absences;
+        std::vector<std::pair<size_t, size_t>> absences;
         size_t totalCount = 0;
-        size_t currentLine = 1;
-        size_t currentColumn = 0;
         size_t currentOriginalLine = 1;
         size_t currentOriginalColumn = 0;
-        std::function<std::pair<size_t, size_t>(size_t line, size_t column)> locationLookupFunction = nullptr;
+        size_t& currentLine = currentOriginalLine;
+        size_t& currentColumn = currentOriginalColumn;
         Filesystem::Path filePath;
 
-        Lexer(Filesystem::Path _filePath, std::function<std::pair<size_t, size_t>(size_t line, size_t column)> _locationLookupFunction = nullptr):
-          filePath(_filePath),
-          locationLookupFunction(_locationLookupFunction)
+        Lexer(Filesystem::Path _filePath):
+          filePath(_filePath)
           {};
 
         void feed(const std::string data);

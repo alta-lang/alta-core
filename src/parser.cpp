@@ -11,6 +11,29 @@ namespace AltaCore {
     #define ACP_EXP(x) { if (x) { next(true, {}, *x); } else { next(false); }; continue; }
     #define ACP_RULE(x) { next(true, { RuleType::x }); continue; }
 
+    bool PrepoExpression::operator ==(const PrepoExpression& right) {
+      if (type != right.type) return false;
+      if (type == PrepoExpressionType::Boolean) {
+        return boolean == right.boolean;
+      } else if (type == PrepoExpressionType::String) {
+        return string == right.string;
+      } else {
+        // both are null or undefined
+        return true;
+      }
+    };
+
+    PrepoExpression::operator bool() {
+      if (type == PrepoExpressionType::Boolean) {
+        return boolean;
+      } else if (type == PrepoExpressionType::String) {
+        return !string.empty();
+      } else {
+        // null and undefined are non-truthy
+        return false;
+      }
+    };
+
     // <rule-state-structures>
     template<typename S> struct ConditionStatementState {
       S state;
@@ -163,8 +186,277 @@ namespace AltaCore {
     };
     // </helper-functions>
 
-    Parser::Parser(std::vector<Token> _tokens, Filesystem::Path _filePath):
+    PrepoExpression Prepo::defined(std::vector<PrepoExpression> targets) {
+      for (auto& target: targets) {
+        if (target.type == PrepoExpressionType::Undefined) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    ALTACORE_OPTIONAL<PrepoExpression> Parser::expectPrepoExpression() {
+      std::stack<PrepoRuleStackElement> ruleStack;
+      ALTACORE_OPTIONAL<PrepoExpression> root = ALTACORE_NULLOPT;
+
+      ruleStack.emplace(
+        PrepoRuleType::Expression,
+        std::stack<PrepoRuleType>(),
+        PrepoRuleState(prepoState),
+        std::vector<PrepoExpectation>()
+      );
+
+      auto next = [&](bool ok = false, std::vector<PrepoRuleType> rules = {}, PrepoExpression result = PrepoExpression()) {
+        auto& state = std::get<2>(ruleStack.top());
+        state.iteration++;
+        
+        auto& ruleExps = std::get<1>(ruleStack.top());
+        for (auto it = rules.rbegin(); it != rules.rend(); it++) {
+          ruleExps.push(*it);
+        }
+
+        if (ok && rules.size() > 0) return;
+
+        auto oldRuleType = std::get<0>(ruleStack.top());
+        auto oldState = std::get<2>(ruleStack.top());
+        ruleStack.pop();
+
+        if (ruleStack.size() < 1) return;
+
+        auto& [newRule, newNextExps, newPrepoRuleState, newExps] = ruleStack.top();
+
+        if (!ok) {
+          prepoState = oldState.stateAtStart;
+          if (newNextExps.size() < 1) {
+            newExps.push_back(PrepoExpectation()); // push back an invalid PrepoExpectation
+          }
+        } else if (ruleExps.size() == 0) {
+          newNextExps = {};
+          newExps.push_back(PrepoExpectation(oldRuleType, result));
+        }
+      };
+
+      auto currentLine = peek(1, true).line;
+
+      auto expect = [&](TokenType type) -> Token {
+        auto invalidToken = Token();
+        invalidToken.valid = false;
+        if (peek().line != currentLine) return invalidToken;
+        return this->expect(type);
+      };
+
+      while (ruleStack.size() > 0) {
+        auto& [rule, nextExps, state, exps] = ruleStack.top();
+
+        if (nextExps.size() > 0) {
+          auto nextExp = nextExps.top();
+          nextExps.pop();
+
+          ruleStack.emplace(
+            nextExp,
+            std::stack<PrepoRuleType>(),
+            PrepoRuleState(prepoState),
+            std::vector<PrepoExpectation>()
+          );
+          continue;
+        }
+
+        #define PREPO_NOT_OK { next(); continue; }
+        #define PREPO_NODE(x) { next(true, {}, x); continue; }
+        #define PREPO_RULES(x) { next(true, x); continue; }
+        #define PREPO_RULE_LIST(...) { next(true, { __VA_ARGS__ }); continue; }
+        #define PREPO_EXP(x) { if (x) { next(true, {}, *x); } else { next(false); }; continue; }
+        #define PREPO_RULE(x) { next(true, { PrepoRuleType::x }); continue; }
+
+        if (rule == PrepoRuleType::Expression) {
+          if (state.iteration == 0) PREPO_RULE(Or);
+          if (!exps.back()) PREPO_NOT_OK;
+          root = exps.back().item;
+          
+          next(true);
+          break;
+        } else if (rule == PrepoRuleType::Equality) {
+          if (state.internalIndex == 0) {
+            state.internalIndex = 1;
+            PREPO_RULE(MacroCall);
+          } else if (state.internalIndex == 1) {
+            if (!exps.back()) PREPO_NOT_OK;
+
+            if (!expect(TokenType::Equality)) PREPO_EXP(exps.back().item);
+
+            state.internalIndex = 2;
+            PREPO_RULE(MacroCall);
+          } else {
+            if (!exps.back()) PREPO_NOT_OK;
+
+            auto left = (exps.size() == 1) ? ALTACORE_ANY_CAST<PrepoExpression>(state.internalValue) : *exps.front().item;
+            auto result = evaluateExpressions ? PrepoExpression(left == *exps.back().item) : PrepoExpression();
+
+            exps.clear();
+
+            if (expect(TokenType::Equality)) {
+              state.internalValue = std::move(result);
+              PREPO_RULE(MacroCall);
+            }
+
+            PREPO_NODE(result);
+          }
+        } else if (rule == PrepoRuleType::MacroCall) {
+          if (state.internalIndex == 0) {
+            auto cache = prepoState;
+            auto target = expect(TokenType::Identifier);
+            if (!(target && expect(TokenType::OpeningParenthesis))) {
+              state.internalIndex = 2;
+              prepoState = cache;
+              PREPO_RULE(AnyLiteral);
+            }
+            state.internalIndex = 1;
+            state.internalValue = std::make_tuple(target.raw, std::vector<PrepoExpression>());
+            PREPO_RULE(Expression);
+          } else if (state.internalIndex == 1) {
+            auto [target, args] = ALTACORE_ANY_CAST<std::tuple<std::string, std::vector<PrepoExpression>>>(state.internalValue);
+
+            if (exps.back()) {
+              args.push_back(*exps.back().item);
+              if (expect(TokenType::Comma)) {
+                PREPO_RULE(Expression);
+              }
+            }
+
+            if (!expect(TokenType::ClosingParenthesis)) PREPO_NOT_OK;
+
+            if (!evaluateExpressions) PREPO_NODE(PrepoExpression());
+
+            if (target == "defined") {
+              PREPO_NODE(Prepo::defined(args));
+            } else {
+              throw std::runtime_error("only builtin macros are currently supported");
+            }
+          } else {
+            PREPO_EXP(exps.back().item);
+          }
+        } else if (rule == PrepoRuleType::Retrieval) {
+          auto target = expect(TokenType::Identifier);
+          if (!target) PREPO_NOT_OK;
+          if (!evaluateExpressions) PREPO_NODE(PrepoExpression());
+          if (definitions.find(target.raw) == definitions.end()) {
+            PREPO_NODE(PrepoExpression());
+          } else {
+            PREPO_NODE(definitions[target.raw]);
+          }
+        } else if (rule == PrepoRuleType::String) {
+          auto str = expect(TokenType::String);
+          if (!str) PREPO_NOT_OK;
+          if (!evaluateExpressions) PREPO_NODE(PrepoExpression());
+          PREPO_NODE(PrepoExpression(AltaCore::Util::unescape(str.raw.substr(1, str.raw.length() - 2))));
+        } else if (rule == PrepoRuleType::BooleanLiteral) {
+          auto id = expect(TokenType::Identifier);
+          if (!id) PREPO_NOT_OK;
+          if (!evaluateExpressions) PREPO_NODE(PrepoExpression());
+          if (id.raw == "true") {
+            PREPO_NODE(PrepoExpression(true));
+          } else if (id.raw == "false") {
+            PREPO_NODE(PrepoExpression(false));
+          } else {
+            PREPO_NOT_OK;
+          }
+        } else if (rule == PrepoRuleType::And) {
+          if (state.internalIndex == 0) {
+            state.internalIndex = 1;
+            PREPO_RULE(Equality);
+          } else if (state.internalIndex == 1) {
+            if (!exps.back()) PREPO_NOT_OK;
+
+            if (!expect(TokenType::And)) PREPO_EXP(exps.back().item);
+
+            state.internalIndex = 2;
+            PREPO_RULE(Equality);
+          } else {
+            if (!exps.back()) PREPO_NOT_OK;
+
+            auto left = (exps.size() == 1) ? ALTACORE_ANY_CAST<PrepoExpression>(state.internalValue) : *exps.front().item;
+            auto result = evaluateExpressions ? PrepoExpression(left && *exps.back().item) : PrepoExpression();
+            if (!result) {
+              evaluateExpressions = false;
+            }
+
+            exps.clear();
+
+            if (expect(TokenType::And)) {
+              state.internalValue = std::move(result);
+              PREPO_RULE(Equality);
+            }
+
+            PREPO_NODE(result);
+          }
+        } else if (rule == PrepoRuleType::Or) {
+          if (state.internalIndex == 0) {
+            state.internalIndex = 1;
+            PREPO_RULE(And);
+          } else if (state.internalIndex == 1) {
+            if (!exps.back()) PREPO_NOT_OK;
+
+            if (!expect(TokenType::Or)) PREPO_EXP(exps.back().item);
+
+            state.internalIndex = 2;
+            PREPO_RULE(And);
+          } else {
+            if (!exps.back()) PREPO_NOT_OK;
+
+            auto left = (exps.size() == 1) ? ALTACORE_ANY_CAST<PrepoExpression>(state.internalValue) : *exps.front().item;
+            auto result = evaluateExpressions ? PrepoExpression(left || *exps.back().item) : PrepoExpression();
+            if (result) {
+              evaluateExpressions = false;
+            }
+
+            exps.clear();
+
+            if (expect(TokenType::Or)) {
+              state.internalValue = std::move(result);
+              PREPO_RULE(And);
+            }
+
+            PREPO_NODE(result);
+          }
+        } else if (rule == PrepoRuleType::Wrapped) {
+          if (state.internalIndex == 0) {
+            if (!expect(TokenType::OpeningParenthesis)) PREPO_NOT_OK;
+            state.internalIndex = 1;
+            PREPO_RULE(Expression);
+          } else {
+            if (!exps.back()) PREPO_NOT_OK;
+            if (!expect(TokenType::ClosingParenthesis)) PREPO_NOT_OK;
+            PREPO_EXP(exps.back().item);
+          }
+        } else if (rule == PrepoRuleType::AnyLiteral) {
+          if (state.internalIndex == 0) {
+            state.internalIndex = 1;
+            PREPO_RULE_LIST(
+              PrepoRuleType::BooleanLiteral,
+              PrepoRuleType::Retrieval,
+              PrepoRuleType::String
+            );
+          }
+
+          PREPO_EXP(exps.back().item);
+        }
+
+        #undef PREPO_NOT_OK
+        #undef PREPO_NODE
+        #undef PREPO_RULES
+        #undef PREPO_RULE_LIST
+        #undef PREPO_EXP
+        #undef PREPO_RULE
+
+        next();
+      }
+
+      return root;
+    };
+
+    Parser::Parser(std::vector<Token> _tokens, ALTACORE_MAP<std::string, PrepoExpression>& _definitions, Filesystem::Path _filePath):
       GenericParser(_tokens),
+      definitions(_definitions),
       filePath(_filePath)
       {};
 
@@ -216,10 +508,26 @@ namespace AltaCore {
         }
       };
 
+      std::stack<bool> prepoLevels;
+      std::stack<bool> prepoLast;
+      bool advanceExp = true;
+
+      auto topLevelTrue = [&]() {
+        if (prepoLevels.size() < 1) return true;
+        if (prepoLevels.top()) return true;
+        return false;
+      };
+
+      auto foundBlock = [&]() {
+        if (prepoLast.size() < 1) return true;
+        if (prepoLast.top()) return true;
+        return false;
+      };
+
       while (ruleStack.size() > 0) {
         auto& [rule, nextExps, state, exps] = ruleStack.top();
 
-        if (nextExps.size() > 0) {
+        if (advanceExp && nextExps.size() > 0) {
           auto nextExp = nextExps.top();
           nextExps.pop();
 
@@ -229,6 +537,96 @@ namespace AltaCore {
             RuleState(currentState),
             std::vector<Expectation>()
           );
+          continue;
+        } else if (!advanceExp) {
+          advanceExp = true;
+        }
+
+        // here's the preprocessor logic,
+        // it hijacks all other rules and takes
+        // maximum precedence
+        if (auto dir = expect(TokenType::PreprocessorDirective)) {
+          auto directive = dir.raw.substr(1);
+          auto currentLine = dir.line;
+
+          auto ignoreLine = [&]() {
+            while (peek().line == currentLine) {
+              expectAnyToken();
+            }
+          };
+
+          #define PREPO_CONTINUE { advanceExp = false; continue; }
+
+          if (directive == "if") {
+            auto expr = expectPrepoExpression();
+            if (!expr) {
+              ignoreLine();
+            } else {
+              prepoLevels.push(!!*expr);
+              prepoLast.push(!!*expr);
+            }
+          } else if (directive == "else") {
+            auto ifTok = peek();
+            if (ifTok.line == currentLine && ifTok.raw == "if") {
+              expectAnyToken(); // consume the "if"
+              if (topLevelTrue()) {
+                prepoLast.top() = false;
+              } else {
+                auto expr = expectPrepoExpression();
+                if (!expr) {
+                  ignoreLine();
+                } else {
+                  prepoLevels.top() = !!*expr;
+                  prepoLast.top() = !!*expr;
+                }
+              }
+            } else {
+              if (topLevelTrue()) {
+                prepoLast.top() = false;
+              } else {
+                prepoLevels.top() = true;
+                prepoLast.top() = true;
+              }
+            }
+          } else if (directive == "end") {
+            auto nextTok = peek();
+            if (nextTok.line == currentLine && nextTok.raw == "if") {
+              prepoLevels.pop();
+              prepoLast.pop();
+            } else {
+              ignoreLine();
+            }
+          } else if (directive == "define") {
+            auto name = peek();
+            if (!name || name.line != currentLine || name.type != TokenType::Identifier) {
+              ignoreLine();
+              PREPO_CONTINUE;
+            }
+            expectAnyToken(); // consume the identifier
+            auto expr = expectPrepoExpression();
+            definitions[name.raw] = (expr) ? *expr : PrepoExpression(null);
+          } else if (directive == "undefine") {
+            auto name = peek();
+            if (!name || name.line != currentLine || name.type != TokenType::Identifier) {
+              ignoreLine();
+              PREPO_CONTINUE;
+            }
+            expectAnyToken(); // consume the identifier
+            if (definitions.find(name.raw) != definitions.end()) {
+              definitions.erase(name.raw);
+            }
+          } else {
+            ignoreLine();
+          }
+
+          PREPO_CONTINUE;
+
+          #undef PREPO_CONTINUE
+        } else if (!foundBlock()) {
+          while (peek().type != TokenType::PreprocessorDirective) {
+            expectAnyToken();
+          }
+          advanceExp = false;
           continue;
         }
 
@@ -834,11 +1232,14 @@ namespace AltaCore {
             }
           }
           modName = Util::unescape(modName);
+          std::shared_ptr<AST::ImportStatement> node = nullptr;
           if (isAlias) {
-            ACP_NODE((std::make_shared<AST::ImportStatement>(modName, alias)));
+            node = std::make_shared<AST::ImportStatement>(modName, alias);
           } else {
-            ACP_NODE((std::make_shared<AST::ImportStatement>(modName, imports)));
+            node = std::make_shared<AST::ImportStatement>(modName, imports);
           }
+          node->parse(filePath);
+          ACP_NODE(node);
         } else if (rule == RuleType::BooleanLiteral) {
           if (expectKeyword("true")) {
             ACP_NODE((std::make_shared<AST::BooleanLiteralNode>(true)));

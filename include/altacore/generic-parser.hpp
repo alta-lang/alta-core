@@ -38,6 +38,17 @@ namespace AltaCore {
       return tok;
     };
 
+    template<typename RT, typename TT, class T> Token GenericParser<RT, TT, T>::peek(size_t lookahead, bool lookbehind) {
+      Token tok;
+      tok.valid = false;
+
+      auto position = (lookbehind) ? (currentState.currentPosition - lookahead) : (currentState.currentPosition + lookahead);
+
+      if (position >= tokens.size()) return tok;
+
+      return tokens[position];
+    };
+
     /*
     template<typename RT, typename TT, class T> auto GenericParser<RT, TT, T>::expect(std::vector<typename GenericParser<RT, TT, T>::ExpectationType> expectations) -> Expectation {
       Expectation ret; // by default, Expectations are invalid

@@ -6,6 +6,7 @@
 #include <string>
 #include <exception>
 #include <functional>
+#include "simple-map.hpp"
 
 #ifdef ALTACORE_LOCAL_SEMVER
 #include "../../deps/semver.c/semver.h"
@@ -16,6 +17,9 @@
 namespace AltaCore {
   namespace AST {
     class RootNode; // forward declaration
+  };
+  namespace Parser {
+    class PrepoExpression;
   };
   namespace Modules {
     class ModuleError: public std::exception {};
@@ -48,6 +52,7 @@ namespace AltaCore {
     };
 
     extern Filesystem::Path standardLibraryPath;
+    extern ALTACORE_MAP<std::string, Parser::PrepoExpression>* parsingDefinitions;
     extern std::function<std::shared_ptr<AST::RootNode>(std::string importRequest, Filesystem::Path requestingModulePath)> parseModule;
     Filesystem::Path resolve(std::string importRequest, Filesystem::Path relativeTo);
     Filesystem::Path findInfo(Filesystem::Path moduleOrPackagePath);

@@ -12,6 +12,7 @@ AltaCore::AST::RootNode::RootNode(std::vector<std::shared_ptr<AltaCore::AST::Sta
   {};
 
 void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::string moduleName) {
+  if (info) return;
   info = std::make_shared<DH::RootNode>();
   
   Modules::PackageInfo pkgInfo;
@@ -49,7 +50,7 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
   }
 };
 void AltaCore::AST::RootNode::detail(std::string filePath, std::string moduleName) {
-  return detail(Filesystem::Path(filePath, moduleName));
+  return detail(Filesystem::Path(filePath), moduleName);
 };
 
 ALTACORE_AST_VALIDATE_D(RootNode) {
