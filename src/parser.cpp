@@ -11,6 +11,11 @@ namespace AltaCore {
     #define ACP_EXP(x) { if (x) { next(true, {}, *x); } else { next(false); }; continue; }
     #define ACP_RULE(x) { next(true, { RuleType::x }); continue; }
 
+    bool State::operator ==(const State& rhs) const {
+      if (currentPosition != rhs.currentPosition) return false;
+      return true;
+    };
+
     bool PrepoExpression::operator ==(const PrepoExpression& right) {
       if (type != right.type) return false;
       if (type == PrepoExpressionType::Boolean) {
@@ -200,9 +205,9 @@ namespace AltaCore {
       ALTACORE_OPTIONAL<PrepoExpression> root = ALTACORE_NULLOPT;
 
       ruleStack.emplace(
-        PrepoRuleType::Expression,
+        PrepoRuleType::Root,
         std::stack<PrepoRuleType>(),
-        PrepoRuleState(prepoState),
+        RuleState(currentState),
         std::vector<PrepoExpectation>()
       );
 
@@ -223,10 +228,10 @@ namespace AltaCore {
 
         if (ruleStack.size() < 1) return;
 
-        auto& [newRule, newNextExps, newPrepoRuleState, newExps] = ruleStack.top();
+        auto& [newRule, newNextExps, newRuleState, newExps] = ruleStack.top();
 
         if (!ok) {
-          prepoState = oldState.stateAtStart;
+          currentState = oldState.stateAtStart;
           if (newNextExps.size() < 1) {
             newExps.push_back(PrepoExpectation()); // push back an invalid PrepoExpectation
           }
@@ -255,7 +260,7 @@ namespace AltaCore {
           ruleStack.emplace(
             nextExp,
             std::stack<PrepoRuleType>(),
-            PrepoRuleState(prepoState),
+            RuleState(currentState),
             std::vector<PrepoExpectation>()
           );
           continue;
@@ -268,13 +273,17 @@ namespace AltaCore {
         #define PREPO_EXP(x) { if (x) { next(true, {}, *x); } else { next(false); }; continue; }
         #define PREPO_RULE(x) { next(true, { PrepoRuleType::x }); continue; }
 
-        if (rule == PrepoRuleType::Expression) {
-          if (state.iteration == 0) PREPO_RULE(Or);
+        if (rule == PrepoRuleType::Root) {
+          if (state.iteration == 0) PREPO_RULE(Expression);
           if (!exps.back()) PREPO_NOT_OK;
           root = exps.back().item;
           
           next(true);
           break;
+        } else if (rule == PrepoRuleType::Expression) {
+          if (state.iteration == 0) PREPO_RULE(Or);
+          if (!exps.back()) PREPO_NOT_OK;
+          PREPO_EXP(exps.back().item);
         } else if (rule == PrepoRuleType::Equality) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
@@ -303,11 +312,11 @@ namespace AltaCore {
           }
         } else if (rule == PrepoRuleType::MacroCall) {
           if (state.internalIndex == 0) {
-            auto cache = prepoState;
+            auto cache = currentState;
             auto target = expect(TokenType::Identifier);
             if (!(target && expect(TokenType::OpeningParenthesis))) {
               state.internalIndex = 2;
-              prepoState = cache;
+              currentState = cache;
               PREPO_RULE(AnyLiteral);
             }
             state.internalIndex = 1;
@@ -546,7 +555,7 @@ namespace AltaCore {
         // it hijacks all other rules and takes
         // maximum precedence
         if (auto dir = expect(TokenType::PreprocessorDirective)) {
-          auto directive = dir.raw.substr(1);
+          auto directive = dir.raw.substr(2);
           auto currentLine = dir.line;
 
           auto ignoreLine = [&]() {
@@ -591,6 +600,7 @@ namespace AltaCore {
           } else if (directive == "end") {
             auto nextTok = peek();
             if (nextTok.line == currentLine && nextTok.raw == "if") {
+              expectAnyToken(); // consume the "if"
               prepoLevels.pop();
               prepoLast.pop();
             } else {
@@ -604,8 +614,7 @@ namespace AltaCore {
             }
             expectAnyToken(); // consume the identifier
             auto expr = expectPrepoExpression();
-            definitions[name.raw] = (expr) ? *expr : 
-PrepoExpression(nullptr);
+            definitions[name.raw] = (expr) ? *expr : PrepoExpression(nullptr);
           } else if (directive == "undefine") {
             auto name = peek();
             if (!name || name.line != currentLine || name.type != TokenType::Identifier) {
@@ -1239,7 +1248,9 @@ PrepoExpression(nullptr);
           } else {
             node = std::make_shared<AST::ImportStatement>(modName, imports);
           }
+          Timing::parseTimes[absoluteFilePath].stop();
           node->parse(filePath);
+          Timing::parseTimes[absoluteFilePath].start();
           ACP_NODE(node);
         } else if (rule == RuleType::BooleanLiteral) {
           if (expectKeyword("true")) {

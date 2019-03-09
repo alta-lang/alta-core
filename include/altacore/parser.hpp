@@ -162,6 +162,7 @@ namespace AltaCore {
     };
 
     enum class PrepoRuleType {
+      Root,
       Expression,
       Equality,
       String,
@@ -219,22 +220,22 @@ namespace AltaCore {
       };
     };
 
-    template<typename RT> class GenericState {
+    class State {
       public:
         size_t currentPosition = 0;
 
-        bool operator ==(const GenericState<RT>& rhs) const;
+        bool operator ==(const State& rhs) const;
     };
 
-    template<typename S> class GenericRuleState {
+    class RuleState {
       public:
         size_t iteration = 0;
         size_t internalIndex = 0;
-        S stateAtStart;
-        S currentState;
+        State stateAtStart;
+        State currentState;
         ALTACORE_ANY internalValue;
 
-        GenericRuleState(S _stateAtStart):
+        RuleState(State _stateAtStart):
           stateAtStart(_stateAtStart),
           currentState(_stateAtStart)
           {};
@@ -248,8 +249,6 @@ namespace AltaCore {
 
         using Expectation = GenericExpectation<RuleType, NodeType>;
         using ExpectationType = GenericExpectationType<RuleType, TokenType>;
-        using State = GenericState<RuleType>;
-        using RuleState = GenericRuleState<State>;
         using RuleReturn = ALTACORE_VARIANT<ExpectationType, std::initializer_list<ExpectationType>, ALTACORE_OPTIONAL<NodeType>>;
 
         using RuleStackElement = std::tuple<RuleType, std::stack<RuleType>, RuleState, std::vector<Expectation>>;
@@ -287,12 +286,9 @@ namespace AltaCore {
       private:
         using NextFunctionType = std::function<void(bool, std::vector<RuleType>, NodeType)>;
 
-        using PrepoState = GenericState<PrepoRuleType>;
-        using PrepoRuleState = GenericRuleState<PrepoState>;
         using PrepoExpectation = GenericExpectation<PrepoRuleType, PrepoExpression>;
-        using PrepoRuleStackElement = std::tuple<PrepoRuleType, std::stack<PrepoRuleType>, PrepoRuleState, std::vector<PrepoExpectation>>;
+        using PrepoRuleStackElement = std::tuple<PrepoRuleType, std::stack<PrepoRuleType>, RuleState, std::vector<PrepoExpectation>>;
 
-        PrepoState prepoState;
         bool evaluateExpressions = true;
 
         // <helper-functions>

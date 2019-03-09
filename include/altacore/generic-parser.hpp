@@ -18,11 +18,6 @@ namespace AltaCore {
       return true;
     };
 
-    template<typename RT> bool GenericState<RT>::operator ==(const GenericState<RT>& rhs) const {
-      if (currentPosition != rhs.currentPosition) return false;
-      return true;
-    };
-
     template<typename RT, typename TT, class T> Token GenericParser<RT, TT, T>::expect(std::vector<typename GenericParser<RT, TT, T>::TokenType> expectations) {
       Token tok;
       tok.valid = false;
