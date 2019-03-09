@@ -604,7 +604,8 @@ namespace AltaCore {
             }
             expectAnyToken(); // consume the identifier
             auto expr = expectPrepoExpression();
-            definitions[name.raw] = (expr) ? *expr : PrepoExpression(null);
+            definitions[name.raw] = (expr) ? *expr : 
+PrepoExpression(nullptr);
           } else if (directive == "undefine") {
             auto name = peek();
             if (!name || name.line != currentLine || name.type != TokenType::Identifier) {
