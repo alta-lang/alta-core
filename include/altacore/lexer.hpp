@@ -154,8 +154,9 @@ namespace AltaCore {
       TokenType type;
       std::string raw;
       size_t position;
-      size_t originalLine;
-      size_t originalColumn;
+      size_t filePosition;
+      size_t originalLine = SIZE_MAX;
+      size_t originalColumn = SIZE_MAX;
       size_t line;
       size_t column;
       bool valid = false;
@@ -163,6 +164,11 @@ namespace AltaCore {
       explicit operator bool() const {
         return valid;
       }
+      
+      Token() {};
+      Token(bool _valid):
+        valid(_valid)
+        {};
     };
 
     /**
@@ -187,15 +193,21 @@ namespace AltaCore {
         Token& appendNewToken(const TokenType rule, const char character, bool setHanging = true);
         Token& appendNewToken(const TokenType rule, std::string data, bool setHanging = true);
       public:
-        bool throwOnAbsence = true;
+        bool throwOnAbsence = false;
         std::vector<Token> tokens;
         std::vector<std::pair<size_t, size_t>> absences;
         size_t totalCount = 0;
-        size_t currentOriginalLine = 1;
-        size_t currentOriginalColumn = 0;
-        size_t& currentLine = currentOriginalLine;
-        size_t& currentColumn = currentOriginalColumn;
+        size_t currentLine = 1;
+        size_t currentColumn = 0;
         Filesystem::Path filePath;
+
+        size_t startLine = 0;
+        int64_t extraLines = 0;
+        int64_t extraColumns = 0;
+        Token stopAfterToken = Token(false);
+        size_t stopAfterTokenIndex = 0;
+        std::vector<Token> originalTokens;
+        bool stopped = false;
 
         Lexer(Filesystem::Path _filePath):
           filePath(_filePath)
@@ -203,6 +215,7 @@ namespace AltaCore {
 
         void feed(const std::string data);
         void lex();
+        void relex(size_t tokPos, const Token replace, const std::string value);
     };
   };
 };

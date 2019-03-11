@@ -62,6 +62,7 @@ namespace AltaCore {
 
         bool operator ==(const PrepoExpression& right);
         explicit operator bool();
+        operator std::string();
     };
 
     namespace Prepo {
@@ -241,48 +242,15 @@ namespace AltaCore {
           {};
     };
 
-    template<typename RT, typename TT, class T> class GenericParser {
+    class Parser {
       public:
-        using RuleType = RT;
-        using TokenType = TT;
-        using NodeType = T;
+        using NodeType = std::shared_ptr<AST::Node>;
 
         using Expectation = GenericExpectation<RuleType, NodeType>;
         using ExpectationType = GenericExpectationType<RuleType, TokenType>;
         using RuleReturn = ALTACORE_VARIANT<ExpectationType, std::initializer_list<ExpectationType>, ALTACORE_OPTIONAL<NodeType>>;
 
         using RuleStackElement = std::tuple<RuleType, std::stack<RuleType>, RuleState, std::vector<Expectation>>;
-
-      protected:
-        std::vector<Token> tokens;
-        State currentState;
-
-        Token expect(std::vector<TokenType> expectations);
-        Token expect(std::initializer_list<TokenType> expectations) {
-          return expect(std::vector(expectations));
-        };
-        Token expect(TokenType expectation) {
-          return expect({ expectation });
-        };
-        Token expectAnyToken();
-        Token peek(size_t lookahead = 0, bool lookbehind = false);
-
-      public:
-        ALTACORE_OPTIONAL<NodeType> root;
-        RuleState farthestRule = RuleState(currentState);
-
-        virtual void parse() {};
-        void reset() {
-          currentState = State();
-          root = nullptr;
-        };
-
-        GenericParser(std::vector<Token> _tokens):
-          tokens(_tokens)
-          {};
-    };
-
-    class Parser: public GenericParser<RuleType, TokenType, std::shared_ptr<AST::Node>> {
       private:
         using NextFunctionType = std::function<void(bool, std::vector<RuleType>, NodeType)>;
 
@@ -312,10 +280,29 @@ namespace AltaCore {
         Filesystem::Path filePath;
 
         bool inClass = false;
+
+        std::vector<Token> tokens;
+        std::vector<Token> originalTokens;
+        State currentState;
+
+        Token expect(std::vector<TokenType> expectations, bool rawPrepo = false);
+        Token expect(TokenType expectation) {
+          return expect(std::vector<TokenType> { expectation });
+        };
+        Token expectAnyToken();
+        Token peek(size_t lookahead = 0, bool lookbehind = false);
+
+        Lexer::Lexer relexer = Lexer::Lexer(Filesystem::Path());
       public:
+        ALTACORE_OPTIONAL<NodeType> root;
+        RuleState farthestRule = RuleState(currentState);
         ALTACORE_MAP<std::string, PrepoExpression>& definitions;
 
         void parse();
+        void reset() {
+          currentState = State();
+          root = nullptr;
+        };
 
         Parser(std::vector<Token> tokens, ALTACORE_MAP<std::string, PrepoExpression>& definitions, Filesystem::Path filePath = Filesystem::Path());
     };

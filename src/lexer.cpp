@@ -1,5 +1,6 @@
 #include "../include/altacore/lexer.hpp"
 #include <string.h>
+#include <fstream>
 
 namespace AltaCore {
   namespace Lexer {
@@ -94,7 +95,7 @@ namespace AltaCore {
 
           if (
             (character >= 'a' && character <= 'z') ||
-            (character <= 'A' && character >= 'Z') ||
+            (character >= 'A' && character <= 'Z') ||
             (ruleIteration > 2 && character >= '0' && character <= '9')
           ) {
             return true;
@@ -125,8 +126,8 @@ namespace AltaCore {
       token.position = totalCount;
       token.line = currentLine;
       token.column = currentColumn;
-      //token.originalLine = currentOriginalLine;
-      //token.originalColumn = currentOriginalColumn;
+      token.originalLine = currentLine;
+      token.originalColumn = currentColumn;
       token.type = rule;
       token.raw = std::string(1, character);
       token.valid = true;
@@ -139,8 +140,8 @@ namespace AltaCore {
       token.position = totalCount;
       token.line = currentLine;
       token.column = currentColumn;
-      //token.originalLine = currentOriginalLine;
-      //token.originalColumn = currentOriginalColumn;
+      token.originalLine = currentLine;
+      token.originalColumn = currentColumn;
       token.type = rule;
       token.raw = data;
       token.valid = true;
@@ -177,9 +178,6 @@ namespace AltaCore {
         }
 
         currentColumn++;
-        //currentOriginalColumn++;
-        //currentLine = currentOriginalLine;
-        //currentColumn = currentOriginalColumn;
 
         const char character = backlog.front();
 
@@ -216,12 +214,63 @@ namespace AltaCore {
               totalCount = back.position;
               currentLine = back.line;
               currentColumn = back.column - 1;
-              //currentOriginalLine = back.originalLine;
-              //currentOriginalColumn = back.originalColumn - 1;
               fails[totalCount].insert(back.type);
               tokens.pop_back();
               incrementTotal = false;
               continue;
+            }
+          }
+        }
+
+        if (stopAfterToken) {
+          auto& back = tokens.back();
+          if (
+            (back.raw == stopAfterToken.raw) &&
+            (back.line == stopAfterToken.line + extraLines) &&
+            (
+              (
+                (stopAfterToken.line == startLine) &&
+                (back.column == stopAfterToken.column + extraColumns)
+              ) ||
+              (
+                (back.column == stopAfterToken.column)
+              )
+            )
+          ) {
+            stopped = true;
+            break;
+          }
+
+          if (
+            back.line > stopAfterToken.line ||
+            (
+              back.line == stopAfterToken.line &&
+              back.column > stopAfterToken.column
+            ) ||
+            (
+              back.line == stopAfterToken.line &&
+              back.column == stopAfterToken.column &&
+              back.raw.size() > stopAfterToken.raw.size()
+            )
+          ) {
+            bool found = false;
+            for (size_t i = stopAfterTokenIndex; i < originalTokens.size(); i++) {
+              auto& tok = originalTokens[i];
+              if (
+                tok.line > back.line ||
+                (
+                  tok.line == back.line &&
+                  tok.column > back.column + back.raw.size()
+                )
+              ) {
+                found = true;
+                stopAfterToken = tok;
+                stopAfterTokenIndex = i;
+                break;
+              }
+            }
+            if (!found) {
+              stopAfterToken = Token(false);
             }
           }
         }
@@ -249,8 +298,6 @@ namespace AltaCore {
         if (character == '\n') {
           currentLine++;
           currentColumn = 0;
-          //currentOriginalLine++;
-          //currentOriginalColumn = 0;
           backlog.pop_front();
           continue;
         }
@@ -272,6 +319,52 @@ namespace AltaCore {
       }
 
       Timing::lexTimes[absoluteFilePath].stop();
+    };
+    void Lexer::relex(size_t tokPos, const Token replace, const std::string value) {
+      int64_t origLineCount = 0;
+      int64_t newLineCount = 0;
+      auto origLastLine = replace.raw;
+      auto newLastLine = value;
+      for (size_t i = 0; i < replace.raw.size(); i++) {
+        auto& character = replace.raw[i];
+        if (character == '\n') {
+          origLineCount++;
+          origLastLine = replace.raw.substr(i + 1);
+        }
+      }
+      for (size_t i = 0; i < value.size(); i++) {
+        auto& character = value[i];
+        if (character == '\n') {
+          newLineCount++;
+          newLastLine = value.substr(i + 1);
+        }
+        backlog.push_back(character);
+      }
+      extraLines = newLineCount - origLineCount;
+      extraColumns = (int64_t)newLastLine.size() - (int64_t)origLastLine.size();
+
+      startLine = replace.line + origLineCount;
+
+      originalTokens = tokens;
+      if (tokens.size() > tokPos + 1) {
+        stopAfterToken = tokens[tokPos + 1];
+        stopAfterTokenIndex = tokPos + 1;
+      }
+      tokens.erase(tokens.begin() + tokPos, tokens.end());
+      auto path = filePath.toString();
+      std::ifstream file(path);
+      file.seekg(replace.position + replace.raw.size());
+      
+      std::string line;
+      while (std::getline(file, line)) {
+        if (file.peek() != EOF) {
+          line += '\n';
+        }
+        feed(line);
+        if (stopped) break;
+      }
+
+      file.close();
     };
   };
 };

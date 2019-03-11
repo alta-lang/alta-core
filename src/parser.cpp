@@ -11,6 +11,55 @@ namespace AltaCore {
     #define ACP_EXP(x) { if (x) { next(true, {}, *x); } else { next(false); }; continue; }
     #define ACP_RULE(x) { next(true, { RuleType::x }); continue; }
 
+    Token Parser::expect(std::vector<TokenType> expectations, bool rawPrepo) {
+      Token tok;
+      tok.valid = false;
+
+      if (currentState.currentPosition >= tokens.size()) return tok;
+
+      if (!rawPrepo && tokens[currentState.currentPosition].type == TokenType::PreprocessorSubstitution) {
+        auto& curr = tokens[currentState.currentPosition];
+        relexer = Lexer::Lexer(filePath);
+        relexer.tokens = tokens;
+        auto name = curr.raw.substr(2, curr.raw.size() - 3);
+        auto def = (definitions.find(name) != definitions.end()) ? definitions[name] : PrepoExpression();
+        Timing::parseTimes[filePath].stop();
+        relexer.relex(currentState.currentPosition, curr, def);
+        Timing::parseTimes[filePath].start();
+        tokens = relexer.tokens;
+      }
+
+      for (auto& expectation: expectations) {
+        if (tokens[currentState.currentPosition].type == expectation) {
+          tok = tokens[currentState.currentPosition++];
+          break;
+        }
+      }
+
+      return tok;
+    };
+
+    Token Parser::peek(size_t lookahead, bool lookbehind) {
+      Token tok;
+      tok.valid = false;
+
+      auto position = (lookbehind) ? (currentState.currentPosition - lookahead) : (currentState.currentPosition + lookahead);
+
+      if (position >= tokens.size()) return tok;
+
+      return tokens[position];
+    };
+
+    Token Parser::expectAnyToken() {
+      if (tokens.size() > currentState.currentPosition) {
+        return tokens[currentState.currentPosition++];
+      }
+
+      Token tok;
+      tok.valid = false;
+      return tok;
+    };
+
     bool State::operator ==(const State& rhs) const {
       if (currentPosition != rhs.currentPosition) return false;
       return true;
@@ -36,6 +85,17 @@ namespace AltaCore {
       } else {
         // null and undefined are non-truthy
         return false;
+      }
+    };
+
+    PrepoExpression::operator std::string() {
+      if (type == PrepoExpressionType::Boolean) {
+        return (boolean) ? "true" : "false";
+      } else if (type == PrepoExpressionType::String) {
+        return string;
+      } else {
+        // null and undefined produce empty strings
+        return "";
       }
     };
 
@@ -247,7 +307,7 @@ namespace AltaCore {
         auto invalidToken = Token();
         invalidToken.valid = false;
         if (peek().line != currentLine) return invalidToken;
-        return this->expect(type);
+        return this->expect({ type }, true);
       };
 
       while (ruleStack.size() > 0) {
@@ -464,9 +524,11 @@ namespace AltaCore {
     };
 
     Parser::Parser(std::vector<Token> _tokens, ALTACORE_MAP<std::string, PrepoExpression>& _definitions, Filesystem::Path _filePath):
-      GenericParser(_tokens),
+      tokens(_tokens),
+      originalTokens(_tokens),
       definitions(_definitions),
-      filePath(_filePath)
+      filePath(_filePath),
+      relexer(filePath)
       {};
 
     void Parser::parse() {
@@ -648,7 +710,7 @@ namespace AltaCore {
          * also expect a differentiating token like `+` or `(` or `if` etc.
          * for those rules, in order to optimize parse times (literally in half,
          * probably even exponentially), if their left-hand expression is found
-         * but their differentiating token is not, they simply ACP_NODE((their
+         * but their differentiating token is not, they simply return their
          * left-hand expression and pretend to succeed. this, however, is fine
          * because the parser doesn't really care what rules succeed or fail,
          * only the results of those rules. so if, for example, while trying to
