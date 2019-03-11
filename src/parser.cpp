@@ -548,8 +548,10 @@ namespace AltaCore {
         state.iteration++;
 
         if (result) {
-          result->position.line = tokens[state.stateAtStart.currentPosition].line;
-          result->position.column = tokens[state.stateAtStart.currentPosition].column;
+          auto& tok = tokens[state.stateAtStart.currentPosition];
+          result->position.line = tok.line;
+          result->position.column = tok.column;
+          result->position.filePosition = tok.position;
           result->position.file = filePath;
         }
 

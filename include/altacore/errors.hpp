@@ -10,6 +10,7 @@ namespace AltaCore {
       public:
         size_t line = 0;
         size_t column = 0;
+        size_t filePosition = 0;
         Filesystem::Path file = Filesystem::Path();
 
         Position() {};
