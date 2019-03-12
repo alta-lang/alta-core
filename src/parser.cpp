@@ -19,12 +19,11 @@ namespace AltaCore {
 
       if (!rawPrepo && tokens[currentState.currentPosition].type == TokenType::PreprocessorSubstitution) {
         auto& curr = tokens[currentState.currentPosition];
-        relexer = Lexer::Lexer(filePath);
         relexer.tokens = tokens;
         auto name = curr.raw.substr(2, curr.raw.size() - 3);
         auto def = (definitions.find(name) != definitions.end()) ? definitions[name] : PrepoExpression();
         Timing::parseTimes[filePath].stop();
-        relexer.relex(currentState.currentPosition, curr, def);
+        relexer.relex(currentState.currentPosition, def);
         Timing::parseTimes[filePath].start();
         tokens = relexer.tokens;
       }

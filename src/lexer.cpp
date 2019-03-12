@@ -124,6 +124,7 @@ namespace AltaCore {
     Token& Lexer::appendNewToken(const TokenType rule, const char character, bool setHanging) {
       Token token;
       token.position = totalCount;
+      token.arrayPosition = tokens.size();
       token.line = currentLine;
       token.column = currentColumn;
       token.originalLine = currentLine;
@@ -138,6 +139,7 @@ namespace AltaCore {
     Token& Lexer::appendNewToken(const TokenType rule, std::string data, bool setHanging) {
       Token token;
       token.position = totalCount;
+      token.arrayPosition = tokens.size();
       token.line = currentLine;
       token.column = currentColumn;
       token.originalLine = currentLine;
@@ -320,7 +322,9 @@ namespace AltaCore {
 
       Timing::lexTimes[absoluteFilePath].stop();
     };
-    void Lexer::relex(size_t tokPos, const Token replace, const std::string value) {
+    void Lexer::relex(size_t tokPos, const std::string value) {
+      reset(tokPos);
+      auto& replace = originalTokens[tokPos];
       int64_t origLineCount = 0;
       int64_t newLineCount = 0;
       auto origLastLine = replace.raw;
@@ -345,12 +349,10 @@ namespace AltaCore {
 
       startLine = replace.line + origLineCount;
 
-      originalTokens = tokens;
-      if (tokens.size() > tokPos + 1) {
-        stopAfterToken = tokens[tokPos + 1];
+      if (originalTokens.size() > tokPos + 1) {
+        stopAfterToken = originalTokens[tokPos + 1];
         stopAfterTokenIndex = tokPos + 1;
       }
-      tokens.erase(tokens.begin() + tokPos, tokens.end());
       auto path = filePath.toString();
       std::ifstream file(path);
       file.seekg(replace.position + replace.raw.size());
@@ -364,7 +366,36 @@ namespace AltaCore {
         if (stopped) break;
       }
 
+      tokens.insert(tokens.end(), originalTokens.begin() + stopAfterToken.arrayPosition + 1, originalTokens.end());
+
       file.close();
     };
+    void Lexer::reset(size_t position) {
+      fails.clear();
+      hangingRule = TokenType::None;
+      consumeNext = false;
+      characterLiteralEscaped = false;
+      backlog.clear();
+      absences.clear(); // for now; TODO: clear only absences after position
+      startLine = 0;
+      extraLines = 0;
+      extraColumns = 0;
+      stopAfterToken = Token(false);
+      stopAfterTokenIndex = 0;
+      originalTokens.clear();
+      totalCount = 0;
+      currentLine = 1;
+      currentColumn = 0;
+      stopped = false;
+
+      if (position < tokens.size()) {
+        originalTokens = tokens;
+        tokens.erase(tokens.begin() + position, tokens.end());
+        auto& tok = originalTokens[position];
+        currentLine = tok.line;
+        currentColumn = tok.column - 1;
+        totalCount = tok.position - 1;
+      }
+    }
   };
 };
