@@ -154,7 +154,6 @@ namespace AltaCore {
       TokenType type;
       std::string raw;
       size_t position;
-      size_t arrayPosition;
       size_t originalLine = SIZE_MAX;
       size_t originalColumn = SIZE_MAX;
       size_t line;
