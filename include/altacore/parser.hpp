@@ -250,12 +250,14 @@ namespace AltaCore {
         using ExpectationType = GenericExpectationType<RuleType, TokenType>;
         using RuleReturn = ALTACORE_VARIANT<ExpectationType, std::initializer_list<ExpectationType>, ALTACORE_OPTIONAL<NodeType>>;
 
-        using RuleStackElement = std::tuple<RuleType, std::stack<RuleType>, RuleState, std::vector<Expectation>>;
+        using RuleStackElement = std::tuple<RuleType, std::stack<RuleType>, RuleState, std::vector<Expectation>, std::shared_ptr<AST::Node>, State>;
       private:
         using NextFunctionType = std::function<void(bool, std::vector<RuleType>, NodeType)>;
+        using SaveStateType = std::function<void()>;
+        using RestoreStateType = std::function<void()>;
 
         using PrepoExpectation = GenericExpectation<PrepoRuleType, PrepoExpression>;
-        using PrepoRuleStackElement = std::tuple<PrepoRuleType, std::stack<PrepoRuleType>, RuleState, std::vector<PrepoExpectation>>;
+        using PrepoRuleStackElement = std::tuple<PrepoRuleType, std::stack<PrepoRuleType>, RuleState, std::vector<PrepoExpectation>, PrepoExpression, State>;
 
         bool evaluateExpressions = true;
 
@@ -264,6 +266,7 @@ namespace AltaCore {
         std::vector<std::string> expectModifiers(ModifierTargetType mtt);
         bool expectKeyword(std::string keyword);
         std::vector<std::shared_ptr<AST::AttributeNode>> expectAttributes();
+        // this got a little out of hand 🤔
         bool expectBinaryOperation(
           RuleType rule,
           RuleType nextHigherPrecedentRule,
@@ -271,7 +274,10 @@ namespace AltaCore {
           std::vector<AST::OperatorType> operatorTypes,
           RuleState& state,
           std::vector<Expectation>& expectations,
-          NextFunctionType next
+          std::shared_ptr<AST::Node>& ruleNode,
+          NextFunctionType next,
+          SaveStateType saveState,
+          RestoreStateType restoreState
         );
         ALTACORE_OPTIONAL<PrepoExpression> expectPrepoExpression();
         // </helper-functions>
