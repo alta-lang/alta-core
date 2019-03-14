@@ -17,10 +17,15 @@ AltaCore::AST::ImportStatement::ImportStatement(std::string _request, std::strin
   alias(_alias)
   {};
 
+void AltaCore::AST::ImportStatement::parse(Filesystem::Path sourcePath) {
+  Modules::parseModule(request, sourcePath);
+};
+
 ALTACORE_AST_DETAIL_D(ImportStatement) {
   ALTACORE_MAKE_DH(ImportStatement);
   info->parentModule = Util::getModule(scope.get()).lock();
   info->importedAST = Modules::parseModule(request, info->parentModule->path);
+  info->importedAST->detail(Modules::resolve(request, info->parentModule->path));
   info->importedModule = info->importedAST->info->module;
   info->parentModule->dependencies.push_back(info->importedModule);
   info->importedModule->dependents.push_back(info->parentModule);

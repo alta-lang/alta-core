@@ -19,7 +19,6 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/fs.cpp"
   "${PROJECT_SOURCE_DIR}/src/modules.cpp"
   "${PROJECT_SOURCE_DIR}/src/util.cpp"
-  "${PROJECT_SOURCE_DIR}/src/preprocessor.cpp"
   "${PROJECT_SOURCE_DIR}/src/attributes.cpp"
   "${PROJECT_SOURCE_DIR}/src/validator.cpp"
   "${PROJECT_SOURCE_DIR}/src/altacore.cpp"

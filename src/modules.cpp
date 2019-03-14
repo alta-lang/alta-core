@@ -6,10 +6,12 @@ namespace AltaCore {
   namespace Modules {
     Filesystem::Path standardLibraryPath;
     ALTACORE_MAP<std::string, std::shared_ptr<AltaCore::AST::RootNode>> importCache;
+    ALTACORE_MAP<std::string, Parser::PrepoExpression> defaultDefinitions;
+    ALTACORE_MAP<std::string, Parser::PrepoExpression>* parsingDefinitions = &defaultDefinitions;
     std::function<std::shared_ptr<AST::RootNode>(std::string importRequest, Filesystem::Path requestingModulePath)> parseModule = [](std::string importRequest, Filesystem::Path requestingModulePath) -> std::shared_ptr<AST::RootNode> {
       auto modPath = resolve(importRequest, requestingModulePath);
-      if (auto& imp = importCache[modPath.absolutify().toString()]) {
-        return imp;
+      if (importCache.find(modPath.absolutify().toString()) != importCache.end()) {
+        return importCache[modPath.absolutify().toString()];
       }
       std::ifstream file(modPath.absolutify().toString());
       std::string line;
@@ -28,10 +30,10 @@ namespace AltaCore {
 
       file.close();
 
-      Parser::Parser parser(lexer.tokens);
+      Parser::Parser parser(lexer.tokens, *parsingDefinitions, modPath);
       parser.parse();
       auto root = std::dynamic_pointer_cast<AST::RootNode>(*parser.root);
-      root->detail(modPath);
+      //root->detail(modPath);
 
       importCache[modPath.absolutify().toString()] = root;
 

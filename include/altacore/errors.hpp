@@ -10,6 +10,7 @@ namespace AltaCore {
       public:
         size_t line = 0;
         size_t column = 0;
+        size_t filePosition = 0;
         Filesystem::Path file = Filesystem::Path();
 
         Position() {};
@@ -45,6 +46,12 @@ namespace AltaCore {
     class ParsingError: public Error {
       public:
         ParsingError(std::string message = "", Position position = Position()):
+          Error(message, position)
+          {};
+    };
+    class LexingError: public Error {
+      public:
+        LexingError(std::string message = "", Position position = Position()):
           Error(message, position)
           {};
     };

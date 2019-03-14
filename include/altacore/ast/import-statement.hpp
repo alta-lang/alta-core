@@ -23,6 +23,8 @@ namespace AltaCore {
         ImportStatement(std::string request, std::vector<std::pair<std::string, std::string>> imports);
         ImportStatement(std::string request, std::string alias);
 
+        void parse(Filesystem::Path sourcePath);
+
         ALTACORE_AST_DETAIL(ImportStatement);
         ALTACORE_AST_VALIDATE;
     };
