@@ -966,14 +966,18 @@ namespace AltaCore {
           } else {
             if (!exps.back()) ACP_NOT_OK;
 
+            auto state = currentState;
             if (!expect(TokenType::Dot)) ACP_EXP(exps.back().item);
 
             auto query = expect(TokenType::Identifier);
-            if (!query) ACP_NOT_OK;
+            if (!query) {
+              currentState = state;
+              ACP_EXP(exps.back().item);
+            }
 
             auto acc = std::make_shared<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item), query.raw);
 
-            auto state = currentState;
+            state = currentState;
             while (expect(TokenType::Dot)) {
               query = expect(TokenType::Identifier);
               if (!query) {
@@ -1086,8 +1090,8 @@ namespace AltaCore {
             if (expr->nodeType() == AST::NodeType::Fetch) {
               auto id = std::dynamic_pointer_cast<AST::Fetch>(expr);
               auto name = id->query;
+              if (typesToIgnore.find(name) != typesToIgnore.end()) ACP_NOT_OK;
               if (name == "int" || name == "byte" || name == "char" || name == "bool" || name == "void") {
-                if (typesToIgnore.find(name) != typesToIgnore.end()) ACP_NOT_OK;
                 type->name = name;
                 type->isNative = true;
               } else {
