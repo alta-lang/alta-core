@@ -127,7 +127,7 @@ std::vector<std::shared_ptr<AltaCore::DET::Type>> AltaCore::DET::Type::getUnderl
 
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::reference() const {
   auto other = copy();
-  other->modifiers.push_back((uint8_t)Shared::TypeModifierFlag::Reference);
+  other->modifiers.insert(other->modifiers.begin(), (uint8_t)Shared::TypeModifierFlag::Reference);
   return other;
 };
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::dereference() const {
@@ -145,7 +145,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::dereference() const {
 };
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::point() const {
   auto other = copy();
-  other->modifiers.push_back((uint8_t)Shared::TypeModifierFlag::Pointer);
+  other->modifiers.insert(other->modifiers.begin(), (uint8_t)Shared::TypeModifierFlag::Pointer);
   return other;
 };
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::follow() const {
