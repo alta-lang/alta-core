@@ -31,8 +31,9 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::create(std::sh
   func->scope = std::make_shared<Scope>(func);
 
   for (auto& [name, type, isVariable, id]: parameters) {
-    auto var = std::make_shared<Variable>(name, type);
+    auto var = std::make_shared<Variable>(name, isVariable ? type->point() : type);
     var->parentScope = func->scope;
+    var->isVariable = isVariable;
     func->parameterVariables.push_back(var);
     func->scope->items.push_back(var);
 

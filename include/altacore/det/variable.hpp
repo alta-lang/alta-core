@@ -16,6 +16,7 @@ namespace AltaCore {
         std::shared_ptr<Type> type;
         bool isLiteral = false;
         bool isExport = false;
+        bool isVariable = false;
 
         Variable(std::string name, std::shared_ptr<Type> type, std::shared_ptr<Scope> parentScope = nullptr);
     };

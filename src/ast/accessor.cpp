@@ -1,4 +1,5 @@
 #include "../../include/altacore/ast/accessor.hpp"
+#include "../../include/altacore/ast/fetch.hpp"
 #include "../../include/altacore/det.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::Accessor::nodeType() {
@@ -19,6 +20,18 @@ ALTACORE_AST_DETAIL_D(Accessor) {
   auto targetAcc = std::dynamic_pointer_cast<Accessor>(target);
   auto targetAccDH = std::dynamic_pointer_cast<DH::Accessor>(info->target);
   bool notAccessingNamespace = false;
+  
+  if (auto retr = std::dynamic_pointer_cast<Fetch>(target)) {
+    auto retrInfo = std::dynamic_pointer_cast<DH::Fetch>(info->target);
+    if (retrInfo->narrowedTo) {
+      if (auto var = std::dynamic_pointer_cast<DET::Variable>(retrInfo->narrowedTo)) {
+        if (var->isVariable) {
+          info->getsVariableLength = true;
+          return info;
+        }
+      }
+    }
+  }
 
   if (targetAcc && targetAccDH->readAccessor) {
     if (targetAccDH->readAccessor->returnType->isNative) {

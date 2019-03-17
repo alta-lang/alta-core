@@ -94,6 +94,7 @@ namespace AltaCore {
       std::shared_ptr<DET::ScopeItem> narrowedTo = nullptr;
       size_t narrowedToIndex = 0;
       std::shared_ptr<DET::Type> targetType = nullptr;
+      bool getsVariableLength = false;
     };
 
     class AssignmentExpression: public ExpressionNode {
