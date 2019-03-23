@@ -69,6 +69,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/retrieval-node.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/super-class-fetch.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/instanceof-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/generic.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

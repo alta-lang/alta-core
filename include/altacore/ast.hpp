@@ -46,5 +46,6 @@
 #include "ast/retrieval-node.hpp"
 #include "ast/super-class-fetch.hpp"
 #include "ast/instanceof-expression.hpp"
+#include "ast/generic.hpp"
 
 #endif // ALTACORE_AST_HPP

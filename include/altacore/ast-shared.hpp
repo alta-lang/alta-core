@@ -54,6 +54,7 @@ namespace AltaCore {
       RetrievalNode,
       SuperClassFetch,
       InstanceofExpression,
+      Generic,
     };
 
     static const char* const NodeType_names[] = {
@@ -101,6 +102,7 @@ namespace AltaCore {
       "RetrievalNode",
       "SuperClassFetch",
       "InstanceofExpression",
+      "Generic",
     };
 
     enum class OperatorType {

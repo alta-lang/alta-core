@@ -8,6 +8,7 @@
 #include "retrieval-node.hpp"
 #include <vector>
 #include <string>
+#include "generic.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -16,6 +17,7 @@ namespace AltaCore {
         virtual const NodeType nodeType();
 
         std::vector<std::string> modifiers;
+        std::vector<std::shared_ptr<Generic>> generics;
         std::string name;
         std::vector<std::shared_ptr<ClassStatementNode>> statements;
         std::vector<std::shared_ptr<RetrievalNode>> parents;

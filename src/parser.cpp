@@ -1832,6 +1832,12 @@ namespace AltaCore {
             auto def = std::make_shared<AST::ClassDefinitionNode>(id.raw);
             def->modifiers = mods;
 
+            if (expect(TokenType::OpeningAngleBracket)) {
+              state.internalIndex = 2;
+              ruleNode = std::move(def);
+              ACP_RULE(Generic);
+            }
+
             if (expectKeyword("extends")) {
               bool dot = false;
               while (auto pid = expect(TokenType::Identifier)) {
@@ -1855,6 +1861,25 @@ namespace AltaCore {
             ruleNode = std::move(def);
             state.internalIndex = 1;
             ACP_RULE(ClassStatement);
+          } else if (state.internalIndex == 2) {
+            auto klass = std::dynamic_pointer_cast<AST::ClassDefinitionNode>(ruleNode);
+
+            if (exps.back()) {
+              klass->generics.push_back(std::dynamic_pointer_cast<AST::Generic>(*exps.back().item));
+            } else if (klass->generics.size() > 0) {
+              ACP_NOT_OK;
+            }
+
+            if (!expect(TokenType::Comma)) {
+              state.internalIndex = 1;
+              if (!expect(TokenType::ClosingAngleBracket)) ACP_NOT_OK;
+              if (!expect(TokenType::OpeningBrace)) ACP_NOT_OK;
+              ACP_RULE(ClassStatement);
+            } else if (exps.back()) {
+              ACP_RULE(Generic);
+            } else {
+              ACP_NOT_OK;
+            }
           } else {
             auto klass = std::dynamic_pointer_cast<AST::ClassDefinitionNode>(ruleNode);
 
@@ -2242,6 +2267,13 @@ namespace AltaCore {
             if (!exps.back()) ACP_NOT_OK;
             instOf->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
             ACP_NODE((instOf));
+          }
+        } else if (rule == RuleType::Generic) {
+          if (state.internalIndex == 0) {
+            auto name = expect(TokenType::Identifier);
+            if (!name) ACP_NOT_OK;
+            auto node = std::make_shared<AST::Generic>(name.raw);
+            ACP_NODE(node);
           }
         }
 

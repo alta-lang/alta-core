@@ -108,6 +108,7 @@ namespace AltaCore {
       {
         "literal",
         "export",
+        "generic",
       },
       {
         "export",
@@ -160,6 +161,7 @@ namespace AltaCore {
       TypeAlias,
       SuperClassFetch,
       Instanceof,
+      Generic,
     };
 
     enum class PrepoRuleType {
