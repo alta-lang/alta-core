@@ -963,29 +963,60 @@ namespace AltaCore {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
             ACP_RULE(Fetch);
+          } else if (state.internalIndex == 2) {
+            auto acc = std::dynamic_pointer_cast<AST::Accessor>(ruleNode);
+
+            if (!exps.back()) {
+              if (acc->genericArguments.size() < 1) {
+                restoreState();
+                acc->genericArguments.clear();
+                ACP_NODE(acc);
+              }
+            } else {
+              acc->genericArguments.push_back(std::dynamic_pointer_cast<AST::Type>(*exps.back().item));
+
+              if (expect(TokenType::Comma)) {
+                ACP_RULE(Type);
+              }
+            }
+
+            if (!expect(TokenType::ClosingAngleBracket)) {
+              restoreState();
+              acc->genericArguments.clear();
+            }
+
+            ACP_NODE(acc);
           } else {
             if (!exps.back()) ACP_NOT_OK;
 
-            auto state = currentState;
+            auto savedState = currentState;
             if (!expect(TokenType::Dot)) ACP_EXP(exps.back().item);
 
             auto query = expect(TokenType::Identifier);
             if (!query) {
-              currentState = state;
+              currentState = savedState;
               ACP_EXP(exps.back().item);
             }
 
             auto acc = std::make_shared<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item), query.raw);
 
-            state = currentState;
+            savedState = currentState;
             while (expect(TokenType::Dot)) {
               query = expect(TokenType::Identifier);
               if (!query) {
-                currentState = state;
+                currentState = savedState;
                 break;
               }
               acc = std::make_shared<AST::Accessor>(acc, query.raw);
-              state = currentState;
+              savedState = currentState;
+            }
+
+            saveState();
+
+            if (expect(TokenType::OpeningAngleBracket)) {
+              ruleNode = std::move(acc);
+              state.internalIndex = 2;
+              ACP_RULE(Type);
             }
 
             ACP_NODE(acc);
@@ -1192,9 +1223,44 @@ namespace AltaCore {
             ACP_NODE(varDef);
           }
         } else if (rule == RuleType::Fetch) {
-          auto id = expect(TokenType::Identifier);
-          if (!id) ACP_NOT_OK;
-          ACP_NODE(std::make_shared<AST::Fetch>(id.raw));
+          if (state.internalIndex == 0) {
+            auto id = expect(TokenType::Identifier);
+            if (!id) ACP_NOT_OK;
+
+            auto fetch = std::make_shared<AST::Fetch>(id.raw);
+
+            saveState();
+            if (expect(TokenType::OpeningAngleBracket)) {
+              state.internalIndex = 1;
+              ruleNode = std::move(fetch);
+              ACP_RULE(Type);
+            }
+
+            ACP_NODE(fetch);
+          } else {
+            auto fetch = std::dynamic_pointer_cast<AST::Fetch>(ruleNode);
+
+            if (!exps.back()) {
+              if (fetch->genericArguments.size() < 1) {
+                restoreState();
+                fetch->genericArguments.clear();
+                ACP_NODE(fetch);
+              }
+            } else {
+              fetch->genericArguments.push_back(std::dynamic_pointer_cast<AST::Type>(*exps.back().item));
+
+              if (expect(TokenType::Comma)) {
+                ACP_RULE(Type);
+              }
+            }
+
+            if (!expect(TokenType::ClosingAngleBracket)) {
+              restoreState();
+              fetch->genericArguments.clear();
+            }
+
+            ACP_NODE(fetch);
+          }
         } else if (rule == RuleType::Accessor) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
@@ -1210,6 +1276,29 @@ namespace AltaCore {
                 RuleType::GroupedExpression
               );
             }
+          } else if (state.internalIndex == 2) {
+            auto acc = std::dynamic_pointer_cast<AST::Accessor>(ruleNode);
+
+            if (!exps.back()) {
+              if (acc->genericArguments.size() < 1) {
+                restoreState();
+                acc->genericArguments.clear();
+                ACP_NODE(acc);
+              }
+            } else {
+              acc->genericArguments.push_back(std::dynamic_pointer_cast<AST::Type>(*exps.back().item));
+
+              if (expect(TokenType::Comma)) {
+                ACP_RULE(Type);
+              }
+            }
+
+            if (!expect(TokenType::ClosingAngleBracket)) {
+              restoreState();
+              acc->genericArguments.clear();
+            }
+
+            ACP_NODE(acc);
           } else {
             if (!exps.back()) ACP_NOT_OK;
 
@@ -1220,15 +1309,23 @@ namespace AltaCore {
 
             auto acc = std::make_shared<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item), query.raw);
 
-            auto state = currentState;
+            auto savedState = currentState;
             while (expect(TokenType::Dot)) {
               query = expect(TokenType::Identifier);
               if (!query) {
-                currentState = state;
+                currentState = savedState;
                 break;
               }
               acc = std::make_shared<AST::Accessor>(acc, query.raw);
-              state = currentState;
+              savedState = currentState;
+            }
+
+            saveState();
+
+            if (expect(TokenType::OpeningAngleBracket)) {
+              ruleNode = std::move(acc);
+              state.internalIndex = 2;
+              ACP_RULE(Type);
             }
 
             ACP_NODE(acc);

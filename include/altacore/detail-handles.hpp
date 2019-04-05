@@ -95,6 +95,8 @@ namespace AltaCore {
       size_t narrowedToIndex = 0;
       std::shared_ptr<DET::Type> targetType = nullptr;
       bool getsVariableLength = false;
+      std::vector<std::shared_ptr<Type>> genericArgumentDetails;
+      std::vector<std::shared_ptr<DET::Type>> genericArguments;
     };
 
     class AssignmentExpression: public ExpressionNode {
@@ -231,6 +233,8 @@ namespace AltaCore {
       ALTACORE_DH_CTOR(Fetch, RetrievalNode);
 
       std::shared_ptr<DET::ScopeItem> narrowedTo;
+      std::vector<std::shared_ptr<Type>> genericArgumentDetails;
+      std::vector<std::shared_ptr<DET::Type>> genericArguments;
     };
     class FunctionCallExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(FunctionCallExpression, ExpressionNode);

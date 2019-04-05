@@ -160,6 +160,36 @@ ALTACORE_AST_DETAIL_D(Accessor) {
     }
   }
 
+  for (size_t i = 0; i < genericArguments.size(); i++) {
+    auto& arg = genericArguments[i];
+    auto det = arg->fullDetail(scope);
+    info->genericArgumentDetails.push_back(det);
+    if (!det->type) {
+      ALTACORE_DETAILING_ERROR("failed to detail generic argument as a type");
+    }
+    info->genericArguments.push_back(det->type);
+  }
+
+  if (genericArguments.size() > 0) {
+    for (size_t i = 0; i < info->items.size(); i++) {
+      auto& item = info->items[i];
+      auto type = item->nodeType();
+      if (type != DET::NodeType::Function && type != DET::NodeType::Class) {
+        ALTACORE_DETAILING_ERROR(
+          std::string("only functions and classes can be generic") +
+          ((info->items.size() > 1) ? "(try narrowing the retrieval)" : "")
+        );
+      }
+
+      // unequal number of generics = incompatible item; remove it
+      if (item->genericParameterCount < genericArguments.size()) {
+        i--; // recheck this index since we shrunk the vector
+        info->items.erase(info->items.begin() + i);
+        continue;
+      }
+    }
+  }
+
   return info;
 };
 
