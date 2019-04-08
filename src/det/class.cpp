@@ -1,5 +1,6 @@
 #include "../../include/altacore/det/class.hpp"
 #include "../../include/altacore/det/variable.hpp"
+#include "../../include/altacore/ast/class-definition-node.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Class::nodeType() {
   return NodeType::Class;
@@ -37,4 +38,16 @@ bool AltaCore::DET::Class::hasParent(std::shared_ptr<Class> parent) const {
     if (myParent->hasParent(parent)) return true;
   }
   return false;
+};
+
+std::shared_ptr<AltaCore::DET::Class> AltaCore::DET::Class::instantiateGeneric(std::vector<std::shared_ptr<Type>> genericArguments) {
+  if (auto klass = ast.lock()) {
+    auto inf = info.lock();
+    if (!inf) {
+      return nullptr;
+    }
+    return klass->instantiateGeneric(inf, genericArguments);
+  } else {
+    return nullptr;
+  }
 };

@@ -73,6 +73,8 @@ namespace AltaCore {
     class WhileLoopStatement;
     class RetrievalNode;
     class SuperClassFetch;
+    class GenericClassInstantiationDefinitionNode;
+    class Generic;
 
     class RetrievalNode: public ExpressionNode {
       ALTACORE_DH_CTOR(RetrievalNode, ExpressionNode);
@@ -143,6 +145,7 @@ namespace AltaCore {
 
       std::vector<std::shared_ptr<ClassStatementNode>> statements;
       std::vector<std::shared_ptr<RetrievalNode>> parents;
+      std::vector<std::shared_ptr<GenericClassInstantiationDefinitionNode>> genericInstantiations;
 
       bool isExport = false;
       bool isLiteral = false;
@@ -156,6 +159,12 @@ namespace AltaCore {
       std::shared_ptr<ClassSpecialMethodDefinitionStatement> defaultDestructorDetail = nullptr;
       std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement> defaultCopyConstructor = nullptr;
       std::shared_ptr<ClassSpecialMethodDefinitionStatement> defaultCopyConstructorDetail = nullptr;
+      std::vector<std::shared_ptr<Generic>> genericDetails;
+    };
+    class GenericClassInstantiationDefinitionNode: public ClassDefinitionNode {
+      ALTACORE_DH_CTOR(GenericClassInstantiationDefinitionNode, ClassDefinitionNode);
+
+      std::weak_ptr<ClassDefinitionNode> generic;
     };
     class ClassInstantiationExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(ClassInstantiationExpression, ExpressionNode);
@@ -363,6 +372,11 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> target = nullptr;
       std::shared_ptr<Type> type = nullptr;
+    };
+    class Generic: public Node {
+      ALTACORE_DH_CTOR(Generic, Node);
+
+      std::shared_ptr<DET::Alias> alias = nullptr;
     };
 
     #undef ALTACORE_DH_CTOR

@@ -12,7 +12,7 @@
 
 namespace AltaCore {
   namespace AST {
-    class ClassDefinitionNode: public StatementNode {
+    class ClassDefinitionNode: public StatementNode, public std::enable_shared_from_this<ClassDefinitionNode> {
       public:
         virtual const NodeType nodeType();
 
@@ -26,6 +26,8 @@ namespace AltaCore {
 
         ALTACORE_AST_DETAIL(ClassDefinitionNode);
         ALTACORE_AST_VALIDATE;
+
+        std::shared_ptr<DET::Class> instantiateGeneric(std::shared_ptr<DH::ClassDefinitionNode> info, std::vector<std::shared_ptr<DET::Type>> genericArguments);
     };
   };
 };

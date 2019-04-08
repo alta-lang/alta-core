@@ -15,6 +15,8 @@ namespace AltaCore {
         Generic(std::string _name):
           name(_name)
           {};
+
+        ALTACORE_AST_DETAIL(Generic);
     };
   };
 };

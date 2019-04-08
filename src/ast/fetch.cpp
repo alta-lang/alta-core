@@ -56,6 +56,12 @@ ALTACORE_AST_DETAIL_D(Fetch) {
     for (size_t i = 0; i < info->items.size(); i++) {
       auto& item = info->items[i];
       auto type = item->nodeType();
+      bool isNarrowedTo = false;
+
+      if (info->narrowedTo == info->items[i]) {
+        isNarrowedTo = true;
+      }
+
       if (type != DET::NodeType::Function && type != DET::NodeType::Class) {
         ALTACORE_DETAILING_ERROR(
           std::string("only functions and classes can be generic") +
@@ -66,8 +72,20 @@ ALTACORE_AST_DETAIL_D(Fetch) {
       // unequal number of generics = incompatible item; remove it
       if (item->genericParameterCount < genericArguments.size()) {
         info->items.erase(info->items.begin() + i);
+        if (isNarrowedTo) {
+          info->narrowedTo = nullptr;
+        }
         i--; // recheck this index since we shrunk the vector
         continue;
+      }
+
+      if (auto klass = std::dynamic_pointer_cast<DET::Class>(item)) {
+        info->items[i] = klass->instantiateGeneric(info->genericArguments);
+        if (isNarrowedTo) {
+          info->narrowedTo = info->items[i];
+        }
+      } else {
+        ALTACORE_DETAILING_ERROR("generic type wasn't a class or function (btw, this is impossible)");
       }
     }
   }
