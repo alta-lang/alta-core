@@ -1,5 +1,6 @@
 #include "../../include/altacore/ast/fetch.hpp"
 #include "../../include/altacore/ast/accessor.hpp"
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::Fetch::nodeType() {
   return NodeType::Fetch;
@@ -80,7 +81,15 @@ ALTACORE_AST_DETAIL_D(Fetch) {
       }
 
       if (auto klass = std::dynamic_pointer_cast<DET::Class>(item)) {
-        info->items[i] = klass->instantiateGeneric(info->genericArguments);
+        auto newKlass = klass->instantiateGeneric(info->genericArguments);
+        info->items[i] = newKlass;
+        auto thisMod = Util::getModule(info->inputScope.get()).lock();
+        thisMod->genericsUsed.push_back(newKlass);
+        auto thatMod = Util::getModule(newKlass->parentScope.lock().get()).lock();
+        if (thisMod->packageInfo.name == thatMod->packageInfo.name) {
+          newKlass->instantiatedFromSamePackage = true;
+        }
+        info->inputScope->hoist(info->items[i]);
         if (isNarrowedTo) {
           info->narrowedTo = info->items[i];
         }

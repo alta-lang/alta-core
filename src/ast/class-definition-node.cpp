@@ -207,6 +207,7 @@ std::shared_ptr<AltaCore::DET::Class> AltaCore::AST::ClassDefinitionNode::instan
   inst->klass = DET::Class::create(name, info->inputScope, {});
   inst->klass->ast = shared_from_this();
   inst->klass->info = info;
+  inst->klass->genericParameterCount = info->klass->genericParameterCount;
 
   inst->klass->genericArguments = genericArguments;
 
@@ -214,7 +215,7 @@ std::shared_ptr<AltaCore::DET::Class> AltaCore::AST::ClassDefinitionNode::instan
     auto& generic = generics[i];
     auto& genericArg = genericArguments[i];
 
-    auto det = generic->fullDetail(info->klass->scope);
+    auto det = generic->fullDetail(inst->klass->scope);
     det->alias->target = genericArg;
     inst->genericDetails.push_back(det);
   }

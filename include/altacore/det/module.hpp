@@ -6,6 +6,7 @@
 #include <string>
 #include "../fs.hpp"
 #include "../modules.hpp"
+#include "../simple-map.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -29,10 +30,14 @@ namespace AltaCore {
         std::shared_ptr<Module> parent = nullptr;
         std::vector<std::shared_ptr<Module>> dependencies;
         std::vector<std::shared_ptr<Module>> dependents;
+        ALTACORE_MAP<std::string, std::vector<std::shared_ptr<Module>>> genericDependencies;
+        std::vector<std::shared_ptr<ScopeItem>> genericsUsed;
         std::weak_ptr<AST::RootNode> ast;
         Modules::PackageInfo packageInfo;
 
         std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
+
+        std::vector<std::shared_ptr<ScopeItem>> hoistedGenerics;
 
         Module();
     };

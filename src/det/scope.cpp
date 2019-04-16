@@ -148,6 +148,27 @@ void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::Type> type) {
   }
 };
 
+void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::ScopeItem> generic) {
+  if (generic->genericParameterCount < 1) return; // we don't need to hoist it if it's not a generic
+  if (auto mod = parentModule.lock()) {
+    mod->hoistedGenerics.push_back(generic);
+  } else if (auto func = parentFunction.lock()) {
+    func->privateHoistedGenerics.push_back(generic);
+  } else if (auto klass = parentClass.lock()) {
+    klass->privateHoistedGenerics.push_back(generic);
+  } else if (auto ns = parentNamespace.lock()) {
+    if (auto scope = ns->parentScope.lock()) {
+      scope->hoist(generic);
+    } else {
+      throw std::runtime_error("failed to hoist generic anywhere");
+    }
+  } else if (auto scope = parent.lock()) {
+    scope->hoist(generic);
+  } else {
+    throw std::runtime_error("failed to hoist generic anywhere");
+  }
+};
+
 std::shared_ptr<AltaCore::DET::Scope> AltaCore::DET::Scope::getMemberScope(std::shared_ptr<AltaCore::DET::ScopeItem> item) {
   auto detType = item->nodeType();
 

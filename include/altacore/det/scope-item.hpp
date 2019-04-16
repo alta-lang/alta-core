@@ -22,6 +22,11 @@ namespace AltaCore {
         std::string name;
         size_t genericParameterCount = 0;
 
+        std::vector<std::shared_ptr<ScopeItem>> privateHoistedGenerics;
+        std::vector<std::shared_ptr<ScopeItem>> publicHoistedGenerics;
+
+        bool instantiatedFromSamePackage = false;
+
         ScopeItem(std::string name, std::shared_ptr<Scope> parentScope = nullptr);
 
         static std::vector<std::shared_ptr<ScopeItem>> getUnderlyingItems(std::shared_ptr<DH::Node> node);

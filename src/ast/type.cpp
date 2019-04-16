@@ -58,7 +58,8 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Type::detail(std::shared_ptr<
     }
 
     if (item && item->nodeType() == DET::NodeType::Type) {
-      info->type = std::dynamic_pointer_cast<DET::Type>(item);
+      info->type = std::dynamic_pointer_cast<DET::Type>(item)->copy();
+      info->type->modifiers.insert(info->type->modifiers.begin(), modifiers.begin(), modifiers.end());
     } else if (isAny) {
       info->type = std::make_shared<DET::Type>();
     } else if (isNative) {
