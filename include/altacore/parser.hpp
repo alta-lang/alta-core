@@ -162,6 +162,7 @@ namespace AltaCore {
       SuperClassFetch,
       Instanceof,
       Generic,
+      NullRule,
     };
 
     enum class PrepoRuleType {

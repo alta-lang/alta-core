@@ -1462,16 +1462,24 @@ namespace AltaCore {
             state.internalIndex = 1;
             ACP_RULE(ClassInstantiation);
           } else if (state.internalIndex == 1) {
-            if (!exps.back()) ACP_NOT_OK;
+            if (!exps.back() && !ruleNode) ACP_NOT_OK;
+
+            auto target = std::dynamic_pointer_cast<AST::ExpressionNode>(ruleNode ? ruleNode : *exps.back().item);
 
             bool isSubscript = false;
 
             if (expect(TokenType::OpeningSquareBracket)) isSubscript = true;
-            if (!isSubscript && !expect(TokenType::OpeningParenthesis)) ACP_EXP(exps.back().item);
+            if (!isSubscript && !expect(TokenType::OpeningParenthesis)) {
+              if (target == ruleNode) {
+                ACP_NODE(ruleNode);
+              } else {
+                ACP_EXP(exps.back().item);
+              }
+            }
 
             if (!isSubscript) {
               auto funcCall = std::make_shared<AST::FunctionCallExpression>();
-              funcCall->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+              funcCall->target = target;
 
               auto tmpState = currentState;
               auto name = expect(TokenType::Identifier);
@@ -1490,7 +1498,7 @@ namespace AltaCore {
               ACP_RULE(Expression);
             } else {
               auto subs = std::make_shared<AST::SubscriptExpression>();
-              subs->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+              subs->target = target;
 
               ruleNode = std::move(subs);
               state.internalIndex = 3;
@@ -1548,7 +1556,25 @@ namespace AltaCore {
               ACP_RULE(Expression);
             }
 
-            ACP_NODE((callState));
+            auto savedState = currentState;
+            while (expect(TokenType::Dot)) {
+              auto query = expect(TokenType::Identifier);
+              if (!query) {
+                currentState = savedState;
+                break;
+              }
+              ruleNode = std::make_shared<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(ruleNode), query.raw);
+              savedState = currentState;
+            }
+
+            saveState();
+
+            if (expect(TokenType::OpeningAngleBracket)) {
+              state.internalIndex = 4;
+              ACP_RULE(Type);
+            }
+
+            ACP_NODE((ruleNode));
           } else if (state.internalIndex == 3) {
             auto subs = std::dynamic_pointer_cast<AST::SubscriptExpression>(ruleNode);
 
@@ -1584,7 +1610,49 @@ namespace AltaCore {
               ACP_RULE(Expression);
             }
 
-            ACP_NODE((subs));
+            auto savedState = currentState;
+            while (expect(TokenType::Dot)) {
+              auto query = expect(TokenType::Identifier);
+              if (!query) {
+                currentState = savedState;
+                break;
+              }
+              ruleNode = std::make_shared<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(ruleNode), query.raw);
+              savedState = currentState;
+            }
+
+            saveState();
+
+            if (expect(TokenType::OpeningAngleBracket)) {
+              state.internalIndex = 4;
+              ACP_RULE(Type);
+            }
+
+            ACP_NODE((ruleNode));
+          } else if (state.internalIndex == 4) {
+            auto acc = std::dynamic_pointer_cast<AST::Accessor>(ruleNode);
+
+            if (!exps.back()) {
+              if (acc->genericArguments.size() < 1) {
+                restoreState();
+                acc->genericArguments.clear();
+                ACP_NODE(acc);
+              }
+            } else {
+              acc->genericArguments.push_back(std::dynamic_pointer_cast<AST::Type>(*exps.back().item));
+
+              if (expect(TokenType::Comma)) {
+                ACP_RULE(Type);
+              }
+            }
+
+            if (!expect(TokenType::ClosingAngleBracket)) {
+              restoreState();
+              acc->genericArguments.clear();
+            }
+
+            state.internalIndex = 1;
+            ACP_RULE(NullRule); // use a null rule to go back to the first branch
           }
         } else if (rule == RuleType::String) {
           auto raw = expect(TokenType::String);
@@ -2372,6 +2440,8 @@ namespace AltaCore {
             auto node = std::make_shared<AST::Generic>(name.raw);
             ACP_NODE(node);
           }
+        } else if (rule == RuleType::NullRule) {
+          ACP_NOT_OK;
         }
 
         next();

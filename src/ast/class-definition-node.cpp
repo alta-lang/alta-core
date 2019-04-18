@@ -211,6 +211,9 @@ std::shared_ptr<AltaCore::DET::Class> AltaCore::AST::ClassDefinitionNode::instan
 
   inst->klass->genericArguments = genericArguments;
 
+  auto thisMod = Util::getModule(info->inputScope.get()).lock();
+  auto& gDepEntry = thisMod->genericDependencies[inst->klass->id];
+
   for (size_t i = 0; i < generics.size(); i++) {
     auto& generic = generics[i];
     auto& genericArg = genericArguments[i];
@@ -218,6 +221,11 @@ std::shared_ptr<AltaCore::DET::Class> AltaCore::AST::ClassDefinitionNode::instan
     auto det = generic->fullDetail(inst->klass->scope);
     det->alias->target = genericArg;
     inst->genericDetails.push_back(det);
+
+    if (genericArg->klass) {
+      auto thatMod = Util::getModule(genericArg->klass->parentScope.lock().get()).lock();
+      gDepEntry.push_back(thatMod);
+    }
   }
 
   AltaCoreClassHelpers::detailClass(inst, this);
