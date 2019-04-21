@@ -6,8 +6,14 @@
 #include <string>
 
 namespace AltaCore {
+  namespace AST {
+    class ClassDefinitionNode;
+  };
+  namespace DetailHandles {
+    class ClassDefinitionNode;
+  };
   namespace DET {
-    class Variable; // forward declaration
+    class Variable;
 
     class Class: public ScopeItem {
       public:
@@ -27,10 +33,15 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Variable>> itemsToCopy;
 
         std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
+        std::vector<std::shared_ptr<Type>> genericArguments;
+
+        std::weak_ptr<AST::ClassDefinitionNode> ast;
+        std::weak_ptr<DetailHandles::ClassDefinitionNode> info;
 
         Class(std::string name, std::shared_ptr<Scope> parentScope, std::vector<std::shared_ptr<Class>> parents = {});
 
         bool hasParent(std::shared_ptr<Class> parent) const;
+        std::shared_ptr<Class> instantiateGeneric(std::vector<std::shared_ptr<Type>> genericArguments);
     };
   };
 };

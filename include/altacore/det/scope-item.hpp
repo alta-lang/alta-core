@@ -20,6 +20,12 @@ namespace AltaCore {
         Visibility visibility = Visibility::Public;
         std::weak_ptr<Scope> parentScope;
         std::string name;
+        size_t genericParameterCount = 0;
+
+        std::vector<std::shared_ptr<ScopeItem>> privateHoistedGenerics;
+        std::vector<std::shared_ptr<ScopeItem>> publicHoistedGenerics;
+
+        bool instantiatedFromSamePackage = false;
 
         ScopeItem(std::string name, std::shared_ptr<Scope> parentScope = nullptr);
 

@@ -4,6 +4,7 @@
 #include "retrieval-node.hpp"
 #include "../det/scope-item.hpp"
 #include "../det/function.hpp"
+#include "type.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -12,6 +13,7 @@ namespace AltaCore {
         virtual const NodeType nodeType();
 
         std::shared_ptr<AST::ExpressionNode> target = nullptr;
+        std::vector<std::shared_ptr<Type>> genericArguments;
 
         Accessor(std::shared_ptr<AST::ExpressionNode> target, std::string query);
 

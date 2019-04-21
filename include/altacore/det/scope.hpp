@@ -37,6 +37,7 @@ namespace AltaCore {
 
         std::vector<std::shared_ptr<ScopeItem>> findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes = {}, bool searchParents = true, std::shared_ptr<Scope> originScope = nullptr);
         void hoist(std::shared_ptr<Type> whatToHoist);
+        void hoist(std::shared_ptr<ScopeItem> generic);
 
         bool hasParent(std::shared_ptr<Scope> parent) const;
 

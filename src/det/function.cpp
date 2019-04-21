@@ -1,4 +1,5 @@
 #include "../../include/altacore/det/function.hpp"
+#include "../../include/altacore/det/class.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Function::nodeType() {
   return NodeType::Function;
@@ -40,10 +41,16 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::create(std::sh
     if (type->isFunction) {
       func->publicHoistedFunctionalTypes.push_back(type);
     }
+    if (type->klass && type->klass->genericParameterCount > 0) {
+      func->publicHoistedGenerics.push_back(type->klass);
+    }
   }
 
   if (returnType->isFunction) {
     func->publicHoistedFunctionalTypes.push_back(returnType);
+  }
+  if (returnType->klass && returnType->klass->genericParameterCount > 0) {
+    func->publicHoistedGenerics.push_back(returnType->klass);
   }
 
   return func;

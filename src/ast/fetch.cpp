@@ -1,4 +1,6 @@
 #include "../../include/altacore/ast/fetch.hpp"
+#include "../../include/altacore/ast/accessor.hpp"
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::Fetch::nodeType() {
   return NodeType::Fetch;
@@ -40,6 +42,62 @@ ALTACORE_AST_DETAIL_D(Fetch) {
   }
 
   info->items = items;
+
+  for (size_t i = 0; i < genericArguments.size(); i++) {
+    auto& arg = genericArguments[i];
+    auto det = arg->fullDetail(scope);
+    info->genericArgumentDetails.push_back(det);
+    if (!det->type) {
+      ALTACORE_DETAILING_ERROR("failed to detail generic argument as a type");
+    }
+    info->genericArguments.push_back(det->type);
+  }
+
+  if (genericArguments.size() > 0) {
+    for (size_t i = 0; i < info->items.size(); i++) {
+      auto& item = info->items[i];
+      auto type = item->nodeType();
+      bool isNarrowedTo = false;
+
+      if (info->narrowedTo == info->items[i]) {
+        isNarrowedTo = true;
+      }
+
+      if (type != DET::NodeType::Function && type != DET::NodeType::Class) {
+        ALTACORE_DETAILING_ERROR(
+          std::string("only functions and classes can be generic") +
+          ((info->items.size() > 1) ? "(try narrowing the retrieval)" : "")
+        );
+      }
+
+      // unequal number of generics = incompatible item; remove it
+      if (item->genericParameterCount < genericArguments.size()) {
+        info->items.erase(info->items.begin() + i);
+        if (isNarrowedTo) {
+          info->narrowedTo = nullptr;
+        }
+        i--; // recheck this index since we shrunk the vector
+        continue;
+      }
+
+      if (auto klass = std::dynamic_pointer_cast<DET::Class>(item)) {
+        auto newKlass = klass->instantiateGeneric(info->genericArguments);
+        info->items[i] = newKlass;
+        auto thisMod = Util::getModule(info->inputScope.get()).lock();
+        thisMod->genericsUsed.push_back(newKlass);
+        auto thatMod = Util::getModule(newKlass->parentScope.lock().get()).lock();
+        if (thisMod->packageInfo.name == thatMod->packageInfo.name) {
+          newKlass->instantiatedFromSamePackage = true;
+        }
+        info->inputScope->hoist(info->items[i]);
+        if (isNarrowedTo) {
+          info->narrowedTo = info->items[i];
+        }
+      } else {
+        ALTACORE_DETAILING_ERROR("generic type wasn't a class or function (btw, this is impossible)");
+      }
+    }
+  }
 
   return info;
 };

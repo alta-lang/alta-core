@@ -4,12 +4,16 @@
 #include "retrieval-node.hpp"
 #include "../det/scope-item.hpp"
 #include "../det/type.hpp"
+#include "type.hpp"
 
 namespace AltaCore {
   namespace AST {
+    class Accessor; // forward declaration
     class Fetch: public RetrievalNode {
       public:
         virtual const NodeType nodeType();
+
+        std::vector<std::shared_ptr<Type>> genericArguments;
 
         Fetch(std::string query);
 
