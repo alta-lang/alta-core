@@ -55,6 +55,7 @@ namespace AltaCore {
       SuperClassFetch,
       InstanceofExpression,
       Generic,
+      ForLoopStatement,
     };
 
     static const char* const NodeType_names[] = {
@@ -103,6 +104,7 @@ namespace AltaCore {
       "SuperClassFetch",
       "InstanceofExpression",
       "Generic",
+      "ForLoopStatement",
     };
 
     enum class OperatorType {

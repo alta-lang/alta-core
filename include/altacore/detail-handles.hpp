@@ -71,6 +71,7 @@ namespace AltaCore {
     class Type;
     class VariableDefinitionExpression;
     class WhileLoopStatement;
+    class ForLoopStatement;
     class RetrievalNode;
     class SuperClassFetch;
     class GenericClassInstantiationDefinitionNode;
@@ -342,6 +343,17 @@ namespace AltaCore {
       ALTACORE_DH_CTOR(WhileLoopStatement, StatementNode);
 
       std::shared_ptr<ExpressionNode> test = nullptr;
+      std::shared_ptr<StatementNode> body = nullptr;
+
+      std::shared_ptr<DET::Scope> scope = nullptr;
+    };
+
+    class ForLoopStatement: public StatementNode {
+      ALTACORE_DH_CTOR(ForLoopStatement, StatementNode);
+
+      std::shared_ptr<ExpressionNode> initializer = nullptr;
+      std::shared_ptr<ExpressionNode> condition = nullptr;
+      std::shared_ptr<ExpressionNode> increment = nullptr;
       std::shared_ptr<StatementNode> body = nullptr;
 
       std::shared_ptr<DET::Scope> scope = nullptr;

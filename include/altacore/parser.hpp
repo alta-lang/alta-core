@@ -163,6 +163,7 @@ namespace AltaCore {
       Instanceof,
       Generic,
       NullRule,
+      ForLoop,
     };
 
     enum class PrepoRuleType {

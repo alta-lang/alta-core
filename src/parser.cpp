@@ -798,6 +798,7 @@ namespace AltaCore {
             RuleType::Block,
             RuleType::ClassDefinition,
             RuleType::WhileLoop,
+            RuleType::ForLoop,
             RuleType::TypeAlias,
             RuleType::Expression,
 
@@ -2442,6 +2443,52 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::NullRule) {
           ACP_NOT_OK;
+        } else if (rule == RuleType::ForLoop) {
+          if (state.internalIndex == 0) {
+            if (!expectKeyword("for")) ACP_NOT_OK;
+            if (!expect(TokenType::OpeningParenthesis)) ACP_NOT_OK;
+
+            state.internalIndex = 1;
+            ACP_RULE(Expression);
+          } else if (state.internalIndex == 1) {
+            if (!expect(TokenType::Semicolon)) ACP_NOT_OK;
+
+            ruleNode = std::make_shared<AST::ForLoopStatement>();
+            auto loop = std::dynamic_pointer_cast<AST::ForLoopStatement>(ruleNode);
+            if (exps.back()) {
+              loop->initializer = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            }
+
+            state.internalIndex = 2;
+            ACP_RULE(Expression);
+          } else if (state.internalIndex == 2) {
+            if (!expect(TokenType::Semicolon)) ACP_NOT_OK;
+
+            auto loop = std::dynamic_pointer_cast<AST::ForLoopStatement>(ruleNode);
+            if (exps.back()) {
+              loop->condition = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            }
+
+            state.internalIndex = 3;
+            ACP_RULE(Expression);
+          } else if (state.internalIndex == 3) {
+            auto loop = std::dynamic_pointer_cast<AST::ForLoopStatement>(ruleNode);
+            if (exps.back()) {
+              loop->increment = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            }
+
+            if (!expect(TokenType::ClosingParenthesis)) ACP_NOT_OK;
+
+            state.internalIndex = 4;
+            ACP_RULE(Statement);
+          } else if (state.internalIndex == 4) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto loop = std::dynamic_pointer_cast<AST::ForLoopStatement>(ruleNode);
+            loop->body = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
+
+            ACP_NODE(loop);
+          }
         }
 
         next();
