@@ -799,6 +799,7 @@ namespace AltaCore {
             RuleType::ClassDefinition,
             RuleType::WhileLoop,
             RuleType::ForLoop,
+            RuleType::RangedFor,
             RuleType::TypeAlias,
             RuleType::Expression,
 
@@ -2485,6 +2486,69 @@ namespace AltaCore {
             if (!exps.back()) ACP_NOT_OK;
 
             auto loop = std::dynamic_pointer_cast<AST::ForLoopStatement>(ruleNode);
+            loop->body = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
+
+            ACP_NODE(loop);
+          }
+        } else if (rule == RuleType::RangedFor) {
+          if (state.internalIndex == 0) {
+            if (!expectKeyword("for")) ACP_NOT_OK;
+
+            auto loop = std::make_shared<AST::RangedForLoopStatement>();
+            ruleNode = loop;
+
+            auto name = expect(TokenType::Identifier);
+            if (!name) ACP_NOT_OK;
+
+            if (!expect(TokenType::Colon)) ACP_NOT_OK;
+
+            loop->counterName = name.raw;
+
+            state.internalIndex = 1;
+            ACP_RULE(Type);
+          } else if (state.internalIndex == 1) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto loop = std::dynamic_pointer_cast<AST::RangedForLoopStatement>(ruleNode);
+            loop->counterType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+            if (!expectKeyword("in")) ACP_NOT_OK;
+
+            state.internalIndex = 2;
+            ACP_RULE(Expression);
+          } else if (state.internalIndex == 2) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto loop = std::dynamic_pointer_cast<AST::RangedForLoopStatement>(ruleNode);
+            loop->start = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+            if (expect(TokenType::Colon) && expect(TokenType::Colon)) {
+              loop->decrement = true;
+              if (expect(TokenType::Colon)) {
+                loop->inclusive = true;
+              }
+            } else if (expect(TokenType::Dot) && expect(TokenType::Dot)) {
+              if (expect(TokenType::Dot)) {
+                loop->inclusive = true;
+              }
+            } else {
+              ACP_NOT_OK;
+            }
+
+            state.internalIndex = 3;
+            ACP_RULE(Expression);
+          } else if (state.internalIndex == 3) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto loop = std::dynamic_pointer_cast<AST::RangedForLoopStatement>(ruleNode);
+            loop->end = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+            state.internalIndex = 4;
+            ACP_RULE(Statement);
+          } else if (state.internalIndex == 4) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto loop = std::dynamic_pointer_cast<AST::RangedForLoopStatement>(ruleNode);
             loop->body = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
 
             ACP_NODE(loop);

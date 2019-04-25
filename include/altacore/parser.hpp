@@ -164,6 +164,7 @@ namespace AltaCore {
       Generic,
       NullRule,
       ForLoop,
+      RangedFor,
     };
 
     enum class PrepoRuleType {

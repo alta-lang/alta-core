@@ -48,5 +48,6 @@
 #include "ast/instanceof-expression.hpp"
 #include "ast/generic.hpp"
 #include "ast/for-loop-statement.hpp"
+#include "ast/ranged-for-loop-statement.hpp"
 
 #endif // ALTACORE_AST_HPP

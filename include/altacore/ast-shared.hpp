@@ -56,6 +56,7 @@ namespace AltaCore {
       InstanceofExpression,
       Generic,
       ForLoopStatement,
+      RangedForLoopStatement,
     };
 
     static const char* const NodeType_names[] = {
@@ -105,6 +106,7 @@ namespace AltaCore {
       "InstanceofExpression",
       "Generic",
       "ForLoopStatement",
+      "RangedForLoopStatement",
     };
 
     enum class OperatorType {

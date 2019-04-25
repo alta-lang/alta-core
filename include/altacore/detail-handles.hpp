@@ -359,6 +359,18 @@ namespace AltaCore {
       std::shared_ptr<DET::Scope> scope = nullptr;
     };
 
+    class RangedForLoopStatement: public StatementNode {
+      ALTACORE_DH_CTOR(RangedForLoopStatement, StatementNode);
+
+      std::shared_ptr<Type> counterType = nullptr;
+      std::shared_ptr<ExpressionNode> start = nullptr;
+      std::shared_ptr<ExpressionNode> end = nullptr;
+      std::shared_ptr<StatementNode> body = nullptr;
+
+      std::shared_ptr<DET::Scope> scope = nullptr;
+      std::shared_ptr<DET::Variable> counter = nullptr;
+    };
+
     class SubscriptExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(SubscriptExpression, ExpressionNode);
 
