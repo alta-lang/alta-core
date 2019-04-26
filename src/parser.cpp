@@ -2327,7 +2327,7 @@ namespace AltaCore {
               state.internalIndex = 3;
             } else {
               state.internalIndex = 1;
-              ACP_RULE(FunctionCallOrSubscript);
+              ACP_RULE(Not);
             }
 
             ACP_RULE(PointerOrDereference);
@@ -2552,6 +2552,34 @@ namespace AltaCore {
             loop->body = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
 
             ACP_NODE(loop);
+          }
+        } else if (rule == RuleType::Not) {
+          if (state.internalIndex == 0) {
+            bool found = false;
+            bool inverse = false;
+
+            while (expect(TokenType::ExclamationMark)) {
+              found = true;
+              inverse = !inverse;
+            }
+
+            state.internalValue = std::make_pair(found, inverse);
+            state.internalIndex = 1;
+            ACP_RULE(FunctionCallOrSubscript);
+          } else {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto [found, inverse] = ALTACORE_ANY_CAST<std::pair<bool, bool>>(state.internalValue);
+            auto target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+            if (found) {
+              target = std::make_shared<AST::UnaryOperation>(AST::UOperatorType::Not, target);
+              if (!inverse) {
+                target = std::make_shared<AST::UnaryOperation>(AST::UOperatorType::Not, target);
+              }
+            }
+
+            ACP_NODE(target);
           }
         }
 

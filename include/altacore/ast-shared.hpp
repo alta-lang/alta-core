@@ -57,6 +57,7 @@ namespace AltaCore {
       Generic,
       ForLoopStatement,
       RangedForLoopStatement,
+      UnaryOperation,
     };
 
     static const char* const NodeType_names[] = {
@@ -107,6 +108,7 @@ namespace AltaCore {
       "Generic",
       "ForLoopStatement",
       "RangedForLoopStatement",
+      "UnaryOperation",
     };
 
     enum class OperatorType {
@@ -120,6 +122,10 @@ namespace AltaCore {
       LessThan,
       GreaterThanOrEqualTo,
       LessThanOrEqualTo,
+    };
+
+    enum class UOperatorType {
+      Not,
     };
   };
 };

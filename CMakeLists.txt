@@ -72,6 +72,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/generic.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/for-loop-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/ranged-for-loop-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/unary-operation.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

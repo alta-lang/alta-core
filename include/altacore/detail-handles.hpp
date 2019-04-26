@@ -46,6 +46,7 @@ namespace AltaCore {
     class AttributeNode;
     class AttributeStatement;
     class BinaryOperation;
+    class UnaryOperation;
     class BlockNode;
     class CastExpression;
     class ClassDefinitionNode;
@@ -129,6 +130,11 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> left = nullptr;
       std::shared_ptr<ExpressionNode> right = nullptr;
+    };
+    class UnaryOperation: public ExpressionNode {
+      ALTACORE_DH_CTOR(UnaryOperation, ExpressionNode);
+
+      std::shared_ptr<ExpressionNode> target = nullptr;
     };
     class BlockNode: public StatementNode {
       ALTACORE_DH_CTOR(BlockNode, StatementNode);

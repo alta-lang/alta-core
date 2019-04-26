@@ -59,6 +59,7 @@ namespace AltaCore {
       Ampersand,
       OpeningSquareBracket,
       ClosingSquareBracket,
+      ExclamationMark,
 
       LAST, // always keep this as last, it counts the number of items in the enum
     };
@@ -103,6 +104,7 @@ namespace AltaCore {
       "&",
       "[",
       "]",
+      "!",
 
       "",
     };
@@ -146,6 +148,7 @@ namespace AltaCore {
       "Ampersand",
       "Opening square bracket",
       "Closing square bracket",
+      "Exclamation mark",
 
       "LAST", // shouldn't be necessary, but just in case ;)
     };
