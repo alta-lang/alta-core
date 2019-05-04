@@ -181,6 +181,13 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::deconstify() const {
   }
   return other;
 };
+std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::destroyReferences() const {
+  auto other = copy();
+  while (other->referenceLevel() > 0) {
+    other = other->dereference();
+  }
+  return other;
+};
 const size_t AltaCore::DET::Type::indirectionLevel() const {
   size_t count = 0;
 

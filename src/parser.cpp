@@ -560,7 +560,7 @@ namespace AltaCore {
         RuleState(currentState),
         std::vector<Expectation>(),
         nullptr,
-        currentState
+        std::make_tuple(currentState, std::stack<bool>(), std::stack<bool>(), true)
       );
 
       auto next = [&](bool ok = false, std::vector<RuleType> rules = {}, NodeType result = nullptr) {
@@ -575,14 +575,14 @@ namespace AltaCore {
           result->position.file = filePath;
         }
 
+        // the null rule is never executed, it's used to jump to a different
+        // state within the same rule
+        if (rules.size() == 1 && rules[0] == RuleType::NullRule) return;
+
         auto& ruleExps = std::get<1>(ruleStack.top());
         for (auto it = rules.rbegin(); it != rules.rend(); it++) {
           ruleExps.push(*it);
         }
-
-        // the null rule is never executed, it's used to jump to a different
-        // state within the same rule
-        if (rules.size() == 1 && rules[0] == RuleType::NullRule) return;
 
         if (ok && rules.size() > 0) return;
 
@@ -605,21 +605,25 @@ namespace AltaCore {
         }
       };
 
+      std::stack<bool> prepoLevels;
+      std::stack<bool> prepoLast;
+      bool advanceExp = true;
+
       auto saveSpecificState = [&](State state) {
         if (ruleStack.size() < 1) return;
-        std::get<5>(ruleStack.top()) = state;
+        std::get<5>(ruleStack.top()) = std::make_tuple(state, prepoLevels, prepoLast, advanceExp);
       };
       auto saveState = [&]() {
         return saveSpecificState(currentState);
       };
       auto restoreState = [&]() {
         if (ruleStack.size() < 1) return;
-        currentState = std::get<5>(ruleStack.top());
+        auto [state, levels, last, advance] = std::get<5>(ruleStack.top());
+        currentState = state;
+        prepoLevels = levels;
+        prepoLast = last;
+        advanceExp = advance;
       };
-
-      std::stack<bool> prepoLevels;
-      std::stack<bool> prepoLast;
-      bool advanceExp = true;
 
       auto topLevelTrue = [&]() {
         if (prepoLevels.size() < 1) return true;
@@ -646,7 +650,7 @@ namespace AltaCore {
             RuleState(currentState),
             std::vector<Expectation>(),
             nullptr,
-            currentState
+            std::make_tuple(currentState, prepoLevels, prepoLast, advanceExp)
           );
           continue;
         } else if (!advanceExp) {
@@ -1497,6 +1501,11 @@ namespace AltaCore {
           } else if (state.internalIndex == 4) {
             auto acc = std::dynamic_pointer_cast<AST::Accessor>(ruleNode);
 
+            if (!acc) {
+              restoreState();
+              ACP_NODE(ruleNode);
+            }
+
             if (!exps.back()) {
               if (acc->genericArguments.size() < 1) {
                 restoreState();
@@ -1524,7 +1533,8 @@ namespace AltaCore {
             Token id;
             saveState();
             while (expect(TokenType::Dot) && (id = expect(TokenType::Identifier))) {
-              target = std::make_shared<AST::Accessor>(target, id.raw);
+              ruleNode = std::make_shared<AST::Accessor>(target, id.raw);
+              target = std::dynamic_pointer_cast<AST::ExpressionNode>(ruleNode);
               saveState();
             }
 
@@ -2098,11 +2108,11 @@ namespace AltaCore {
                 RuleType::IntegralLiteral,
                 RuleType::String,
                 RuleType::Character,
-                RuleType::StrictAccessor
+                RuleType::Accessor
               );
             }
             state.internalIndex = 1;
-            ACP_RULE(StrictAccessor);
+            ACP_RULE(Accessor);
           } else if (state.internalIndex == 1 || state.internalIndex == 5) {
             if (!exps.back()) {
               if (state.internalIndex != 5) {
@@ -2114,7 +2124,7 @@ namespace AltaCore {
                 RuleType::IntegralLiteral,
                 RuleType::String,
                 RuleType::Character,
-                RuleType::StrictAccessor
+                RuleType::Accessor
               );
             }
 
@@ -2146,7 +2156,7 @@ namespace AltaCore {
                 RuleType::IntegralLiteral,
                 RuleType::String,
                 RuleType::Character,
-                RuleType::StrictAccessor
+                RuleType::Accessor
               );
             }
 
@@ -2464,6 +2474,26 @@ namespace AltaCore {
             }
 
             ACP_NODE(target);
+          }
+        } else if (rule == RuleType::Accessor) {
+          if (state.internalIndex == 0) {
+            state.internalIndex = 1;
+            if (inClass) {
+              ACP_RULE_LIST(
+                RuleType::SuperClassFetch,
+                RuleType::Fetch,
+                RuleType::GroupedExpression,
+                RuleType::StrictAccessor,
+              );
+            } else {
+              ACP_RULE_LIST(
+                RuleType::Fetch,
+                RuleType::GroupedExpression,
+                RuleType::StrictAccessor,
+              );
+            }
+          } else {
+            ACP_EXP(exps.back().item);
           }
         }
 

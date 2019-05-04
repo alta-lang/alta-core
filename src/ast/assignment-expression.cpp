@@ -31,7 +31,7 @@ ALTACORE_AST_VALIDATE_D(AssignmentExpression) {
     ALTACORE_VALIDATION_ERROR("can't assign to a constant");
   }
 
-  if (!targetType->isCompatibleWith(*valueType)) {
+  if (!targetType->destroyReferences()->isCompatibleWith(*valueType)) {
     ALTACORE_VALIDATION_ERROR("source type is not compatible with the destination type for assignment expression");
   }
 

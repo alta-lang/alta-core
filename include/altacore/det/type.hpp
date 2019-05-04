@@ -73,6 +73,10 @@ namespace AltaCore {
          * Remove the leftmost (i.e. root) `const` modifier from this type (if present)
          */
         std::shared_ptr<Type> deconstify() const;
+        /**
+         * Completely removes all outer references
+         */
+        std::shared_ptr<Type> destroyReferences() const;
 
         size_t compatiblity(const Type& other);
         bool isExactlyCompatibleWith(const Type& other);

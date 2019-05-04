@@ -165,6 +165,7 @@ namespace AltaCore {
       ForLoop,
       RangedFor,
       Not,
+      Accessor,
     };
 
     enum class PrepoRuleType {
@@ -255,7 +256,7 @@ namespace AltaCore {
         using ExpectationType = GenericExpectationType<RuleType, TokenType>;
         using RuleReturn = ALTACORE_VARIANT<ExpectationType, std::initializer_list<ExpectationType>, ALTACORE_OPTIONAL<NodeType>>;
 
-        using RuleStackElement = std::tuple<RuleType, std::stack<RuleType>, RuleState, std::vector<Expectation>, std::shared_ptr<AST::Node>, State>;
+        using RuleStackElement = std::tuple<RuleType, std::stack<RuleType>, RuleState, std::vector<Expectation>, std::shared_ptr<AST::Node>, std::tuple<State, std::stack<bool>, std::stack<bool>, bool>>;
       private:
         using NextFunctionType = std::function<void(bool, std::vector<RuleType>, NodeType)>;
         using SaveStateType = std::function<void()>;
