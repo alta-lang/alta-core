@@ -18,6 +18,7 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
   ALTACORE_MAKE_DH(BinaryOperation);
   info->left = left->fullDetail(scope);
   info->right = right->fullDetail(scope);
+  info->type = type;
   return info;
 };
 

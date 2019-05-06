@@ -9,6 +9,8 @@ namespace AltaCore {
   namespace AST {
     using Shared::TypeModifierFlag;
     using Shared::Visibility;
+    using Shared::OperatorType;
+    using Shared::UOperatorType;
 
     enum class NodeType {
       Node,
@@ -58,6 +60,7 @@ namespace AltaCore {
       ForLoopStatement,
       RangedForLoopStatement,
       UnaryOperation,
+      SizeofOperation,
     };
 
     static const char* const NodeType_names[] = {
@@ -109,23 +112,7 @@ namespace AltaCore {
       "ForLoopStatement",
       "RangedForLoopStatement",
       "UnaryOperation",
-    };
-
-    enum class OperatorType {
-      Addition,
-      Subtraction,
-      Multiplication,
-      Division,
-      EqualTo,
-      NotEqualTo,
-      GreaterThan,
-      LessThan,
-      GreaterThanOrEqualTo,
-      LessThanOrEqualTo,
-    };
-
-    enum class UOperatorType {
-      Not,
+      "SizeofOperation",
     };
   };
 };

@@ -14,6 +14,7 @@ AltaCore::AST::UnaryOperation::UnaryOperation(
 
 ALTACORE_AST_DETAIL_D(UnaryOperation) {
   ALTACORE_MAKE_DH(UnaryOperation);
+  info->type = type;
   info->target = target->fullDetail(scope);
   return info;
 };

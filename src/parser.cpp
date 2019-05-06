@@ -1657,6 +1657,7 @@ namespace AltaCore {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
             ACP_RULE_LIST(
+              RuleType::Sizeof,
               RuleType::IntegralLiteral,
               RuleType::BooleanLiteral,
               RuleType::String,
@@ -2104,6 +2105,7 @@ namespace AltaCore {
                 ACP_RULE(SuperClassFetch);
               }
               ACP_RULE_LIST(
+                RuleType::Sizeof,
                 RuleType::BooleanLiteral,
                 RuleType::IntegralLiteral,
                 RuleType::String,
@@ -2120,6 +2122,7 @@ namespace AltaCore {
               }
               state.internalIndex = 4;
               ACP_RULE_LIST(
+                RuleType::Sizeof,
                 RuleType::BooleanLiteral,
                 RuleType::IntegralLiteral,
                 RuleType::String,
@@ -2152,6 +2155,7 @@ namespace AltaCore {
               restoreState();
               state.internalIndex = 4;
               ACP_RULE_LIST(
+                RuleType::Sizeof,
                 RuleType::BooleanLiteral,
                 RuleType::IntegralLiteral,
                 RuleType::String,
@@ -2488,6 +2492,17 @@ namespace AltaCore {
             }
           } else {
             ACP_EXP(exps.back().item);
+          }
+        } else if (rule == RuleType::Sizeof) {
+          if (state.internalIndex == 0) {
+            if (!expectKeyword("sizeof")) ACP_NOT_OK;
+            state.internalIndex = 1;
+            ACP_RULE(Type);
+          } else {
+            if (!exps.back()) ACP_NOT_OK;
+            auto op = std::make_shared<AST::SizeofOperation>();
+            op->target = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+            ACP_NODE(op);
           }
         }
 

@@ -128,12 +128,14 @@ namespace AltaCore {
     class BinaryOperation: public ExpressionNode {
       ALTACORE_DH_CTOR(BinaryOperation, ExpressionNode);
 
+      Shared::OperatorType type = Shared::OperatorType::Addition;
       std::shared_ptr<ExpressionNode> left = nullptr;
       std::shared_ptr<ExpressionNode> right = nullptr;
     };
     class UnaryOperation: public ExpressionNode {
       ALTACORE_DH_CTOR(UnaryOperation, ExpressionNode);
 
+      Shared::UOperatorType type = Shared::UOperatorType::Not;
       std::shared_ptr<ExpressionNode> target = nullptr;
     };
     class BlockNode: public StatementNode {
@@ -407,6 +409,11 @@ namespace AltaCore {
       ALTACORE_DH_CTOR(Generic, Node);
 
       std::shared_ptr<DET::Alias> alias = nullptr;
+    };
+    class SizeofOperation: public ExpressionNode {
+      ALTACORE_DH_CTOR(SizeofOperation, ExpressionNode);
+
+      std::shared_ptr<Type> target = nullptr;
     };
 
     #undef ALTACORE_DH_CTOR

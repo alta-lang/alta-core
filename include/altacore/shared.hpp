@@ -23,6 +23,23 @@ namespace AltaCore {
       Protected,
       Private,
     };
+
+    enum class OperatorType {
+      Addition,
+      Subtraction,
+      Multiplication,
+      Division,
+      EqualTo,
+      NotEqualTo,
+      GreaterThan,
+      LessThan,
+      GreaterThanOrEqualTo,
+      LessThanOrEqualTo,
+    };
+
+    enum class UOperatorType {
+      Not,
+    };
   };
 };
 

@@ -35,7 +35,11 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto boolean = dynamic_cast<DH::BooleanLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (auto binOp = dynamic_cast<DH::BinaryOperation*>(expression)) {
-    return getUnderlyingType(binOp->left.get());
+    if ((uint8_t)binOp->type <= (uint8_t)Shared::OperatorType::Division) {
+      return getUnderlyingType(binOp->left.get());
+    } else {
+      return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
+    }
   } else if (auto call = dynamic_cast<DH::FunctionCallExpression*>(expression)) {
     return call->targetType->returnType;
   } else if (auto acc = dynamic_cast<DH::Accessor*>(expression)) {
@@ -67,9 +71,15 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto subs = dynamic_cast<DH::SubscriptExpression*>(expression)) {
     return getUnderlyingType(subs->target.get())->follow();
   } else if (auto sc = dynamic_cast<DH::SuperClassFetch*>(expression)) {
-    return std::make_shared<Type>(sc->superclass, std::vector<uint8_t> { (uint8_t)Shared::TypeModifierFlag::Reference });
+    return std::make_shared<Type>(sc->superclass, std::vector<uint8_t> { (uint8_t)Modifier::Reference });
   } else if (auto instOf = dynamic_cast<DH::InstanceofExpression*>(expression)) {
-    return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Shared::TypeModifierFlag::Constant });
+    return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
+  } else if (auto unary = dynamic_cast<DH::UnaryOperation*>(expression)) {
+    if (unary->type == Shared::UOperatorType::Not) {
+      return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
+    }
+  } else if (auto op = dynamic_cast<DH::SizeofOperation*>(expression)) {
+    return std::make_shared<Type>(NativeType::Integer, std::vector<uint8_t> { (uint8_t)Modifier::Constant, (uint8_t)Modifier::Long, (uint8_t)Modifier::Long });
   }
 
   return nullptr;
