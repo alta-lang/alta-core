@@ -153,7 +153,7 @@ namespace AltaCore {
       ClassSpecialMethod,
       ClassInstantiation,
       StrictAccessor,
-      PointerOrDereference,
+      //PointerOrDereference,
       WhileLoop,
       Cast,
       Character,
@@ -164,8 +164,9 @@ namespace AltaCore {
       NullRule,
       ForLoop,
       RangedFor,
-      Not,
+      //Not,
       Accessor,
+      NotOrPointerOrDereference,
     };
 
     enum class PrepoRuleType {

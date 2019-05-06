@@ -2194,7 +2194,7 @@ namespace AltaCore {
         } else if (rule == RuleType::Cast) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
-            ACP_RULE(PointerOrDereference);
+            ACP_RULE(NotOrPointerOrDereference);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
             auto cast = std::make_shared<AST::CastExpression>();
@@ -2213,36 +2213,58 @@ namespace AltaCore {
             cast->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
             ACP_NODE((cast));
           }
-        } else if (rule == RuleType::PointerOrDereference) {
+        } else if (rule == RuleType::NotOrPointerOrDereference) {
           if (state.internalIndex == 0) {
-            if (expect(TokenType::Asterisk) || expectKeyword("valueof")) {
-              state.internalIndex = 2;
-            } else if (expect(TokenType::Ampersand) || expectKeyword("getptr")) {
-              state.internalIndex = 3;
-            } else {
-              state.internalIndex = 1;
-              ACP_RULE(Not);
+            saveState();
+
+            std::stack<std::shared_ptr<AST::ExpressionNode>> exprs;
+            bool isNot = false;
+            bool isPointer = false;
+            bool isDereference = false;
+
+            while (
+              (isNot =         expect(TokenType::ExclamationMark) || expectKeyword("not")) ||
+              (isPointer =     expect(TokenType::Ampersand)       || expectKeyword("getptr")) ||
+              (isDereference = expect(TokenType::Asterisk)        || expectKeyword("valueof"))
+            ) {
+              if (isNot) {
+                auto expr = std::make_shared<AST::UnaryOperation>();
+                expr->type = AST::UOperatorType::Not;
+                exprs.push(expr);
+              } else if (isPointer) {
+                exprs.push(std::make_shared<AST::PointerExpression>());
+              } else {
+                exprs.push(std::make_shared<AST::DereferenceExpression>());
+              }
+              isNot = isPointer = isDereference = false;
             }
 
-            ACP_RULE(PointerOrDereference);
-          } else if (state.internalIndex == 1) {
-            ACP_EXP(exps.back().item);
+            state.internalValue = exprs;
+
+            state.internalIndex = 1;
+            ACP_RULE(FunctionCallOrSubscriptOrAccessor);
           } else {
             if (!exps.back()) ACP_NOT_OK;
 
-            auto expr = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            auto tgt = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            auto exprs = ALTACORE_ANY_CAST<std::stack<std::shared_ptr<AST::ExpressionNode>>>(state.internalValue);
 
-            if (state.internalIndex == 2) {
-              auto val = std::make_shared<AST::DereferenceExpression>();
-              val->target = expr;
-              ACP_NODE((val));
-            } else if (state.internalIndex == 3) {
-              auto val = std::make_shared<AST::PointerExpression>();
-              val->target = expr;
-              ACP_NODE((val));
-            } else {
-              ACP_NOT_OK;
+            while (exprs.size() > 0) {
+              auto parent = exprs.top();
+              exprs.pop();
+              if (auto unary = std::dynamic_pointer_cast<AST::UnaryOperation>(parent)) {
+                unary->target = tgt;
+              } else if (auto ptr = std::dynamic_pointer_cast<AST::PointerExpression>(parent)) {
+                ptr->target = tgt;
+              } else if (auto deref = std::dynamic_pointer_cast<AST::DereferenceExpression>(parent)) {
+                deref->target = tgt;
+              } else {
+                throw std::runtime_error("that's weird... this should never happen (not unary, not pointer, not dereference)");
+              }
+              tgt = parent;
             }
+
+            ACP_NODE(tgt);
           }
         } else if (rule == RuleType::WhileLoop) {
           if (state.internalIndex == 0) {
@@ -2446,34 +2468,6 @@ namespace AltaCore {
             loop->body = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
 
             ACP_NODE(loop);
-          }
-        } else if (rule == RuleType::Not) {
-          if (state.internalIndex == 0) {
-            bool found = false;
-            bool inverse = false;
-
-            while (expect(TokenType::ExclamationMark)) {
-              found = true;
-              inverse = !inverse;
-            }
-
-            state.internalValue = std::make_pair(found, inverse);
-            state.internalIndex = 1;
-            ACP_RULE(FunctionCallOrSubscriptOrAccessor);
-          } else {
-            if (!exps.back()) ACP_NOT_OK;
-
-            auto [found, inverse] = ALTACORE_ANY_CAST<std::pair<bool, bool>>(state.internalValue);
-            auto target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
-
-            if (found) {
-              target = std::make_shared<AST::UnaryOperation>(AST::UOperatorType::Not, target);
-              if (!inverse) {
-                target = std::make_shared<AST::UnaryOperation>(AST::UOperatorType::Not, target);
-              }
-            }
-
-            ACP_NODE(target);
           }
         } else if (rule == RuleType::Accessor) {
           if (state.internalIndex == 0) {
