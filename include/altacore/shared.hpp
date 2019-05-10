@@ -35,6 +35,8 @@ namespace AltaCore {
       LessThan,
       GreaterThanOrEqualTo,
       LessThanOrEqualTo,
+      LogicalAnd,
+      LogicalOr,
     };
 
     enum class UOperatorType {

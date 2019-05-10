@@ -168,6 +168,8 @@ namespace AltaCore {
       Accessor,
       NotOrPointerOrDereference,
       Sizeof,
+      And,
+      Or,
     };
 
     enum class PrepoRuleType {

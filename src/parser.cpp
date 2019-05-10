@@ -1817,7 +1817,7 @@ namespace AltaCore {
         } else if (rule == RuleType::PunctualConditonalExpression) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
-            ACP_RULE(EqualityRelationalOperation);
+            ACP_RULE(And);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
 
@@ -2503,6 +2503,22 @@ namespace AltaCore {
             auto op = std::make_shared<AST::SizeofOperation>();
             op->target = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
             ACP_NODE(op);
+          }
+        } else if (rule == RuleType::And) {
+          if (expectBinaryOperation(RuleType::And, RuleType::Or, {
+            TokenType::And
+          }, {
+            AST::OperatorType::LogicalAnd,
+          }, state, exps, ruleNode, next, saveState, restoreState)) {
+            continue;
+          }
+        } else if (rule == RuleType::Or) {
+          if (expectBinaryOperation(RuleType::Or, RuleType::EqualityRelationalOperation, {
+            TokenType::Or
+          }, {
+            AST::OperatorType::LogicalOr,
+          }, state, exps, ruleNode, next, saveState, restoreState)) {
+            continue;
           }
         }
 
