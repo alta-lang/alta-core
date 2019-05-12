@@ -41,6 +41,12 @@ namespace AltaCore {
 
     enum class UOperatorType {
       Not,
+      Plus,
+      Minus,
+      PreIncrement,
+      PostIncrement,
+      PreDecrement,
+      PostDecrement,
     };
   };
 };

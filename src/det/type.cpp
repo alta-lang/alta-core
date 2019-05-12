@@ -77,6 +77,8 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto unary = dynamic_cast<DH::UnaryOperation*>(expression)) {
     if (unary->type == Shared::UOperatorType::Not) {
       return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
+    } else {
+      return getUnderlyingType(unary->target.get())->copy();
     }
   } else if (auto op = dynamic_cast<DH::SizeofOperation*>(expression)) {
     return std::make_shared<Type>(NativeType::Integer, std::vector<uint8_t> { (uint8_t)Modifier::Constant, (uint8_t)Modifier::Long, (uint8_t)Modifier::Long });

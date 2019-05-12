@@ -1398,7 +1398,7 @@ namespace AltaCore {
           } else if (expectKeyword("false")) {
             ACP_NODE((std::make_shared<AST::BooleanLiteralNode>(false)));
           }
-        } else if (rule == RuleType::FunctionCallOrSubscriptOrAccessor) {
+        } else if (rule == RuleType::FunctionCallOrSubscriptOrAccessorOrPostIncDec) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
             ACP_RULE(ClassInstantiation);
@@ -1410,6 +1410,8 @@ namespace AltaCore {
             bool isCall = false;
             bool isSubscript = false;
             bool isAccessor = false;
+            bool isPostIncrement = false;
+            bool isPostDecrement = false;
 
             saveState();
 
@@ -1419,6 +1421,10 @@ namespace AltaCore {
               isSubscript = true;
             } else if (expect(TokenType::Dot) && expect(TokenType::Identifier)) {
               isAccessor = true;
+            } else if (expect(TokenType::Increment)) {
+              isPostIncrement = true;
+            } else if (expect(TokenType::Decrement)) {
+              isPostDecrement = true;
             } else {
               restoreState();
               ACP_NODE(target);
@@ -1451,11 +1457,24 @@ namespace AltaCore {
               state.internalIndex = 3;
 
               ACP_RULE(Expression);
-            } else {
+            } else if (isAccessor) {
               ruleNode = target;
               state.internalIndex = 5;
 
               restoreState(); // state 5 starts expecting dots and identifiers
+
+              ACP_RULE(NullRule);
+            } else {
+              auto op = std::make_shared<AST::UnaryOperation>();
+              op->target = target;
+
+              if (isPostIncrement) {
+                op->type = AST::UOperatorType::PostIncrement;
+              } else {
+                op->type = AST::UOperatorType::PostDecrement;
+              }
+
+              ruleNode = std::move(op);
 
               ACP_RULE(NullRule);
             }
@@ -2198,7 +2217,7 @@ namespace AltaCore {
         } else if (rule == RuleType::Cast) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
-            ACP_RULE(NotOrPointerOrDereference);
+            ACP_RULE(NotOrPointerOrDereferenceOrPreIncDecOrPlusMinus);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
             auto cast = std::make_shared<AST::CastExpression>();
@@ -2217,7 +2236,7 @@ namespace AltaCore {
             cast->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
             ACP_NODE((cast));
           }
-        } else if (rule == RuleType::NotOrPointerOrDereference) {
+        } else if (rule == RuleType::NotOrPointerOrDereferenceOrPreIncDecOrPlusMinus) {
           if (state.internalIndex == 0) {
             saveState();
 
@@ -2225,28 +2244,46 @@ namespace AltaCore {
             bool isNot = false;
             bool isPointer = false;
             bool isDereference = false;
+            bool isPreIncrement = false;
+            bool isPreDecrement = false;
+            bool isPlus = false;
+            bool isMinus = false;
 
             while (
-              (isNot =         expect(TokenType::ExclamationMark) || expectKeyword("not")) ||
-              (isPointer =     expect(TokenType::Ampersand)       || expectKeyword("getptr")) ||
-              (isDereference = expect(TokenType::Asterisk)        || expectKeyword("valueof"))
+              (isNot =          expect(TokenType::ExclamationMark) || expectKeyword("not")) ||
+              (isPointer =      expect(TokenType::Ampersand)       || expectKeyword("getptr")) ||
+              (isDereference =  expect(TokenType::Asterisk)        || expectKeyword("valueof")) ||
+              (isPreIncrement = !!expect(TokenType::Increment)) ||
+              (isPreDecrement = !!expect(TokenType::Decrement)) ||
+              (isPlus =         !!expect(TokenType::PlusSign)) ||
+              (isMinus =        !!expect(TokenType::MinusSign))
             ) {
-              if (isNot) {
-                auto expr = std::make_shared<AST::UnaryOperation>();
-                expr->type = AST::UOperatorType::Not;
-                exprs.push(expr);
-              } else if (isPointer) {
+              if (isPointer) {
                 exprs.push(std::make_shared<AST::PointerExpression>());
-              } else {
+              } else if (isDereference) {
                 exprs.push(std::make_shared<AST::DereferenceExpression>());
+              } else {
+                auto expr = std::make_shared<AST::UnaryOperation>();
+                if (isNot) {
+                  expr->type = AST::UOperatorType::Not;
+                } else if (isPreIncrement) {
+                  expr->type = AST::UOperatorType::PreIncrement;
+                } else if (isPreDecrement) {
+                  expr->type = AST::UOperatorType::PreDecrement;
+                } else if (isPlus) {
+                  expr->type = AST::UOperatorType::Plus;
+                } else if (isMinus) {
+                  expr->type = AST::UOperatorType::Minus;
+                }
+                exprs.push(expr);
               }
-              isNot = isPointer = isDereference = false;
+              isNot = isPointer = isDereference = isPreDecrement = isPreIncrement = isPlus = isMinus = false;
             }
 
             state.internalValue = exprs;
 
             state.internalIndex = 1;
-            ACP_RULE(FunctionCallOrSubscriptOrAccessor);
+            ACP_RULE(FunctionCallOrSubscriptOrAccessorOrPostIncDec);
           } else {
             if (!exps.back()) ACP_NOT_OK;
 

@@ -37,6 +37,8 @@ namespace AltaCore {
       LessThanOrEqualTo,
       GreaterThanOrEqualTo,
       Inequality,
+      Increment,
+      Decrement,
       // </multi-character-rules>
 
       OpeningBrace,
@@ -83,6 +85,8 @@ namespace AltaCore {
       "<=",
       ">=",
       "!=",
+      "++",
+      "--",
       
       "{",
       "}",
@@ -127,6 +131,8 @@ namespace AltaCore {
       "Less than or equal to",
       "Greater than to equal to",
       "Inequality",
+      "Increment",
+      "Decrement",
 
       "Opening brace",
       "Closing brace",
