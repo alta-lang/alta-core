@@ -39,6 +39,7 @@ namespace AltaCore {
     ALTACORE_DH_SIMPLE_ALIAS(IntegerLiteralNode, LiteralNode);
     ALTACORE_DH_SIMPLE_ALIAS(StringLiteralNode, LiteralNode);
     ALTACORE_DH_SIMPLE_ALIAS(CharacterLiteralNode, LiteralNode);
+    ALTACORE_DH_SIMPLE_ALIAS(FloatingPointLiteralNode, LiteralNode);
     
     // forward declaration
     class Accessor;

@@ -38,6 +38,8 @@ namespace AltaCore {
       Byte,
       Bool,
       Void,
+      Double,
+      Float,
     };
 
     static const char* const NativeType_names[] = {
@@ -45,6 +47,8 @@ namespace AltaCore {
       "Byte",
       "Bool",
       "Void",
+      "Double",
+      "Float",
     };
 
 

@@ -174,6 +174,7 @@ namespace AltaCore {
       BitwiseAnd,
       BitwiseOr,
       BitwiseXor,
+      DecimalLiteral,
     };
 
     enum class PrepoRuleType {

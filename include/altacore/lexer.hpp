@@ -23,6 +23,7 @@ namespace AltaCore {
       PreprocessorDirective,
       SingleLineComment,
       Identifier,
+      Decimal,
       Integer,
       String,
       Character,
@@ -93,6 +94,7 @@ namespace AltaCore {
       "",
       "",
       "",
+      "",
 
       "==",
       "&&",
@@ -151,6 +153,7 @@ namespace AltaCore {
       "Preprocessor directive",
       "Single line comment",
       "Identifier",
+      "Decimal",
       "Integer",
       "String",
       "Character",
@@ -240,6 +243,8 @@ namespace AltaCore {
         bool consumeNext = false;
 
         bool characterLiteralEscaped = false;
+        bool foundDecimalPoint = false;
+        bool foundFraction = false;
 
         /**
          * this is where the majority of the actual lexer logic goes,

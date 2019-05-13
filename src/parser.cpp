@@ -1132,7 +1132,15 @@ namespace AltaCore {
               auto id = std::dynamic_pointer_cast<AST::Fetch>(expr);
               auto name = id->query;
               if (typesToIgnore.find(name) != typesToIgnore.end()) ACP_NOT_OK;
-              if (name == "int" || name == "byte" || name == "char" || name == "bool" || name == "void") {
+              if (
+                name == "int" ||
+                name == "byte" ||
+                name == "char" ||
+                name == "bool" ||
+                name == "void" ||
+                name == "float" ||
+                name == "double"
+              ) {
                 type->name = name;
                 type->isNative = true;
               } else {
@@ -1713,7 +1721,8 @@ namespace AltaCore {
               RuleType::IntegralLiteral,
               RuleType::BooleanLiteral,
               RuleType::String,
-              RuleType::Character
+              RuleType::Character,
+              RuleType::DecimalLiteral
             );
           } else {
             ACP_EXP(exps.back().item);
@@ -2162,7 +2171,8 @@ namespace AltaCore {
                 RuleType::IntegralLiteral,
                 RuleType::String,
                 RuleType::Character,
-                RuleType::Accessor
+                RuleType::Accessor,
+                RuleType::DecimalLiteral
               );
             }
             state.internalIndex = 1;
@@ -2179,7 +2189,8 @@ namespace AltaCore {
                 RuleType::IntegralLiteral,
                 RuleType::String,
                 RuleType::Character,
-                RuleType::Accessor
+                RuleType::Accessor,
+                RuleType::DecimalLiteral
               );
             }
 
@@ -2212,7 +2223,8 @@ namespace AltaCore {
                 RuleType::IntegralLiteral,
                 RuleType::String,
                 RuleType::Character,
-                RuleType::Accessor
+                RuleType::Accessor,
+                RuleType::DecimalLiteral
               );
             }
 
@@ -2628,6 +2640,10 @@ namespace AltaCore {
           }, state, exps, ruleNode, next, saveState, restoreState)) {
             continue;
           }
+        } else if (rule == RuleType::DecimalLiteral) {
+          auto decimal = expect(TokenType::Decimal);
+          if (!decimal) ACP_NOT_OK;
+          ACP_NODE(std::make_shared<AST::FloatingPointLiteralNode>(decimal.raw));
         }
 
         next();

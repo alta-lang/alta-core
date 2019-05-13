@@ -73,6 +73,10 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Type::detail(std::shared_ptr<
         nt = DET::NativeType::Bool;
       } else if (name == "void") {
         nt = DET::NativeType::Void;
+      } else if (name == "double") {
+        nt = DET::NativeType::Double;
+      } else if (name == "float") {
+        nt = DET::NativeType::Float;
       }
 
       info->type = std::make_shared<DET::Type>(nt, modifiers);

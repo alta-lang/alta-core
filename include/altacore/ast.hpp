@@ -51,5 +51,6 @@
 #include "ast/ranged-for-loop-statement.hpp"
 #include "ast/unary-operation.hpp"
 #include "ast/sizeof-operation.hpp"
+#include "ast/floating-point-literal-node.hpp"
 
 #endif // ALTACORE_AST_HPP

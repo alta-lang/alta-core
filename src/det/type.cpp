@@ -82,6 +82,8 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     }
   } else if (auto op = dynamic_cast<DH::SizeofOperation*>(expression)) {
     return std::make_shared<Type>(NativeType::Integer, std::vector<uint8_t> { (uint8_t)Modifier::Constant, (uint8_t)Modifier::Long, (uint8_t)Modifier::Long });
+  } else if (auto deci = dynamic_cast<DH::FloatingPointLiteralNode*>(expression)) {
+    return std::make_shared<Type>(NativeType::Double, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   }
 
   return nullptr;

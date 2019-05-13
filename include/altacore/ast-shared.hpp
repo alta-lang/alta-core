@@ -61,6 +61,7 @@ namespace AltaCore {
       RangedForLoopStatement,
       UnaryOperation,
       SizeofOperation,
+      FloatingPointLiteralNode,
     };
 
     static const char* const NodeType_names[] = {
@@ -113,6 +114,7 @@ namespace AltaCore {
       "RangedForLoopStatement",
       "UnaryOperation",
       "SizeofOperation",
+      "FloatingPointLiteralNode",
     };
   };
 };
