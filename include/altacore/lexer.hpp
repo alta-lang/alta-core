@@ -44,6 +44,13 @@ namespace AltaCore {
       TimesEquals,
       DividedEquals,
       ModuloEquals,
+      LeftShift,
+      RightShift,
+      LeftShiftEquals,
+      RightShiftEquals,
+      BitwiseAndEquals,
+      BitwiseOrEquals,
+      BitwiseXorEquals,
       // </multi-character-rules>
 
       OpeningBrace,
@@ -68,6 +75,9 @@ namespace AltaCore {
       ClosingSquareBracket,
       ExclamationMark,
       Percent,
+      Tilde,
+      Caret,
+      Pipe,
 
       LAST, // always keep this as last, it counts the number of items in the enum
     };
@@ -98,6 +108,13 @@ namespace AltaCore {
       "*=",
       "/=",
       "%=",
+      "<<",
+      ">>",
+      "<<=",
+      ">>=",
+      "&=",
+      "|=",
+      "^=",
       
       "{",
       "}",
@@ -121,6 +138,9 @@ namespace AltaCore {
       "]",
       "!",
       "%",
+      "~",
+      "^",
+      "|",
 
       "",
     };
@@ -150,6 +170,13 @@ namespace AltaCore {
       "Times equals",
       "Divided equals",
       "Modulo equals",
+      "Left shift",
+      "Right shift",
+      "Left shift equals",
+      "Right shift equals",
+      "Bitwise AND equals",
+      "Bitwise OR equals",
+      "Bitwise XOR equals",
 
       "Opening brace",
       "Closing brace",
@@ -173,6 +200,9 @@ namespace AltaCore {
       "Closing square bracket",
       "Exclamation mark",
       "Percent",
+      "Tilde",
+      "Caret",
+      "Pipe",
 
       "LAST", // shouldn't be necessary, but just in case ;)
     };

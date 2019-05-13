@@ -30,6 +30,11 @@ namespace AltaCore {
       Multiplication,
       Division,
       Modulo,
+      LeftShift,
+      RightShift,
+      BitwiseAnd,
+      BitwiseOr,
+      BitwiseXor,
       EqualTo,
       NotEqualTo,
       GreaterThan,
@@ -48,6 +53,7 @@ namespace AltaCore {
       PostIncrement,
       PreDecrement,
       PostDecrement,
+      BitwiseNot,
     };
 
     enum class AssignmentType {
@@ -57,6 +63,11 @@ namespace AltaCore {
       Multiplication,
       Division,
       Modulo,
+      LeftShift,
+      RightShift,
+      BitwiseAnd,
+      BitwiseOr,
+      BitwiseXor,
     };
   };
 };

@@ -166,10 +166,14 @@ namespace AltaCore {
       RangedFor,
       //Not,
       Accessor,
-      NotOrPointerOrDereferenceOrPreIncDecOrPlusMinus,
+      NotOrPointerOrDereferenceOrPreIncDecOrPlusMinusOrBitNot,
       Sizeof,
       And,
       Or,
+      Shift,
+      BitwiseAnd,
+      BitwiseOr,
+      BitwiseXor,
     };
 
     enum class PrepoRuleType {

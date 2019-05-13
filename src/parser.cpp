@@ -1294,7 +1294,17 @@ namespace AltaCore {
               type = AT::Division;
             } else if (expect(TokenType::ModuloEquals)) {
               type = AT::Modulo;
-            } else {
+            } else if (expect(TokenType::LeftShiftEquals)) {
+              type = AT::LeftShift;
+            } else if (expect(TokenType::RightShiftEquals)) {
+              type = AT::RightShift;
+            } else if (expect(TokenType::BitwiseAndEquals)) {
+              type = AT::BitwiseAnd;
+            } else if (expect(TokenType::BitwiseOrEquals)) {
+              type = AT::BitwiseOr;
+            } else if (expect(TokenType::BitwiseAndEquals)) {
+              type = AT::BitwiseXor;
+            }else {
               ACP_EXP(exps.back().item);
             }
 
@@ -1859,7 +1869,7 @@ namespace AltaCore {
         } else if (rule == RuleType::PunctualConditonalExpression) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
-            ACP_RULE(And);
+            ACP_RULE(Or);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
 
@@ -2240,7 +2250,7 @@ namespace AltaCore {
         } else if (rule == RuleType::Cast) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
-            ACP_RULE(NotOrPointerOrDereferenceOrPreIncDecOrPlusMinus);
+            ACP_RULE(NotOrPointerOrDereferenceOrPreIncDecOrPlusMinusOrBitNot);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
             auto cast = std::make_shared<AST::CastExpression>();
@@ -2259,7 +2269,7 @@ namespace AltaCore {
             cast->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
             ACP_NODE((cast));
           }
-        } else if (rule == RuleType::NotOrPointerOrDereferenceOrPreIncDecOrPlusMinus) {
+        } else if (rule == RuleType::NotOrPointerOrDereferenceOrPreIncDecOrPlusMinusOrBitNot) {
           if (state.internalIndex == 0) {
             saveState();
 
@@ -2271,6 +2281,7 @@ namespace AltaCore {
             bool isPreDecrement = false;
             bool isPlus = false;
             bool isMinus = false;
+            bool isBitwiseNot = false;
 
             while (
               (isNot =          expect(TokenType::ExclamationMark) || expectKeyword("not")) ||
@@ -2279,7 +2290,8 @@ namespace AltaCore {
               (isPreIncrement = !!expect(TokenType::Increment)) ||
               (isPreDecrement = !!expect(TokenType::Decrement)) ||
               (isPlus =         !!expect(TokenType::PlusSign)) ||
-              (isMinus =        !!expect(TokenType::MinusSign))
+              (isMinus =        !!expect(TokenType::MinusSign)) ||
+              (isBitwiseNot =   !!expect(TokenType::Tilde))
             ) {
               if (isPointer) {
                 exprs.push(std::make_shared<AST::PointerExpression>());
@@ -2297,10 +2309,12 @@ namespace AltaCore {
                   expr->type = AST::UOperatorType::Plus;
                 } else if (isMinus) {
                   expr->type = AST::UOperatorType::Minus;
+                } else if (isBitwiseNot) {
+                  expr->type = AST::UOperatorType::BitwiseNot;
                 }
                 exprs.push(expr);
               }
-              isNot = isPointer = isDereference = isPreDecrement = isPreIncrement = isPlus = isMinus = false;
+              isNot = isPointer = isDereference = isPreDecrement = isPreIncrement = isPlus = isMinus = isBitwiseNot = false;
             }
 
             state.internalValue = exprs;
@@ -2400,7 +2414,7 @@ namespace AltaCore {
         } else if (rule == RuleType::Instanceof) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
-            ACP_RULE(AdditionOrSubtraction);
+            ACP_RULE(Shift);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
             if (!expectKeyword("instanceof")) ACP_EXP(exps.back().item);
@@ -2565,7 +2579,7 @@ namespace AltaCore {
             ACP_NODE(op);
           }
         } else if (rule == RuleType::And) {
-          if (expectBinaryOperation(RuleType::And, RuleType::Or, {
+          if (expectBinaryOperation(RuleType::And, RuleType::BitwiseOr, {
             TokenType::And
           }, {
             AST::OperatorType::LogicalAnd,
@@ -2573,10 +2587,44 @@ namespace AltaCore {
             continue;
           }
         } else if (rule == RuleType::Or) {
-          if (expectBinaryOperation(RuleType::Or, RuleType::EqualityRelationalOperation, {
+          if (expectBinaryOperation(RuleType::Or, RuleType::And, {
             TokenType::Or
           }, {
             AST::OperatorType::LogicalOr,
+          }, state, exps, ruleNode, next, saveState, restoreState)) {
+            continue;
+          }
+        } else if (rule == RuleType::Shift) {
+          if (expectBinaryOperation(RuleType::Shift, RuleType::AdditionOrSubtraction, {
+            TokenType::LeftShift,
+            TokenType::RightShift,
+          }, {
+            AST::OperatorType::LeftShift,
+            AST::OperatorType::RightShift,
+          }, state, exps, ruleNode, next, saveState, restoreState)) {
+            continue;
+          }
+        } else if (rule == RuleType::BitwiseAnd) {
+          if (expectBinaryOperation(RuleType::BitwiseAnd, RuleType::EqualityRelationalOperation, {
+            TokenType::Ampersand,
+          }, {
+            AST::OperatorType::BitwiseAnd,
+          }, state, exps, ruleNode, next, saveState, restoreState)) {
+            continue;
+          }
+        } else if (rule == RuleType::BitwiseOr) {
+          if (expectBinaryOperation(RuleType::BitwiseOr, RuleType::BitwiseXor, {
+            TokenType::Pipe,
+          }, {
+            AST::OperatorType::BitwiseOr,
+          }, state, exps, ruleNode, next, saveState, restoreState)) {
+            continue;
+          }
+        } else if (rule == RuleType::BitwiseXor) {
+          if (expectBinaryOperation(RuleType::BitwiseXor, RuleType::BitwiseAnd, {
+            TokenType::Caret,
+          }, {
+            AST::OperatorType::BitwiseXor,
           }, state, exps, ruleNode, next, saveState, restoreState)) {
             continue;
           }
