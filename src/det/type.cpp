@@ -35,7 +35,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto boolean = dynamic_cast<DH::BooleanLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (auto binOp = dynamic_cast<DH::BinaryOperation*>(expression)) {
-    if ((uint8_t)binOp->type <= (uint8_t)Shared::OperatorType::Division) {
+    if ((uint8_t)binOp->type <= (uint8_t)Shared::OperatorType::Modulo) {
       return getUnderlyingType(binOp->left.get());
     } else {
       return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });

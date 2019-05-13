@@ -29,6 +29,7 @@ namespace AltaCore {
       Subtraction,
       Multiplication,
       Division,
+      Modulo,
       EqualTo,
       NotEqualTo,
       GreaterThan,
@@ -47,6 +48,15 @@ namespace AltaCore {
       PostIncrement,
       PreDecrement,
       PostDecrement,
+    };
+
+    enum class AssignmentType {
+      Simple,
+      Addition,
+      Subtraction,
+      Multiplication,
+      Division,
+      Modulo,
     };
   };
 };

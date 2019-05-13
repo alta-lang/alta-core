@@ -39,6 +39,11 @@ namespace AltaCore {
       Inequality,
       Increment,
       Decrement,
+      PlusEquals,
+      MinusEquals,
+      TimesEquals,
+      DividedEquals,
+      ModuloEquals,
       // </multi-character-rules>
 
       OpeningBrace,
@@ -87,6 +92,11 @@ namespace AltaCore {
       "!=",
       "++",
       "--",
+      "+=",
+      "-=",
+      "*=",
+      "/=",
+      "%=",
       
       "{",
       "}",
@@ -109,6 +119,7 @@ namespace AltaCore {
       "[",
       "]",
       "!",
+      "%",
 
       "",
     };
@@ -133,6 +144,11 @@ namespace AltaCore {
       "Inequality",
       "Increment",
       "Decrement",
+      "Plus equals",
+      "Minus equals",
+      "Times equals",
+      "Divided equals",
+      "Modulo equals",
 
       "Opening brace",
       "Closing brace",

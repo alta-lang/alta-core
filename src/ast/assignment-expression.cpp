@@ -15,6 +15,7 @@ ALTACORE_AST_DETAIL_D(AssignmentExpression) {
 
   info->target = target->fullDetail(scope);
   info->value = value->fullDetail(scope);
+  info->type = type;
 
   return info;
 };
@@ -33,6 +34,10 @@ ALTACORE_AST_VALIDATE_D(AssignmentExpression) {
 
   if (!targetType->destroyReferences()->isCompatibleWith(*valueType)) {
     ALTACORE_VALIDATION_ERROR("source type is not compatible with the destination type for assignment expression");
+  }
+
+  if (type != AssignmentType::Simple && !targetType->isNative) {
+    ALTACORE_VALIDATION_ERROR("cannot perform compound addition on non-native types");
   }
 
   ALTACORE_VS_E;

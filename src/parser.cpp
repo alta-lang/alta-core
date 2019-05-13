@@ -1278,18 +1278,39 @@ namespace AltaCore {
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
 
-            if (!expect(TokenType::EqualSign)) ACP_EXP(exps.back().item);
+            using AT = AST::AssignmentType;
+
+            AT type = AT::Simple;
+
+            if (expect(TokenType::EqualSign)) {
+              type = AT::Simple;
+            } else if (expect(TokenType::PlusEquals)) {
+              type = AT::Addition;
+            } else if (expect(TokenType::MinusEquals)) {
+              type = AT::Subtraction;
+            } else if (expect(TokenType::TimesEquals)) {
+              type = AT::Multiplication;
+            } else if (expect(TokenType::DividedEquals)) {
+              type = AT::Division;
+            } else if (expect(TokenType::ModuloEquals)) {
+              type = AT::Modulo;
+            } else {
+              ACP_EXP(exps.back().item);
+            }
 
             ruleNode = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
             state.internalIndex = 2;
+            state.internalValue = type;
 
             ACP_RULE(Assignment);
           } else {
             if (!exps.back()) ACP_NOT_OK;
 
             auto lhs = std::dynamic_pointer_cast<AST::ExpressionNode>(ruleNode);
+            auto node = std::make_shared<AST::AssignmentExpression>(lhs, std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item));
+            node->type = ALTACORE_ANY_CAST<AST::AssignmentType>(state.internalValue);
 
-            ACP_NODE((std::make_shared<AST::AssignmentExpression>(lhs, std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item))));
+            ACP_NODE(node);
           }
         } else if (rule == RuleType::AdditionOrSubtraction) {
           if (expectBinaryOperation(rule, RuleType::MultiplicationOrDivision, {
