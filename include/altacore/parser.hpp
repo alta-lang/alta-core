@@ -129,7 +129,7 @@ namespace AltaCore {
       Fetch,
       Assignment,
       AdditionOrSubtraction,
-      MultiplicationOrDivision,
+      MultiplicationOrDivisionOrModulo,
       ModuleOnlyStatement,
       Import,
       BooleanLiteral,

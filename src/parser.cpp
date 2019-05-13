@@ -1313,7 +1313,7 @@ namespace AltaCore {
             ACP_NODE(node);
           }
         } else if (rule == RuleType::AdditionOrSubtraction) {
-          if (expectBinaryOperation(rule, RuleType::MultiplicationOrDivision, {
+          if (expectBinaryOperation(rule, RuleType::MultiplicationOrDivisionOrModulo, {
             TokenType::PlusSign,
             TokenType::MinusSign,
           }, {
@@ -1322,13 +1322,15 @@ namespace AltaCore {
           }, state, exps, ruleNode, next, saveState, restoreState)) {
             continue;
           }
-        } else if (rule == RuleType::MultiplicationOrDivision) {
+        } else if (rule == RuleType::MultiplicationOrDivisionOrModulo) {
           if (expectBinaryOperation(rule, RuleType::Cast, {
             TokenType::Asterisk,
             TokenType::ForwardSlash,
+            TokenType::Percent,
           }, {
             AST::OperatorType::Multiplication,
             AST::OperatorType::Division,
+            AST::OperatorType::Modulo,
           }, state, exps, ruleNode, next, saveState, restoreState)) {
             continue;
           }

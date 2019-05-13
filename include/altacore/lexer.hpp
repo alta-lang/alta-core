@@ -67,6 +67,7 @@ namespace AltaCore {
       OpeningSquareBracket,
       ClosingSquareBracket,
       ExclamationMark,
+      Percent,
 
       LAST, // always keep this as last, it counts the number of items in the enum
     };
@@ -171,6 +172,7 @@ namespace AltaCore {
       "Opening square bracket",
       "Closing square bracket",
       "Exclamation mark",
+      "Percent",
 
       "LAST", // shouldn't be necessary, but just in case ;)
     };
