@@ -417,6 +417,18 @@ namespace AltaCore {
 
       std::shared_ptr<Type> target = nullptr;
     };
+    class StructureDefinitionStatement: public StatementNode {
+      ALTACORE_DH_CTOR(StructureDefinitionStatement, StatementNode);
+
+      bool isExternal = false;
+      bool isTyped = false;
+      bool isLiteral = false;
+      bool isExport = false;
+      std::vector<std::shared_ptr<Type>> memberTypes;
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
+
+      std::shared_ptr<DET::Class> structure = nullptr;
+    };
 
     #undef ALTACORE_DH_CTOR
   };

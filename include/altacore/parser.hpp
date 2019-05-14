@@ -76,6 +76,7 @@ namespace AltaCore {
       ClassStatement,
       Class,
       TypeAlias,
+      Structure,
     };
 
     /**
@@ -111,6 +112,10 @@ namespace AltaCore {
         "generic",
       },
       {
+        "export",
+      },
+      {
+        "literal",
         "export",
       },
     };
@@ -175,6 +180,7 @@ namespace AltaCore {
       BitwiseOr,
       BitwiseXor,
       DecimalLiteral,
+      Structure,
     };
 
     enum class PrepoRuleType {

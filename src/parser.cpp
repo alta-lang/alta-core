@@ -805,6 +805,7 @@ namespace AltaCore {
             RuleType::ConditionalStatement,
             RuleType::Block,
             RuleType::ClassDefinition,
+            RuleType::Structure,
             RuleType::WhileLoop,
             RuleType::ForLoop,
             RuleType::RangedFor,
@@ -2644,6 +2645,80 @@ namespace AltaCore {
           auto decimal = expect(TokenType::Decimal);
           if (!decimal) ACP_NOT_OK;
           ACP_NODE(std::make_shared<AST::FloatingPointLiteralNode>(decimal.raw));
+        } else if (rule == RuleType::Structure) {
+          if (state.internalIndex == 0) {
+            state.internalIndex = 1;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 1) {
+            if (exps.back()) ACP_RULE(Attribute);
+
+            exps.pop_back();
+
+            auto structure = ruleNode ? std::dynamic_pointer_cast<AST::StructureDefinitionStatement>(ruleNode) : std::make_shared<AST::StructureDefinitionStatement>();
+            auto mods = expectModifiers(ModifierTargetType::Structure);
+            structure->modifiers.insert(structure->modifiers.end(), mods.begin(), mods.end());
+
+            ruleNode = std::move(structure);
+            state.internalIndex = 2;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 2) {
+            if (exps.back()) {
+              state.internalIndex = 1;
+              ACP_RULE(Attribute);
+            }
+
+            exps.pop_back();
+
+            auto structure = std::dynamic_pointer_cast<AST::StructureDefinitionStatement>(ruleNode);
+
+            for (auto& exp: exps) {
+              structure->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+            }
+            exps.clear();
+
+            if (!expectKeyword("struct")) ACP_NOT_OK;
+
+            auto name = expect(TokenType::Identifier);
+            if (!name) ACP_NOT_OK;
+            structure->name = name.raw;
+
+            if (!expect(TokenType::OpeningBrace)) ACP_NOT_OK;
+
+            state.internalIndex = 3;
+            ACP_RULE(NullRule);
+          } else if (state.internalIndex == 3) {
+            auto name = expect(TokenType::Identifier);
+            if (!name) {
+              state.internalIndex = 5;
+              ACP_RULE(NullRule);
+            }
+
+            if (!expect(TokenType::Colon)) ACP_NOT_OK;
+
+            auto structure = std::dynamic_pointer_cast<AST::StructureDefinitionStatement>(ruleNode);
+            structure->members.push_back(std::make_pair(std::shared_ptr<AST::Type>(nullptr), name.raw));
+
+            state.internalIndex = 4;
+            ACP_RULE(Type);
+          } else if (state.internalIndex == 4) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto structure = std::dynamic_pointer_cast<AST::StructureDefinitionStatement>(ruleNode);
+            structure->members.back().first = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+            // optional line terminators
+            while (expect(TokenType::Semicolon));
+            while (expect(TokenType::Comma));
+
+            state.internalIndex = 3;
+            ACP_RULE(NullRule);
+          } else {
+            if (!expect(TokenType::ClosingBrace)) ACP_NOT_OK;
+
+            auto structure = std::dynamic_pointer_cast<AST::StructureDefinitionStatement>(ruleNode);
+
+            ACP_NODE(structure);
+          }
         }
 
         next();

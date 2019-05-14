@@ -17,12 +17,15 @@ std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Class::deepClone() {
   return self;
 };
 
-std::shared_ptr<AltaCore::DET::Class> AltaCore::DET::Class::create(std::string name, std::shared_ptr<AltaCore::DET::Scope> parentScope, std::vector<std::shared_ptr<Class>> parents) {
+std::shared_ptr<AltaCore::DET::Class> AltaCore::DET::Class::create(std::string name, std::shared_ptr<AltaCore::DET::Scope> parentScope, std::vector<std::shared_ptr<Class>> parents, bool isStructure) {
   auto klass = std::make_shared<Class>(name, parentScope, parents);
   klass->scope = std::make_shared<Scope>(klass);
   auto thisType = std::make_shared<Type>(klass, std::vector<uint8_t> { (uint8_t)Shared::TypeModifierFlag::Reference });
+  klass->isStructure = isStructure;
 
-  klass->scope->items.push_back(std::make_shared<Variable>("this", thisType, klass->scope));
+  if (!isStructure) {
+    klass->scope->items.push_back(std::make_shared<Variable>("this", thisType, klass->scope));
+  }
 
   return klass;
 };

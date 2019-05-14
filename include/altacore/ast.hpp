@@ -52,5 +52,6 @@
 #include "ast/unary-operation.hpp"
 #include "ast/sizeof-operation.hpp"
 #include "ast/floating-point-literal-node.hpp"
+#include "ast/structure-definition-statement.hpp"
 
 #endif // ALTACORE_AST_HPP
