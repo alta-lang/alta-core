@@ -1355,7 +1355,10 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::ModuleOnlyStatement) {
           if (state.iteration == 0) {
-            ACP_RULE(Import);
+            ACP_RULE_LIST(
+              RuleType::Import,
+              RuleType::Export
+            );
           } else {
             while (expect(TokenType::Semicolon)); // optional
             if (!exps.back()) ACP_NOT_OK;
@@ -2718,6 +2721,108 @@ namespace AltaCore {
             auto structure = std::dynamic_pointer_cast<AST::StructureDefinitionStatement>(ruleNode);
 
             ACP_NODE(structure);
+          }
+        } else if (rule == RuleType::Export) {
+          if (state.internalIndex == 0) {
+            if (!expectKeyword("export")) ACP_NOT_OK;
+
+            auto statement = std::make_shared<AST::ExportStatement>();
+            ruleNode = statement;
+
+            if (expect(TokenType::Asterisk)) {
+              statement->externalTarget = std::make_shared<AST::ImportStatement>();
+              statement->externalTarget->isAliased = statement->externalTarget->isManual = true;
+              bool foundAs = false;
+              if (expectKeyword("as")) {
+                foundAs = true;
+                auto alias = expect(TokenType::Identifier);
+                if (!alias) ACP_NOT_OK;
+                statement->externalTarget->alias = alias.raw;
+              }
+              if (!expectKeyword("from")) ACP_NOT_OK;
+              auto request = expect(TokenType::String);
+              if (!request) ACP_NOT_OK;
+              statement->externalTarget->request = request.raw.substr(1, request.raw.length() - 2);
+              if (!foundAs && expectKeyword("as")) {
+                foundAs = true;
+                auto alias = expect(TokenType::Identifier);
+                if (!alias) ACP_NOT_OK;
+                statement->externalTarget->alias = alias.raw;
+              }
+              ACP_NODE(ruleNode);
+            }
+
+            state.internalValue = false;
+
+            if (expect(TokenType::OpeningBrace)) {
+              statement->externalTarget = std::make_shared<AST::ImportStatement>();
+              state.internalIndex = 2;
+              state.internalValue = true;
+              ACP_RULE(NullRule);
+            }
+
+            saveState();
+
+            state.internalIndex = 1;
+            ACP_RULE(StrictAccessor);
+          } else if (state.internalIndex == 1) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto statement = std::dynamic_pointer_cast<AST::ExportStatement>(ruleNode);
+
+            if (expect(TokenType::Comma)) {
+              restoreState();
+              statement->externalTarget = std::make_shared<AST::ImportStatement>();
+              state.internalIndex = 2;
+              ACP_RULE(NullRule);
+            }
+
+            Token alias;
+            if (expectKeyword("as")) {
+              alias = expect(TokenType::Identifier);
+            }
+
+            if (expectKeyword("from") && expect(TokenType::String)) {
+              restoreState();
+              statement->externalTarget = std::make_shared<AST::ImportStatement>();
+              state.internalIndex = 2;
+              ACP_RULE(NullRule);
+            }
+
+            statement->localTarget = std::dynamic_pointer_cast<AST::RetrievalNode>(*exps.back().item);
+            statement->localTargetAlias = alias ? alias.raw : "";
+
+            ACP_NODE(statement);
+          } else if (state.internalIndex == 2) {
+            Token id;
+
+            auto statement = std::dynamic_pointer_cast<AST::ExportStatement>(ruleNode);
+
+            while (id = expect(TokenType::Identifier)) {
+              statement->externalTarget->imports.push_back(std::make_pair(id.raw, ""));
+              saveState();
+              if (expectKeyword("as")) {
+                auto alias = expect(TokenType::Identifier);
+                if (!alias) {
+                  restoreState();
+                } else {
+                  statement->externalTarget->imports.back().second = alias.raw;
+                }
+              }
+              if (!expect(TokenType::Comma)) break;
+            }
+
+            if (ALTACORE_ANY_CAST<bool>(state.internalValue)) {
+              if (!expect(TokenType::ClosingBrace)) ACP_NOT_OK;
+            }
+
+            if (!expectKeyword("from")) ACP_NOT_OK;
+
+            auto request = expect(TokenType::String);
+            if (!request) ACP_NOT_OK;
+            statement->externalTarget->request = request.raw.substr(1, request.raw.length() - 2);
+
+            ACP_NODE(statement);
           }
         }
 

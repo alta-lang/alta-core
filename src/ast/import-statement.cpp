@@ -29,21 +29,23 @@ ALTACORE_AST_DETAIL_D(ImportStatement) {
   info->importedModule = info->importedAST->info->module;
   info->parentModule->dependencies.push_back(info->importedModule);
   info->importedModule->dependents.push_back(info->parentModule);
-  if (isAliased) {
-    auto ns = std::make_shared<DET::Namespace>(alias, info->parentModule->scope);
-    ns->scope = info->importedModule->exports;
-    info->parentModule->scope->items.push_back(ns);
-  } else {
-    for (auto& [imp, alias]: imports) {
-      auto items = info->importedModule->exports->findAll(imp);
-      info->importedItems.insert(info->importedItems.end(), items.begin(), items.end());
-      if (!alias.empty()) {
-        for (auto& item: items) {
-          auto aliasItem = std::make_shared<DET::Alias>(alias, item, info->parentModule->scope);
-          info->parentModule->scope->items.push_back(aliasItem);
+  if (!isManual) {
+    if (isAliased) {
+      auto ns = std::make_shared<DET::Namespace>(alias, info->parentModule->scope);
+      ns->scope = info->importedModule->exports;
+      info->parentModule->scope->items.push_back(ns);
+    } else {
+      for (auto& [imp, alias]: imports) {
+        auto items = info->importedModule->exports->findAll(imp);
+        info->importedItems.insert(info->importedItems.end(), items.begin(), items.end());
+        if (!alias.empty()) {
+          for (auto& item: items) {
+            auto aliasItem = std::make_shared<DET::Alias>(alias, item, info->parentModule->scope);
+            info->parentModule->scope->items.push_back(aliasItem);
+          }
+        } else {
+          info->parentModule->scope->items.insert(info->parentModule->scope->items.end(), items.begin(), items.end());
         }
-      } else {
-        info->parentModule->scope->items.insert(info->parentModule->scope->items.end(), items.begin(), items.end());
       }
     }
   }
@@ -53,13 +55,15 @@ ALTACORE_AST_DETAIL_D(ImportStatement) {
 ALTACORE_AST_VALIDATE_D(ImportStatement) {
   ALTACORE_VS_S(ImportStatement);
   if (request.empty()) ALTACORE_VALIDATION_ERROR("empty request/query string for import statement");
-  if (isAliased) {
-    if (imports.size() > 0) ALTACORE_VALIDATION_ERROR("no individual imports should be present for aliased imports");
-    if (alias.empty()) ALTACORE_VALIDATION_ERROR("empty alias for aliased import");
-  } else {
-    if (!alias.empty()) ALTACORE_VALIDATION_ERROR("no aliases should be present for non-alised imports");
-    for (auto& [imp, alias]: imports) {
-      if (imp.empty()) ALTACORE_VALIDATION_ERROR("empty individual import for non-alised import");
+  if (!isManual) {
+    if (isAliased) {
+      if (imports.size() > 0) ALTACORE_VALIDATION_ERROR("no individual imports should be present for aliased imports");
+      if (alias.empty()) ALTACORE_VALIDATION_ERROR("empty alias for aliased import");
+    } else {
+      if (!alias.empty()) ALTACORE_VALIDATION_ERROR("no aliases should be present for non-alised imports");
+      for (auto& [imp, alias]: imports) {
+        if (imp.empty()) ALTACORE_VALIDATION_ERROR("empty individual import for non-alised import");
+      }
     }
   }
   if (!info->importedAST) ALTACORE_VALIDATION_ERROR("improperly detailed import statement: empty AST");

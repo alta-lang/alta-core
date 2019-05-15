@@ -63,6 +63,7 @@ namespace AltaCore {
       SizeofOperation,
       FloatingPointLiteralNode,
       StructureDefinitionStatement,
+      ExportStatement,
     };
 
     static const char* const NodeType_names[] = {
@@ -117,6 +118,7 @@ namespace AltaCore {
       "SizeofOperation",
       "FloatingPointLiteralNode",
       "StructureDefinitionNode",
+      "ExportStatement",
     };
   };
 };

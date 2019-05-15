@@ -429,6 +429,12 @@ namespace AltaCore {
 
       std::shared_ptr<DET::Class> structure = nullptr;
     };
+    class ExportStatement: public StatementNode {
+      ALTACORE_DH_CTOR(ExportStatement, StatementNode);
+
+      std::shared_ptr<ImportStatement> externalTarget;
+      std::shared_ptr<RetrievalNode> localTarget;
+    };
 
     #undef ALTACORE_DH_CTOR
   };

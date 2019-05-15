@@ -76,6 +76,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/sizeof-operation.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/floating-point-literal-node.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/structure-definition-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/export-statement.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

@@ -181,6 +181,7 @@ namespace AltaCore {
       BitwiseXor,
       DecimalLiteral,
       Structure,
+      Export,
     };
 
     enum class PrepoRuleType {

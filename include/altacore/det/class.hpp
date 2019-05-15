@@ -27,6 +27,7 @@ namespace AltaCore {
         bool isExternal = false;
         bool isTyped = true;
         bool isLiteral = false;
+        bool isExport = false;
 
         std::shared_ptr<Scope> scope = nullptr;
         std::shared_ptr<Function> defaultConstructor = nullptr;
