@@ -182,6 +182,7 @@ namespace AltaCore {
       DecimalLiteral,
       Structure,
       Export,
+      VariableDeclaration,
     };
 
     enum class PrepoRuleType {

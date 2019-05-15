@@ -435,6 +435,14 @@ namespace AltaCore {
       std::shared_ptr<ImportStatement> externalTarget;
       std::shared_ptr<RetrievalNode> localTarget;
     };
+    class VariableDeclarationStatement: public StatementNode {
+      ALTACORE_DH_CTOR(VariableDeclarationStatement, StatementNode);
+
+      std::shared_ptr<Type> type;
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
+
+      std::shared_ptr<DET::Variable> variable = nullptr;
+    };
 
     #undef ALTACORE_DH_CTOR
   };

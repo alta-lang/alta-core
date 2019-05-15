@@ -573,6 +573,15 @@ namespace AltaCore {
           result->position.column = tok.column;
           result->position.filePosition = tok.position;
           result->position.file = filePath;
+
+          if (auto statement = std::dynamic_pointer_cast<AST::ExportStatement>(result)) {
+            if (statement->externalTarget) {
+              statement->externalTarget->position.line = tok.line;
+              statement->externalTarget->position.column = tok.column;
+              statement->externalTarget->position.filePosition = tok.position;
+              statement->externalTarget->position.file = filePath;
+            }
+          }
         }
 
         // the null rule is never executed, it's used to jump to a different
@@ -798,26 +807,54 @@ namespace AltaCore {
           next(true);
           break;
         } else if (rule == RuleType::Statement) {
-          if (state.iteration == 0) ACP_RULE_LIST(
-            RuleType::FunctionDefinition,
-            RuleType::FunctionDeclaration,
-            RuleType::ReturnDirective,
-            RuleType::ConditionalStatement,
-            RuleType::Block,
-            RuleType::ClassDefinition,
-            RuleType::Structure,
-            RuleType::WhileLoop,
-            RuleType::ForLoop,
-            RuleType::RangedFor,
-            RuleType::TypeAlias,
-            RuleType::Expression,
+          if (state.iteration == 0) {
+            if (ruleStack.size() == 2) {
+              ACP_RULE_LIST(
+                RuleType::FunctionDefinition,
+                RuleType::FunctionDeclaration,
+                RuleType::ReturnDirective,
+                RuleType::ConditionalStatement,
+                RuleType::Block,
+                RuleType::ClassDefinition,
+                RuleType::Structure,
+                RuleType::WhileLoop,
+                RuleType::ForLoop,
+                RuleType::RangedFor,
+                RuleType::TypeAlias,
+                RuleType::VariableDeclaration,
+                RuleType::Export,
+                RuleType::Expression,
 
-            // general attributes must come last because
-            // they're supposed to be able to interpreted as part of
-            // other statements that accept attributes if any such
-            // statement is present
-            RuleType::GeneralAttribute
-          );
+                // general attributes must come last because
+                // they're supposed to be able to interpreted as part of
+                // other statements that accept attributes if any such
+                // statement is present
+                RuleType::GeneralAttribute
+              );
+            } else {
+              ACP_RULE_LIST(
+                RuleType::FunctionDefinition,
+                RuleType::FunctionDeclaration,
+                RuleType::ReturnDirective,
+                RuleType::ConditionalStatement,
+                RuleType::Block,
+                RuleType::ClassDefinition,
+                RuleType::Structure,
+                RuleType::WhileLoop,
+                RuleType::ForLoop,
+                RuleType::RangedFor,
+                RuleType::TypeAlias,
+                RuleType::VariableDeclaration,
+                RuleType::Expression,
+
+                // general attributes must come last because
+                // they're supposed to be able to interpreted as part of
+                // other statements that accept attributes if any such
+                // statement is present
+                RuleType::GeneralAttribute
+              );
+            }
+          }
 
           if (!exps.back()) ACP_NOT_OK;
 
@@ -1355,10 +1392,7 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::ModuleOnlyStatement) {
           if (state.iteration == 0) {
-            ACP_RULE_LIST(
-              RuleType::Import,
-              RuleType::Export
-            );
+            ACP_RULE(Import);
           } else {
             while (expect(TokenType::Semicolon)); // optional
             if (!exps.back()) ACP_NOT_OK;
@@ -2823,6 +2857,59 @@ namespace AltaCore {
             statement->externalTarget->request = request.raw.substr(1, request.raw.length() - 2);
 
             ACP_NODE(statement);
+          }
+        } else if (rule == RuleType::VariableDeclaration) {
+          if (state.internalIndex == 0) {
+            if (!expectKeyword("declare")) ACP_NOT_OK;
+
+            state.internalIndex = 1;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 1) {
+            if (exps.back()) ACP_RULE(Attribute);
+
+            exps.pop_back();
+
+            auto var = ruleNode ? std::dynamic_pointer_cast<AST::VariableDeclarationStatement>(ruleNode) : std::make_shared<AST::VariableDeclarationStatement>();
+            auto mods = expectModifiers(ModifierTargetType::Variable);
+            var->modifiers.insert(var->modifiers.end(), mods.begin(), mods.end());
+
+            ruleNode = std::move(var);
+            state.internalIndex = 2;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 2) {
+            if (exps.back()) {
+              state.internalIndex = 1;
+              ACP_RULE(Attribute);
+            }
+
+            exps.pop_back();
+
+            auto var = std::dynamic_pointer_cast<AST::VariableDeclarationStatement>(ruleNode);
+
+            for (auto& exp: exps) {
+              var->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+            }
+            exps.clear();
+
+            if (!expectKeyword("let") && !expectKeyword("var")) ACP_NOT_OK;
+
+            auto id = expect(TokenType::Identifier);
+            if (!id) ACP_NOT_OK;
+
+            var->name = id.raw;
+
+            if (!expect(TokenType::Colon)) ACP_NOT_OK;
+
+            state.internalIndex = 3;
+            ACP_RULE(Type);
+          } else if (state.internalIndex == 3) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto var = std::dynamic_pointer_cast<AST::VariableDeclarationStatement>(ruleNode);
+
+            var->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+            ACP_NODE(var);
           }
         }
 
