@@ -444,6 +444,12 @@ namespace AltaCore {
 
       std::shared_ptr<DET::Variable> variable = nullptr;
     };
+    class AliasStatement: public StatementNode {
+      ALTACORE_DH_CTOR(AliasStatement, StatementNode);
+
+      std::shared_ptr<RetrievalNode> target = nullptr;
+      std::vector<std::shared_ptr<DET::Alias>> aliases;
+    };
 
     #undef ALTACORE_DH_CTOR
   };

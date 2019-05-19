@@ -822,6 +822,7 @@ namespace AltaCore {
                 RuleType::RangedFor,
                 RuleType::TypeAlias,
                 RuleType::VariableDeclaration,
+                RuleType::Alias,
                 RuleType::Export,
                 RuleType::Expression,
 
@@ -845,6 +846,7 @@ namespace AltaCore {
                 RuleType::RangedFor,
                 RuleType::TypeAlias,
                 RuleType::VariableDeclaration,
+                RuleType::Alias,
                 RuleType::Expression,
 
                 // general attributes must come last because
@@ -2945,6 +2947,29 @@ namespace AltaCore {
             var->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
 
             ACP_NODE(var);
+          }
+        } else if (rule == RuleType::Alias) {
+          if (state.internalIndex == 0) {
+            if (!expectKeyword("using")) ACP_NOT_OK;
+
+            auto name = expect(TokenType::Identifier);
+            if (!name) ACP_NOT_OK;
+
+            if (!expect(TokenType::EqualSign)) ACP_NOT_OK;
+
+            auto alias = std::make_shared<AST::AliasStatement>();
+            alias->name = name.raw;
+
+            ruleNode = std::move(alias);
+            state.internalIndex = 1;
+            ACP_RULE(StrictAccessor);
+          } else {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto alias = std::dynamic_pointer_cast<AST::AliasStatement>(ruleNode);
+            alias->target = std::dynamic_pointer_cast<AST::RetrievalNode>(*exps.back().item);
+
+            ACP_NODE(alias);
           }
         }
 

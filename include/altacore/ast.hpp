@@ -55,5 +55,6 @@
 #include "ast/structure-definition-statement.hpp"
 #include "ast/export-statement.hpp"
 #include "ast/variable-declaration-statement.hpp"
+#include "ast/alias-statement.hpp"
 
 #endif // ALTACORE_AST_HPP

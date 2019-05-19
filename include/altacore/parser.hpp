@@ -183,6 +183,7 @@ namespace AltaCore {
       Structure,
       Export,
       VariableDeclaration,
+      Alias,
     };
 
     enum class PrepoRuleType {

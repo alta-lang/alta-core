@@ -78,6 +78,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/structure-definition-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/export-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/variable-declaration-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/alias-statement.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

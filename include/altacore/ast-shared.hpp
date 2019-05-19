@@ -65,6 +65,7 @@ namespace AltaCore {
       StructureDefinitionStatement,
       ExportStatement,
       VariableDeclarationStatement,
+      AliasStatement,
     };
 
     static const char* const NodeType_names[] = {
@@ -121,6 +122,7 @@ namespace AltaCore {
       "StructureDefinitionNode",
       "ExportStatement",
       "VariableDeclarationStatement",
+      "AliasStatement",
     };
   };
 };
