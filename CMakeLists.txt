@@ -99,6 +99,7 @@ target_compile_definitions(altacore PUBLIC ALTACORE_LOCAL_ANY)
 
 if (CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "10.14")
   target_compile_definitions(altacore PUBLIC ALTACORE_NO_SYSTEM_ANY)
+  target_compile_definitions(altacore PUBLIC ALTACORE_NO_SYSTEM_VARIANT)
 endif()
 
 target_link_libraries(altacore PRIVATE yaml-cpp)
