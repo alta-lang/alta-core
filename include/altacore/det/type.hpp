@@ -35,6 +35,7 @@ namespace AltaCore {
         bool isAccessor = false;
         std::shared_ptr<Class> methodParent = nullptr;
         NativeType nativeTypeName = NativeType::Void;
+        std::string userDefinedName;
         std::shared_ptr<Class> klass = nullptr;
         std::shared_ptr<Type> returnType = nullptr;
         std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters;
@@ -86,7 +87,7 @@ namespace AltaCore {
           ScopeItem(""),
           isAny(true)
           {};
-        Type(NativeType nativeTypeName, std::vector<uint8_t> modifiers = {});
+        Type(NativeType nativeTypeName, std::vector<uint8_t> modifiers = {}, std::string userDefinedName = "");
         Type(std::shared_ptr<Type> returnType, std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters, std::vector<uint8_t> modifiers = {});
         Type(std::shared_ptr<Class> klass, std::vector<uint8_t> modifiers = {});
 

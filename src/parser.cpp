@@ -2419,22 +2419,57 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::TypeAlias) {
           if (state.internalIndex == 0) {
+            state.internalIndex = 1;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 1) {
+            if (exps.back()) ACP_RULE(Attribute);
+
+            exps.pop_back();
+
+            auto typeAlias = ruleNode ? std::dynamic_pointer_cast<AST::TypeAliasStatement>(ruleNode) : std::make_shared<AST::TypeAliasStatement>();
             auto mods = expectModifiers(ModifierTargetType::TypeAlias);
+            typeAlias->modifiers.insert(typeAlias->modifiers.end(), mods.begin(), mods.end());
+
+            ruleNode = std::move(typeAlias);
+            state.internalIndex = 2;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 2) {
+            if (exps.back()) {
+              state.internalIndex = 1;
+              ACP_RULE(Attribute);
+            }
+
+            exps.pop_back();
+
+            auto typeAlias = std::dynamic_pointer_cast<AST::TypeAliasStatement>(ruleNode);
+
+            for (auto& exp: exps) {
+              typeAlias->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+            }
+            exps.clear();
+
             if (!expectKeyword("type")) ACP_NOT_OK;
+
             auto name = expect(TokenType::Identifier);
             if (!name) ACP_NOT_OK;
+
             if (!expect(TokenType::EqualSign)) ACP_NOT_OK;
-            auto typeAlias = std::make_shared<AST::TypeAliasStatement>();
-            typeAlias->modifiers = mods;
+
             typeAlias->name = name.raw;
-            ruleNode = std::move(typeAlias);
-            state.internalIndex = 1;
+
+            if (expectKeyword("any")) {
+              typeAlias->type = std::make_shared<AST::Type>();
+              typeAlias->type->isAny = true;
+              ACP_NODE(typeAlias);
+            }
+
+            state.internalIndex = 3;
             ACP_RULE(Type);
-          } else {
+          } else if (state.internalIndex == 3) {
             if (!exps.back()) ACP_NOT_OK;
             auto typeAlias = std::dynamic_pointer_cast<AST::TypeAliasStatement>(ruleNode);
             typeAlias->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
-            ACP_NODE((typeAlias));
+            ACP_NODE(typeAlias);
           }
         } else if (rule == RuleType::SuperClassFetch) {
           if (state.internalIndex == 0) {

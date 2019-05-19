@@ -40,6 +40,7 @@ namespace AltaCore {
       Void,
       Double,
       Float,
+      UserDefined,
     };
 
     static const char* const NativeType_names[] = {
@@ -49,6 +50,7 @@ namespace AltaCore {
       "Void",
       "Double",
       "Float",
+      "UserDefined",
     };
 
 

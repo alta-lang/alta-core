@@ -326,6 +326,7 @@ namespace AltaCore {
       ALTACORE_DH_CTOR(TypeAliasStatement, StatementNode);
 
       std::shared_ptr<Type> type = nullptr;
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
 
       bool isExport = false;
     };

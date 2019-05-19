@@ -8,13 +8,14 @@
 
 namespace AltaCore {
   namespace AST {
-    class TypeAliasStatement: public StatementNode {
+    class TypeAliasStatement: public StatementNode, public std::enable_shared_from_this<TypeAliasStatement> {
       public:
         virtual const NodeType nodeType();
 
         std::vector<std::string> modifiers;
         std::string name;
         std::shared_ptr<Type> type = nullptr;
+        std::vector<std::shared_ptr<AttributeNode>> attributes;
 
         TypeAliasStatement() {};
 

@@ -281,7 +281,7 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
     if ((nativeTypeName == NativeType::Void) != (other.nativeTypeName == NativeType::Void)) {
       return 0;
     }
-    if (nativeTypeName == other.nativeTypeName) {
+    if (nativeTypeName == other.nativeTypeName && (nativeTypeName != NativeType::UserDefined || userDefinedName == other.userDefinedName)) {
       compat++;
     }
   } else {
@@ -338,6 +338,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
     }
   } else if (isNative) {
     if (nativeTypeName != other.nativeTypeName) return false;
+    if (userDefinedName != other.userDefinedName) return false;
   } else {
     if (klass->id != other.klass->id) return false;
   }
@@ -366,12 +367,13 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
   return true;
 };
 
-AltaCore::DET::Type::Type(AltaCore::DET::NativeType _nativeTypeName, std::vector<uint8_t> _modifiers):
+AltaCore::DET::Type::Type(AltaCore::DET::NativeType _nativeTypeName, std::vector<uint8_t> _modifiers, std::string _userDefinedName):
   ScopeItem(""),
   isNative(true),
   isFunction(false),
   nativeTypeName(_nativeTypeName),
-  modifiers(_modifiers)
+  modifiers(_modifiers),
+  userDefinedName(_userDefinedName)
   {};
 AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> _parameters, std::vector<uint8_t> _modifiers):
   ScopeItem(""),
@@ -392,7 +394,6 @@ AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Class> _klass, std::vec
 bool AltaCore::DET::Type::operator %(const AltaCore::DET::Type& other) {
   return isCompatibleWith(other);
 };
-
 
 const size_t AltaCore::DET::Type::requiredArgumentCount() const {
   size_t count = 0;
