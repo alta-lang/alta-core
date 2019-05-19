@@ -54,10 +54,14 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
   ALTACORE_CAST_DH(FunctionDefinitionNode);
 
   std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
+  std::vector<std::shared_ptr<DET::Type>> publicFunctionalTypes;
 
   if (info->parameters.size() != parameters.size()) {
     for (auto& param: parameters) {
       auto det = param->fullDetail(info->inputScope, false);
+      if (det->type->type->isFunction) {
+        publicFunctionalTypes.push_back(det->type->type);
+      }
       info->parameters.push_back(det);
       params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
     }
@@ -71,6 +75,9 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
 
   if (!info->returnType) {
     info->returnType = returnType->fullDetail(info->inputScope, false);
+    if (info->returnType->type->isFunction) {
+      publicFunctionalTypes.push_back(info->returnType->type);
+    }
   }
 
   if (!info->function) {
@@ -86,6 +93,7 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
       }
     }
   }
+
 
   if (info->attributes.size() != attributes.size()) {
     for (auto& attr: attributes) {

@@ -1,4 +1,5 @@
 #include "../../include/altacore/ast/structure-definition-statement.hpp"
+#include "../../include/altacore/util.hpp"
 #include <sstream>
 #include <crossguid/guid.hpp>
 
@@ -21,6 +22,12 @@ ALTACORE_AST_DETAIL_D(StructureDefinitionStatement) {
 
   info->structure->isLiteral = info->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
   info->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
+
+  if (info->isExport) {
+    if (auto mod = Util::getModule(scope.get()).lock()) {
+      mod->exports->items.push_back(info->structure);
+    }
+  }
 
   auto voidType = std::make_shared<DET::Type>(DET::NativeType::Void);
 
