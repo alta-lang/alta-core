@@ -38,13 +38,9 @@ ALTACORE_AST_DETAIL_D(ImportStatement) {
       for (auto& [imp, alias]: imports) {
         auto items = info->importedModule->exports->findAll(imp);
         info->importedItems.insert(info->importedItems.end(), items.begin(), items.end());
-        if (!alias.empty()) {
-          for (auto& item: items) {
-            auto aliasItem = std::make_shared<DET::Alias>(alias, item, info->parentModule->scope);
-            info->parentModule->scope->items.push_back(aliasItem);
-          }
-        } else {
-          info->parentModule->scope->items.insert(info->parentModule->scope->items.end(), items.begin(), items.end());
+        for (auto& item: items) {
+          auto aliasItem = std::make_shared<DET::Alias>(alias.empty() ? imp : alias, item, info->parentModule->scope);
+          info->parentModule->scope->items.push_back(aliasItem);
         }
       }
     }
