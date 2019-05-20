@@ -161,7 +161,7 @@ namespace AltaCore {
       return false;
     };
 
-    bool Parser::expectBinaryOperation(RuleType rule, RuleType nextHigherPrecedentRule, std::vector<TokenType> operatorTokens, std::vector<AST::OperatorType> operatorTypes, RuleState& state, std::vector<Expectation>& exps, std::shared_ptr<AST::Node>& ruleNode, NextFunctionType next, SaveStateType saveState, RestoreStateType restoreState) {
+    bool Parser::expectBinaryOperation(RuleType rule, RuleType nextHigherPrecedentRule, std::vector<std::vector<TokenType>> operatorTokens, std::vector<AST::OperatorType> operatorTypes, RuleState& state, std::vector<Expectation>& exps, std::shared_ptr<AST::Node>& ruleNode, NextFunctionType next, SaveStateType saveState, RestoreStateType restoreState) {
       if (operatorTokens.size() != operatorTypes.size()) {
         throw std::runtime_error("malformed binary operation expectation: the number of operator tokens must match the number of operator types.");
       }
@@ -178,8 +178,16 @@ namespace AltaCore {
         auto binOp = std::make_shared<AST::BinaryOperation>();
         binOp->left = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
-        auto opExp = expect(operatorTokens);
-        if (!opExp) {
+        size_t idx = SIZE_MAX;
+        for (size_t i = 0; i < operatorTokens.size(); i++) {
+          auto& opToks = operatorTokens[i];
+          auto exp = expectSequence(opToks, true);
+          if (exp.size() == opToks.size()) {
+            idx = i;
+            break;
+          }
+        }
+        if (idx == SIZE_MAX) {
           if (exps.back().item) {
             next(true, {}, *exps.back().item);
           } else {
@@ -188,16 +196,7 @@ namespace AltaCore {
           return true;
         }
 
-        // comment 0.0:
-        // must be initialized to keep the compiler happy
-        AST::OperatorType op = AST::OperatorType::Addition;
-        for (size_t i = 0; i < operatorTokens.size(); i++) {
-          if (opExp.type == operatorTokens[i]) {
-            op = operatorTypes[i];
-            break;
-          }
-        }
-        binOp->type = op;
+        binOp->type = operatorTypes[idx];
 
         saveState();
         ruleNode = std::move(binOp);
@@ -221,21 +220,20 @@ namespace AltaCore {
 
         binOp->right = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
-        Token opExp = expect(operatorTokens);
-
-        if (opExp) {
-          // see comment 0.0
-          AST::OperatorType op = AST::OperatorType::Addition;
-          for (size_t i = 0; i < operatorTokens.size(); i++) {
-            if (opExp.type == operatorTokens[i]) {
-              op = operatorTypes[i];
-              break;
-            }
+        size_t idx = SIZE_MAX;
+        for (size_t i = 0; i < operatorTokens.size(); i++) {
+          auto& opToks = operatorTokens[i];
+          auto exp = expectSequence(opToks, true);
+          if (exp.size() == opToks.size()) {
+            idx = i;
+            break;
           }
+        }
 
+        if (idx != SIZE_MAX) {
           auto otherBinOp = std::make_shared<AST::BinaryOperation>();
           otherBinOp->left = binOp;
-          otherBinOp->type = op;
+          otherBinOp->type = operatorTypes[idx];
 
           saveState();
           ruleNode = std::move(otherBinOp);
@@ -248,6 +246,28 @@ namespace AltaCore {
         }
       }
       return true;
+    };
+    
+    std::vector<Token> Parser::expectSequence(std::vector<TokenType> expectations, bool exact) {
+      std::vector<Token> tokens;
+      auto savedState = currentState;
+
+      for (auto& exp: expectations) {
+        auto tok = expect(exp);
+        if (!tok) {
+          currentState = savedState;
+          return {};
+        }
+        if (tokens.size() > 0) {
+          if (exact && tok.column != tokens.back().column + 1) {
+            currentState = savedState;
+            return {};
+          }
+        }
+        tokens.push_back(tok);
+      }
+
+      return tokens;
     };
     // </helper-functions>
 
@@ -566,6 +586,10 @@ namespace AltaCore {
       auto next = [&](bool ok = false, std::vector<RuleType> rules = {}, NodeType result = nullptr) {
         auto& state = std::get<2>(ruleStack.top());
         state.iteration++;
+
+        if (ok && state.currentState.currentPosition > farthestRule.currentState.currentPosition) {
+          farthestRule = state;
+        }
 
         if (result) {
           auto& tok = tokens[state.stateAtStart.currentPosition];
@@ -1372,8 +1396,8 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::AdditionOrSubtraction) {
           if (expectBinaryOperation(rule, RuleType::MultiplicationOrDivisionOrModulo, {
-            TokenType::PlusSign,
-            TokenType::MinusSign,
+            { TokenType::PlusSign },
+            { TokenType::MinusSign },
           }, {
             AST::OperatorType::Addition,
             AST::OperatorType::Subtraction,
@@ -1382,9 +1406,9 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::MultiplicationOrDivisionOrModulo) {
           if (expectBinaryOperation(rule, RuleType::Cast, {
-            TokenType::Asterisk,
-            TokenType::ForwardSlash,
-            TokenType::Percent,
+            { TokenType::Asterisk },
+            { TokenType::ForwardSlash },
+            { TokenType::Percent },
           }, {
             AST::OperatorType::Multiplication,
             AST::OperatorType::Division,
@@ -1952,10 +1976,10 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::NonequalityRelationalOperation) {
           if (expectBinaryOperation(rule, RuleType::Instanceof, {
-            TokenType::OpeningAngleBracket,
-            TokenType::ClosingAngleBracket,
-            TokenType::LessThanOrEqualTo,
-            TokenType::GreaterThanOrEqualTo,
+            { TokenType::OpeningAngleBracket },
+            { TokenType::ClosingAngleBracket },
+            { TokenType::LessThanOrEqualTo },
+            { TokenType::GreaterThanOrEqualTo },
           }, {
             AST::OperatorType::LessThan,
             AST::OperatorType::GreaterThan,
@@ -1966,8 +1990,8 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::EqualityRelationalOperation) {
           if (expectBinaryOperation(rule, RuleType::NonequalityRelationalOperation, {
-            TokenType::Equality,
-            TokenType::Inequality,
+            { TokenType::Equality },
+            { TokenType::Inequality },
           }, {
             AST::OperatorType::EqualTo,
             AST::OperatorType::NotEqualTo,
@@ -2667,7 +2691,7 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::And) {
           if (expectBinaryOperation(RuleType::And, RuleType::BitwiseOr, {
-            TokenType::And
+            { TokenType::And }
           }, {
             AST::OperatorType::LogicalAnd,
           }, state, exps, ruleNode, next, saveState, restoreState)) {
@@ -2675,7 +2699,7 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::Or) {
           if (expectBinaryOperation(RuleType::Or, RuleType::And, {
-            TokenType::Or
+            { TokenType::Or }
           }, {
             AST::OperatorType::LogicalOr,
           }, state, exps, ruleNode, next, saveState, restoreState)) {
@@ -2683,8 +2707,8 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::Shift) {
           if (expectBinaryOperation(RuleType::Shift, RuleType::AdditionOrSubtraction, {
-            TokenType::LeftShift,
-            TokenType::RightShift,
+            { TokenType::LeftShift },
+            { TokenType::ClosingAngleBracket, TokenType::ClosingAngleBracket },
           }, {
             AST::OperatorType::LeftShift,
             AST::OperatorType::RightShift,
@@ -2693,7 +2717,7 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::BitwiseAnd) {
           if (expectBinaryOperation(RuleType::BitwiseAnd, RuleType::EqualityRelationalOperation, {
-            TokenType::Ampersand,
+            { TokenType::Ampersand },
           }, {
             AST::OperatorType::BitwiseAnd,
           }, state, exps, ruleNode, next, saveState, restoreState)) {
@@ -2701,7 +2725,7 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::BitwiseOr) {
           if (expectBinaryOperation(RuleType::BitwiseOr, RuleType::BitwiseXor, {
-            TokenType::Pipe,
+            { TokenType::Pipe },
           }, {
             AST::OperatorType::BitwiseOr,
           }, state, exps, ruleNode, next, saveState, restoreState)) {
@@ -2709,7 +2733,7 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::BitwiseXor) {
           if (expectBinaryOperation(RuleType::BitwiseXor, RuleType::BitwiseAnd, {
-            TokenType::Caret,
+            { TokenType::Caret },
           }, {
             AST::OperatorType::BitwiseXor,
           }, state, exps, ruleNode, next, saveState, restoreState)) {

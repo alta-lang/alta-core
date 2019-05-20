@@ -294,7 +294,7 @@ namespace AltaCore {
         bool expectBinaryOperation(
           RuleType rule,
           RuleType nextHigherPrecedentRule,
-          std::vector<TokenType> operatorTokens,
+          std::vector<std::vector<TokenType>> operatorTokens,
           std::vector<AST::OperatorType> operatorTypes,
           RuleState& state,
           std::vector<Expectation>& expectations,
@@ -304,6 +304,7 @@ namespace AltaCore {
           RestoreStateType restoreState
         );
         ALTACORE_OPTIONAL<PrepoExpression> expectPrepoExpression();
+        std::vector<Token> expectSequence(std::vector<TokenType> expectations, bool exact = true);
         // </helper-functions>
 
         std::unordered_set<std::string> typesToIgnore;
