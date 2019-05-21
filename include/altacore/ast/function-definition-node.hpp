@@ -8,6 +8,7 @@
 #include "../det/function.hpp"
 #include "attribute-node.hpp"
 #include "../det/scope.hpp"
+#include "generic.hpp"
 #include <vector>
 #include <string>
 
@@ -23,9 +24,12 @@ namespace AltaCore {
         std::vector<std::string> modifiers;
         std::shared_ptr<BlockNode> body = nullptr;
         std::vector<std::shared_ptr<AttributeNode>> attributes;
+        std::vector<std::shared_ptr<Generic>> generics;
 
         FunctionDefinitionNode() {};
         FunctionDefinitionNode(std::string name, std::vector<std::shared_ptr<Parameter>> parameters, std::shared_ptr<Type> returnType, std::vector<std::string> modifiers, std::shared_ptr<BlockNode> body);
+
+        std::shared_ptr<DET::Function> instantiateGeneric(std::shared_ptr<DH::FunctionDefinitionNode> info, std::vector<std::shared_ptr<DET::Type>> genericArguments);
 
         ALTACORE_AST_DETAIL_NO_BODY_OPT(FunctionDefinitionNode);
         ALTACORE_AST_INFO_DETAIL(FunctionDefinitionNode);

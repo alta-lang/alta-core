@@ -9,6 +9,12 @@
 #include <tuple>
 
 namespace AltaCore {
+  namespace AST {
+    class FunctionDefinitionNode;
+  };
+  namespace DetailHandles {
+    class FunctionDefinitionNode;
+  };
   namespace DET {
     class Function: public ScopeItem {
       public:
@@ -35,7 +41,16 @@ namespace AltaCore {
         // internal (i.e. used in the body)
         std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
 
+        std::vector<std::shared_ptr<Type>> genericArguments;
+
+        std::weak_ptr<AST::FunctionDefinitionNode> ast;
+        std::weak_ptr<DetailHandles::FunctionDefinitionNode> info;
+
         Function(std::shared_ptr<Scope> parentScope, std::string name);
+
+        std::shared_ptr<Function> instantiateGeneric(std::vector<std::shared_ptr<Type>> genericArguments);
+
+        void recreate(std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters, std::shared_ptr<Type> returnType);
     };
   };
 };

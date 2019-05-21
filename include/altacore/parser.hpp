@@ -88,6 +88,7 @@ namespace AltaCore {
       {
         "literal",
         "export",
+        "generic",
       },
       {
         "literal",

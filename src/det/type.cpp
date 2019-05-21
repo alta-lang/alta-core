@@ -95,6 +95,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
 
   if (itemType == ItemType::Function) {
     auto func = std::dynamic_pointer_cast<Function>(item);
+    if (func->genericParameterCount > 0 && func->genericArguments.size() < 1) return nullptr;
     std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> params;
     for (auto& [name, type, isVariable, id]: func->parameters) {
       params.push_back(std::make_tuple(name, type, isVariable, id));

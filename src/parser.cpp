@@ -936,6 +936,15 @@ namespace AltaCore {
             auto name = expect(TokenType::Identifier);
             if (!name) ACP_NOT_OK;
             funcDef->name = name.raw;
+            
+            if (expect(TokenType::OpeningAngleBracket)) {
+              while (auto generic = expect(TokenType::Identifier)) {
+                funcDef->generics.push_back(std::make_shared<AST::Generic>(generic.raw));
+                if (!expect(TokenType::Comma)) break;
+              }
+              if (funcDef->generics.size() < 1) ACP_NOT_OK;
+              if (!expect(TokenType::ClosingAngleBracket)) ACP_NOT_OK;
+            }
 
             if (!expect(TokenType::OpeningParenthesis)) ACP_NOT_OK;
 

@@ -277,6 +277,7 @@ namespace AltaCore {
 
       std::shared_ptr<DET::Function> function = nullptr;
     };
+    class GenericFunctionInstantiationDefinitionNode;
     class FunctionDefinitionNode: public StatementNode {
       ALTACORE_DH_CTOR(FunctionDefinitionNode, StatementNode);
 
@@ -285,7 +286,15 @@ namespace AltaCore {
       std::shared_ptr<BlockNode> body = nullptr;
       std::vector<std::shared_ptr<AttributeNode>> attributes;
 
+      std::vector<std::shared_ptr<GenericFunctionInstantiationDefinitionNode>> genericInstantiations;
+      std::vector<std::shared_ptr<Generic>> genericDetails;
+
       std::shared_ptr<DET::Function> function = nullptr;
+    };
+    class GenericFunctionInstantiationDefinitionNode: public FunctionDefinitionNode {
+      ALTACORE_DH_CTOR(GenericFunctionInstantiationDefinitionNode, FunctionDefinitionNode);
+
+      std::weak_ptr<FunctionDefinitionNode> generic;
     };
     class ImportStatement: public StatementNode {
       ALTACORE_DH_CTOR(ImportStatement, StatementNode);
