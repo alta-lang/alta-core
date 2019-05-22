@@ -244,6 +244,7 @@ const size_t AltaCore::DET::Type::referenceLevel() const {
 };
 
 size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
+  if (other.isAccessor) return compatiblity(*other.returnType);
   size_t compat = 2;
 
   if (isAny || other.isAny) return 1;
@@ -295,6 +296,7 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
 };
 
 bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
+  if (other.isAccessor) return commonCompatiblity(*other.returnType);
   if (isAny || other.isAny) return true;
   if (isFunction != other.isFunction) return false;
   if (isNative != other.isNative) return false;
@@ -323,6 +325,7 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
 };
 
 bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& other) {
+  if (other.isAccessor) return isExactlyCompatibleWith(*other.returnType);
   if (!commonCompatiblity(other)) return false;
   if (isAny || other.isAny) return false;
 
@@ -348,6 +351,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
 };
 
 bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
+  if (other.isAccessor) return isCompatibleWith(*other.returnType);
   if (!commonCompatiblity(other)) return false;
   if (isAny || other.isAny) return true;
 
