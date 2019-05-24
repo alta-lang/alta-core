@@ -1,6 +1,9 @@
 #include "../../include/altacore/ast/class-definition-node.hpp"
 #include "../../include/altacore/ast/class-special-method-definition-statement.hpp"
 #include "../../include/altacore/util.hpp"
+#include "../../include/altacore/ast/super-class-fetch.hpp"
+#include "../../include/altacore/ast/class-instantiation-expression.hpp"
+#include "../../include/altacore/ast/integer-literal-node.hpp"
 
 namespace AltaCoreClassHelpers {
   template<class T> void detailClass(std::shared_ptr<T> info, AltaCore::AST::ClassDefinitionNode* self) {
@@ -57,8 +60,23 @@ namespace AltaCoreClassHelpers {
       info->createDefaultConstructor = true;
       info->defaultConstructor = std::make_shared<ClassSpecialMethodDefinitionStatement>(Visibility::Public, SpecialClassMethod::Constructor);
       info->defaultConstructor->body = std::make_shared<BlockNode>();
+      for (size_t i = 0; i < info->klass->parents.size(); i++) {
+        auto& parent = info->klass->parents[i];
+        if (!parent->defaultConstructor) {
+          throw AltaCore::Errors::ValidationError("at least one parent does not have a default constructor; one cannot be created automatically for this child class", self->position);
+        }
+        auto idx = std::make_shared<IntegerLiteralNode>(std::to_string(i));
+        auto fetch = std::make_shared<SuperClassFetch>();
+        fetch->fetch = idx;
+        auto inst = std::make_shared<ClassInstantiationExpression>();
+        inst->target = fetch;
+        auto stmt = std::make_shared<ExpressionStatement>();
+        stmt->expression = inst;
+        info->defaultConstructor->body->statements.push_back(stmt);
+      }
       info->defaultConstructorDetail = info->defaultConstructor->fullDetail(info->klass->scope);
       info->klass->constructors.push_back(info->defaultConstructorDetail->method);
+      info->klass->defaultConstructor = info->defaultConstructorDetail->method;
     }
 
     bool requiresDtor = false;
