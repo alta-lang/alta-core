@@ -80,7 +80,7 @@ namespace AltaCoreClassHelpers {
     }
 
     bool requiresDtor = false;
-    bool requiresCopyCtor = false;
+    bool requiresCopyCtor = true;
     for (auto& item: info->klass->scope->items) {
       if (item->nodeType() != DET::NodeType::Variable) continue;
       if (item->name == "this") continue;
@@ -98,6 +98,11 @@ namespace AltaCoreClassHelpers {
       if (var->type->klass->copyConstructor) {
         requiresCopyCtor = true;
         info->klass->itemsToCopy.push_back(var);
+      }
+    }
+    for (auto& parent: info->klass->parents) {
+      if (parent->copyConstructor) {
+        requiresCopyCtor = true;
       }
     }
 
