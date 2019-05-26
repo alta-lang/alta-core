@@ -76,6 +76,7 @@ namespace AltaCore {
       ClassStatement,
       Class,
       TypeAlias,
+      Structure,
     };
 
     /**
@@ -87,6 +88,7 @@ namespace AltaCore {
       {
         "literal",
         "export",
+        "generic",
       },
       {
         "literal",
@@ -113,6 +115,10 @@ namespace AltaCore {
       {
         "export",
       },
+      {
+        "literal",
+        "export",
+      },
     };
 
     enum class RuleType {
@@ -127,14 +133,13 @@ namespace AltaCore {
       ReturnDirective,
       VariableDefinition,
       Fetch,
-      Accessor,
       Assignment,
       AdditionOrSubtraction,
-      MultiplicationOrDivision,
+      MultiplicationOrDivisionOrModulo,
       ModuleOnlyStatement,
       Import,
       BooleanLiteral,
-      FunctionCallOrSubscript,
+      FunctionCallOrSubscriptOrAccessorOrPostIncDec,
       String,
       FunctionDeclaration,
       Attribute,
@@ -154,7 +159,7 @@ namespace AltaCore {
       ClassSpecialMethod,
       ClassInstantiation,
       StrictAccessor,
-      PointerOrDereference,
+      //PointerOrDereference,
       WhileLoop,
       Cast,
       Character,
@@ -163,6 +168,23 @@ namespace AltaCore {
       Instanceof,
       Generic,
       NullRule,
+      ForLoop,
+      RangedFor,
+      //Not,
+      Accessor,
+      NotOrPointerOrDereferenceOrPreIncDecOrPlusMinusOrBitNot,
+      Sizeof,
+      And,
+      Or,
+      Shift,
+      BitwiseAnd,
+      BitwiseOr,
+      BitwiseXor,
+      DecimalLiteral,
+      Structure,
+      Export,
+      VariableDeclaration,
+      Alias,
     };
 
     enum class PrepoRuleType {
@@ -253,7 +275,7 @@ namespace AltaCore {
         using ExpectationType = GenericExpectationType<RuleType, TokenType>;
         using RuleReturn = ALTACORE_VARIANT<ExpectationType, std::initializer_list<ExpectationType>, ALTACORE_OPTIONAL<NodeType>>;
 
-        using RuleStackElement = std::tuple<RuleType, std::stack<RuleType>, RuleState, std::vector<Expectation>, std::shared_ptr<AST::Node>, State>;
+        using RuleStackElement = std::tuple<RuleType, std::stack<RuleType>, RuleState, std::vector<Expectation>, std::shared_ptr<AST::Node>, std::tuple<State, std::stack<bool>, std::stack<bool>, bool>>;
       private:
         using NextFunctionType = std::function<void(bool, std::vector<RuleType>, NodeType)>;
         using SaveStateType = std::function<void()>;
@@ -273,7 +295,7 @@ namespace AltaCore {
         bool expectBinaryOperation(
           RuleType rule,
           RuleType nextHigherPrecedentRule,
-          std::vector<TokenType> operatorTokens,
+          std::vector<std::vector<TokenType>> operatorTokens,
           std::vector<AST::OperatorType> operatorTypes,
           RuleState& state,
           std::vector<Expectation>& expectations,
@@ -283,6 +305,7 @@ namespace AltaCore {
           RestoreStateType restoreState
         );
         ALTACORE_OPTIONAL<PrepoExpression> expectPrepoExpression();
+        std::vector<Token> expectSequence(std::vector<TokenType> expectations, bool exact = true);
         // </helper-functions>
 
         std::unordered_set<std::string> typesToIgnore;

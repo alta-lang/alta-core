@@ -23,6 +23,52 @@ namespace AltaCore {
       Protected,
       Private,
     };
+
+    enum class OperatorType {
+      Addition,
+      Subtraction,
+      Multiplication,
+      Division,
+      Modulo,
+      LeftShift,
+      RightShift,
+      BitwiseAnd,
+      BitwiseOr,
+      BitwiseXor,
+      EqualTo,
+      NotEqualTo,
+      GreaterThan,
+      LessThan,
+      GreaterThanOrEqualTo,
+      LessThanOrEqualTo,
+      LogicalAnd,
+      LogicalOr,
+    };
+
+    enum class UOperatorType {
+      Not,
+      Plus,
+      Minus,
+      PreIncrement,
+      PostIncrement,
+      PreDecrement,
+      PostDecrement,
+      BitwiseNot,
+    };
+
+    enum class AssignmentType {
+      Simple,
+      Addition,
+      Subtraction,
+      Multiplication,
+      Division,
+      Modulo,
+      LeftShift,
+      RightShift,
+      BitwiseAnd,
+      BitwiseOr,
+      BitwiseXor,
+    };
   };
 };
 

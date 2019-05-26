@@ -39,6 +39,7 @@ namespace AltaCore {
     ALTACORE_DH_SIMPLE_ALIAS(IntegerLiteralNode, LiteralNode);
     ALTACORE_DH_SIMPLE_ALIAS(StringLiteralNode, LiteralNode);
     ALTACORE_DH_SIMPLE_ALIAS(CharacterLiteralNode, LiteralNode);
+    ALTACORE_DH_SIMPLE_ALIAS(FloatingPointLiteralNode, LiteralNode);
     
     // forward declaration
     class Accessor;
@@ -46,6 +47,7 @@ namespace AltaCore {
     class AttributeNode;
     class AttributeStatement;
     class BinaryOperation;
+    class UnaryOperation;
     class BlockNode;
     class CastExpression;
     class ClassDefinitionNode;
@@ -71,6 +73,7 @@ namespace AltaCore {
     class Type;
     class VariableDefinitionExpression;
     class WhileLoopStatement;
+    class ForLoopStatement;
     class RetrievalNode;
     class SuperClassFetch;
     class GenericClassInstantiationDefinitionNode;
@@ -106,6 +109,7 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> target = nullptr;
       std::shared_ptr<ExpressionNode> value = nullptr;
+      Shared::AssignmentType type = Shared::AssignmentType::Simple;
     };
     class AttributeNode: public Node {
       ALTACORE_DH_CTOR(AttributeNode, Node);
@@ -126,8 +130,15 @@ namespace AltaCore {
     class BinaryOperation: public ExpressionNode {
       ALTACORE_DH_CTOR(BinaryOperation, ExpressionNode);
 
+      Shared::OperatorType type = Shared::OperatorType::Addition;
       std::shared_ptr<ExpressionNode> left = nullptr;
       std::shared_ptr<ExpressionNode> right = nullptr;
+    };
+    class UnaryOperation: public ExpressionNode {
+      ALTACORE_DH_CTOR(UnaryOperation, ExpressionNode);
+
+      Shared::UOperatorType type = Shared::UOperatorType::Not;
+      std::shared_ptr<ExpressionNode> target = nullptr;
     };
     class BlockNode: public StatementNode {
       ALTACORE_DH_CTOR(BlockNode, StatementNode);
@@ -266,6 +277,7 @@ namespace AltaCore {
 
       std::shared_ptr<DET::Function> function = nullptr;
     };
+    class GenericFunctionInstantiationDefinitionNode;
     class FunctionDefinitionNode: public StatementNode {
       ALTACORE_DH_CTOR(FunctionDefinitionNode, StatementNode);
 
@@ -274,7 +286,15 @@ namespace AltaCore {
       std::shared_ptr<BlockNode> body = nullptr;
       std::vector<std::shared_ptr<AttributeNode>> attributes;
 
+      std::vector<std::shared_ptr<GenericFunctionInstantiationDefinitionNode>> genericInstantiations;
+      std::vector<std::shared_ptr<Generic>> genericDetails;
+
       std::shared_ptr<DET::Function> function = nullptr;
+    };
+    class GenericFunctionInstantiationDefinitionNode: public FunctionDefinitionNode {
+      ALTACORE_DH_CTOR(GenericFunctionInstantiationDefinitionNode, FunctionDefinitionNode);
+
+      std::weak_ptr<FunctionDefinitionNode> generic;
     };
     class ImportStatement: public StatementNode {
       ALTACORE_DH_CTOR(ImportStatement, StatementNode);
@@ -315,6 +335,7 @@ namespace AltaCore {
       ALTACORE_DH_CTOR(TypeAliasStatement, StatementNode);
 
       std::shared_ptr<Type> type = nullptr;
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
 
       bool isExport = false;
     };
@@ -347,6 +368,29 @@ namespace AltaCore {
       std::shared_ptr<DET::Scope> scope = nullptr;
     };
 
+    class ForLoopStatement: public StatementNode {
+      ALTACORE_DH_CTOR(ForLoopStatement, StatementNode);
+
+      std::shared_ptr<ExpressionNode> initializer = nullptr;
+      std::shared_ptr<ExpressionNode> condition = nullptr;
+      std::shared_ptr<ExpressionNode> increment = nullptr;
+      std::shared_ptr<StatementNode> body = nullptr;
+
+      std::shared_ptr<DET::Scope> scope = nullptr;
+    };
+
+    class RangedForLoopStatement: public StatementNode {
+      ALTACORE_DH_CTOR(RangedForLoopStatement, StatementNode);
+
+      std::shared_ptr<Type> counterType = nullptr;
+      std::shared_ptr<ExpressionNode> start = nullptr;
+      std::shared_ptr<ExpressionNode> end = nullptr;
+      std::shared_ptr<StatementNode> body = nullptr;
+
+      std::shared_ptr<DET::Scope> scope = nullptr;
+      std::shared_ptr<DET::Variable> counter = nullptr;
+    };
+
     class SubscriptExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(SubscriptExpression, ExpressionNode);
 
@@ -377,6 +421,43 @@ namespace AltaCore {
       ALTACORE_DH_CTOR(Generic, Node);
 
       std::shared_ptr<DET::Alias> alias = nullptr;
+    };
+    class SizeofOperation: public ExpressionNode {
+      ALTACORE_DH_CTOR(SizeofOperation, ExpressionNode);
+
+      std::shared_ptr<Type> target = nullptr;
+    };
+    class StructureDefinitionStatement: public StatementNode {
+      ALTACORE_DH_CTOR(StructureDefinitionStatement, StatementNode);
+
+      bool isExternal = false;
+      bool isTyped = false;
+      bool isLiteral = false;
+      bool isExport = false;
+      std::vector<std::shared_ptr<Type>> memberTypes;
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
+
+      std::shared_ptr<DET::Class> structure = nullptr;
+    };
+    class ExportStatement: public StatementNode {
+      ALTACORE_DH_CTOR(ExportStatement, StatementNode);
+
+      std::shared_ptr<ImportStatement> externalTarget;
+      std::shared_ptr<RetrievalNode> localTarget;
+    };
+    class VariableDeclarationStatement: public StatementNode {
+      ALTACORE_DH_CTOR(VariableDeclarationStatement, StatementNode);
+
+      std::shared_ptr<Type> type;
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
+
+      std::shared_ptr<DET::Variable> variable = nullptr;
+    };
+    class AliasStatement: public StatementNode {
+      ALTACORE_DH_CTOR(AliasStatement, StatementNode);
+
+      std::shared_ptr<RetrievalNode> target = nullptr;
+      std::vector<std::shared_ptr<DET::Alias>> aliases;
     };
 
     #undef ALTACORE_DH_CTOR

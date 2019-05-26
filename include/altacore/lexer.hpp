@@ -23,6 +23,7 @@ namespace AltaCore {
       PreprocessorDirective,
       SingleLineComment,
       Identifier,
+      Decimal,
       Integer,
       String,
       Character,
@@ -37,6 +38,19 @@ namespace AltaCore {
       LessThanOrEqualTo,
       GreaterThanOrEqualTo,
       Inequality,
+      Increment,
+      Decrement,
+      PlusEquals,
+      MinusEquals,
+      TimesEquals,
+      DividedEquals,
+      ModuloEquals,
+      LeftShift,
+      LeftShiftEquals,
+      RightShiftEquals,
+      BitwiseAndEquals,
+      BitwiseOrEquals,
+      BitwiseXorEquals,
       // </multi-character-rules>
 
       OpeningBrace,
@@ -59,6 +73,11 @@ namespace AltaCore {
       Ampersand,
       OpeningSquareBracket,
       ClosingSquareBracket,
+      ExclamationMark,
+      Percent,
+      Tilde,
+      Caret,
+      Pipe,
 
       LAST, // always keep this as last, it counts the number of items in the enum
     };
@@ -74,6 +93,7 @@ namespace AltaCore {
       "",
       "",
       "",
+      "",
 
       "==",
       "&&",
@@ -82,6 +102,19 @@ namespace AltaCore {
       "<=",
       ">=",
       "!=",
+      "++",
+      "--",
+      "+=",
+      "-=",
+      "*=",
+      "/=",
+      "%=",
+      "<<",
+      "<<=",
+      ">>=",
+      "&=",
+      "|=",
+      "^=",
       
       "{",
       "}",
@@ -103,6 +136,11 @@ namespace AltaCore {
       "&",
       "[",
       "]",
+      "!",
+      "%",
+      "~",
+      "^",
+      "|",
 
       "",
     };
@@ -113,6 +151,7 @@ namespace AltaCore {
       "Preprocessor directive",
       "Single line comment",
       "Identifier",
+      "Decimal",
       "Integer",
       "String",
       "Character",
@@ -125,6 +164,20 @@ namespace AltaCore {
       "Less than or equal to",
       "Greater than to equal to",
       "Inequality",
+      "Increment",
+      "Decrement",
+      "Plus equals",
+      "Minus equals",
+      "Times equals",
+      "Divided equals",
+      "Modulo equals",
+      "Left shift",
+      "Right shift",
+      "Left shift equals",
+      "Right shift equals",
+      "Bitwise AND equals",
+      "Bitwise OR equals",
+      "Bitwise XOR equals",
 
       "Opening brace",
       "Closing brace",
@@ -146,6 +199,11 @@ namespace AltaCore {
       "Ampersand",
       "Opening square bracket",
       "Closing square bracket",
+      "Exclamation mark",
+      "Percent",
+      "Tilde",
+      "Caret",
+      "Pipe",
 
       "LAST", // shouldn't be necessary, but just in case ;)
     };
@@ -183,6 +241,8 @@ namespace AltaCore {
         bool consumeNext = false;
 
         bool characterLiteralEscaped = false;
+        bool foundDecimalPoint = false;
+        bool foundFraction = false;
 
         /**
          * this is where the majority of the actual lexer logic goes,

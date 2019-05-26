@@ -79,7 +79,7 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
       } else {
         auto type = Type::getUnderlyingType(trueItem);
         bool ok = true;
-        if (excludeTypes.size() > 0) {
+        if (type && excludeTypes.size() > 0) {
           for (auto& excl: excludeTypes) {
             if (type->isExactlyCompatibleWith(*excl)) {
               ok = false;

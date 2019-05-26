@@ -1,5 +1,6 @@
 #include "../../include/altacore/det/function.hpp"
 #include "../../include/altacore/det/class.hpp"
+#include "../../include/altacore/ast/function-definition-node.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Function::nodeType() {
   return NodeType::Function;
@@ -46,11 +47,13 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::create(std::sh
     }
   }
 
-  if (returnType->isFunction) {
-    func->publicHoistedFunctionalTypes.push_back(returnType);
-  }
-  if (returnType->klass && returnType->klass->genericParameterCount > 0) {
-    func->publicHoistedGenerics.push_back(returnType->klass);
+  if (returnType) {
+    if (returnType->isFunction) {
+      func->publicHoistedFunctionalTypes.push_back(returnType);
+    }
+    if (returnType->klass && returnType->klass->genericParameterCount > 0) {
+      func->publicHoistedGenerics.push_back(returnType->klass);
+    }
   }
 
   return func;
@@ -59,3 +62,44 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::create(std::sh
 AltaCore::DET::Function::Function(std::shared_ptr<AltaCore::DET::Scope> _parentScope, std::string _name):
   ScopeItem(_name, _parentScope)
   {};
+
+std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::instantiateGeneric(std::vector<std::shared_ptr<Type>> genericArguments) {
+  if (auto func = ast.lock()) {
+    auto inf = info.lock();
+    if (!inf) {
+      return nullptr;
+    }
+    return func->instantiateGeneric(inf, genericArguments);
+  } else {
+    return nullptr;
+  }
+};
+
+void AltaCore::DET::Function::recreate(std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> _parameters, std::shared_ptr<Type> _returnType) {
+  parameters = _parameters;
+  returnType = _returnType;
+
+  for (auto& [name, type, isVariable, id]: parameters) {
+    auto var = std::make_shared<Variable>(name, isVariable ? type->point() : type);
+    var->parentScope = scope;
+    var->isVariable = isVariable;
+    parameterVariables.push_back(var);
+    scope->items.push_back(var);
+
+    if (type->isFunction) {
+      publicHoistedFunctionalTypes.push_back(type);
+    }
+    if (type->klass && type->klass->genericParameterCount > 0) {
+      publicHoistedGenerics.push_back(type->klass);
+    }
+  }
+
+  if (returnType) {
+    if (returnType->isFunction) {
+      publicHoistedFunctionalTypes.push_back(returnType);
+    }
+    if (returnType->klass && returnType->klass->genericParameterCount > 0) {
+      publicHoistedGenerics.push_back(returnType->klass);
+    }
+  }
+};

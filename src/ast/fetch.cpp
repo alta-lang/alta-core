@@ -93,6 +93,19 @@ ALTACORE_AST_DETAIL_D(Fetch) {
         if (isNarrowedTo) {
           info->narrowedTo = info->items[i];
         }
+      } else if (auto func = std::dynamic_pointer_cast<DET::Function>(item)) {
+        auto newFunc = func->instantiateGeneric(info->genericArguments);
+        info->items[i] = newFunc;
+        auto thisMod = Util::getModule(info->inputScope.get()).lock();
+        thisMod->genericsUsed.push_back(newFunc);
+        auto thatMod = Util::getModule(newFunc->parentScope.lock().get()).lock();
+        if (thisMod->packageInfo.name == thatMod->packageInfo.name) {
+          newFunc->instantiatedFromSamePackage = true;
+        }
+        info->inputScope->hoist(info->items[i]);
+        if (isNarrowedTo) {
+          info->narrowedTo = info->items[i];
+        }
       } else {
         ALTACORE_DETAILING_ERROR("generic type wasn't a class or function (btw, this is impossible)");
       }

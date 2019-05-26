@@ -1,6 +1,7 @@
 #include "../../include/altacore/ast/root-node.hpp"
 #include "../../include/altacore/modules.hpp"
 #include "../../include/altacore/ast/import-statement.hpp"
+#include "../../include/altacore/ast/export-statement.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::RootNode::nodeType() {
   return NodeType::RootNode;
@@ -46,6 +47,12 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
       auto import = std::dynamic_pointer_cast<ImportStatement>(stmt);
       auto importDet = std::dynamic_pointer_cast<DH::ImportStatement>(det);
       info->dependencyASTs.push_back(importDet->importedAST);
+    } else if (stmt->nodeType() == NodeType::ExportStatement) {
+      auto statement = std::dynamic_pointer_cast<ExportStatement>(stmt);
+      auto statementDet = std::dynamic_pointer_cast<DH::ExportStatement>(det);
+      if (statement->externalTarget) {
+        info->dependencyASTs.push_back(statementDet->externalTarget->importedAST);
+      }
     }
   }
 };

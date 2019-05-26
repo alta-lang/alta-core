@@ -21,6 +21,36 @@ namespace AltaCore {
             return true;
           }
         } break;
+        case TokenType::Decimal: {
+          *contigious = true;
+
+          if (character == '.' && tokens.back().type == TokenType::Dot) {
+            return false;
+          }
+
+          if (first) {
+            foundDecimalPoint = false;
+            foundFraction = false;
+          }
+
+          if (character >= '0' && character <= '9') {
+            if (foundDecimalPoint) {
+              foundFraction = true;
+            }
+            return true;
+          } else if (character == '.') {
+            if (foundDecimalPoint) {
+              return false;
+            }
+            foundDecimalPoint = true;
+            return true;
+          } else {
+            if (foundDecimalPoint && foundFraction) {
+              *ended = true;
+            }
+            return false;
+          }
+        } break;
         case TokenType::String: {
           if (!first && character == '\\') {
             consumeNext = true;
@@ -208,7 +238,7 @@ namespace AltaCore {
           } else {
             hangingRule = TokenType::None;
             ruleIteration = 0;
-            if (contigious) {
+            if (contigious && !ended) {
               auto& back = tokens.back();
               for (auto rit = back.raw.rbegin(); rit < back.raw.rend(); rit++) {
                 backlog.push_front(*rit);

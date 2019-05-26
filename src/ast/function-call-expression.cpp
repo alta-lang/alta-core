@@ -23,6 +23,7 @@ std::tuple<size_t, ALTACORE_MAP<size_t, size_t>, std::vector<ALTACORE_VARIANT<st
   std::vector<std::tuple<size_t, std::vector<size_t>, std::shared_ptr<DET::Type>, std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>, std::vector<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>>>>, ALTACORE_MAP<size_t, size_t>>> compatibles;
   for (size_t index = 0; index < targetTypes.size(); index++) {
     auto& targetType = targetTypes[index];
+    if (!targetType) continue;
     if (!targetType->isFunction) continue;
     possible = true;
     //if (targetType->parameters.size() != arguments.size()) continue;

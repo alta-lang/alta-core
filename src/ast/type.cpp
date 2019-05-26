@@ -73,6 +73,10 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Type::detail(std::shared_ptr<
         nt = DET::NativeType::Bool;
       } else if (name == "void") {
         nt = DET::NativeType::Void;
+      } else if (name == "double") {
+        nt = DET::NativeType::Double;
+      } else if (name == "float") {
+        nt = DET::NativeType::Float;
       }
 
       info->type = std::make_shared<DET::Type>(nt, modifiers);
@@ -99,32 +103,32 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Type::detail(std::shared_ptr<
 
 ALTACORE_AST_VALIDATE_D(Type) {
   ALTACORE_VS_S(Type);
-  if (isFunction) {
-    if (isAny) ALTACORE_VALIDATION_ERROR("type can't be multiple kinds, only one of `function`, `any`, or `native`");
-    if (!returnType) ALTACORE_VALIDATION_ERROR("empty return type for function type");
-    returnType->validate(stack, info->returnType);
-    for (size_t i = 0; i < parameters.size(); i++) {
-      auto& [type, isVariable, name] = parameters[i];
-      auto& paramDet = info->parameters[i];
-      if (!type) ALTACORE_VALIDATION_ERROR("empty type for parameter for function type");
-      type->validate(stack, paramDet);
-    }
+  if (info->type->isFunction) {
+    if (info->type->isAny) ALTACORE_VALIDATION_ERROR("type can't be multiple kinds, only one of `function`, `any`, or `native`");
+    //if (!returnType) ALTACORE_VALIDATION_ERROR("empty return type for function type");
+    //returnType->validate(stack, info->returnType);
+    //for (size_t i = 0; i < parameters.size(); i++) {
+    //  auto& [type, isVariable, name] = parameters[i];
+    //  auto& paramDet = info->parameters[i];
+    //  if (!type) ALTACORE_VALIDATION_ERROR("empty type for parameter for function type");
+    //  type->validate(stack, paramDet);
+    //}
   } else {
-    if (returnType) ALTACORE_VALIDATION_ERROR("non-function types can't have return types");
-    if (parameters.size() > 0) ALTACORE_VALIDATION_ERROR("non-function types can't have parameters");
-    if (isAny) {
+    //if (returnType) ALTACORE_VALIDATION_ERROR("non-function types can't have return types");
+    //if (parameters.size() > 0) ALTACORE_VALIDATION_ERROR("non-function types can't have parameters");
+    if (info->type->isAny) {
       //if (isNative) ALTACORE_VALIDATION_ERROR("type can't be multiple kinds, only one of `function`, `any`, or `native`");
-      if (!name.empty()) ALTACORE_VALIDATION_ERROR("`any` type can't have a native type name");
-      if (lookup) ALTACORE_VALIDATION_ERROR("`any` type can't have a target lookup");
-    } else if (isNative) {
+      //if (!name.empty()) ALTACORE_VALIDATION_ERROR("`any` type can't have a native type name");
+      //if (lookup) ALTACORE_VALIDATION_ERROR("`any` type can't have a target lookup");
+    } else if (info->type->isNative) {
       //if (isAny) ALTACORE_VALIDATION_ERROR("type can't be multiple kinds, only one of `function`, `any`, or `native`");
-      if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for native type");
-      if (lookup) ALTACORE_VALIDATION_ERROR("native type can't have a target lookup");
+      //if (name.empty()) ALTACORE_VALIDATION_ERROR("empty name for native type");
+      //if (lookup) ALTACORE_VALIDATION_ERROR("native type can't have a target lookup");
     } else {
-      if (!name.empty()) ALTACORE_VALIDATION_ERROR("non-native type can't have a native type name");
-      if (!lookup) ALTACORE_VALIDATION_ERROR("empty lookup for non-native type");
-      lookup->validate(stack, info->lookup);
-      for (auto& mod: modifiers) {
+      //if (!name.empty()) ALTACORE_VALIDATION_ERROR("non-native type can't have a native type name");
+      //if (!lookup) ALTACORE_VALIDATION_ERROR("empty lookup for non-native type");
+      //lookup->validate(stack, info->lookup);
+      for (auto& mod: info->type->modifiers) {
         if (mod >= (uint8_t)TypeModifierFlag::Signed) {
           ALTACORE_VALIDATION_ERROR("only native types can be `signed`, `unsigned`, `long`, or `short`");
         }

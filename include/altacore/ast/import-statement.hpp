@@ -14,6 +14,8 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
+        bool isManual = false;
+
         std::string request;
         bool isAliased = false;
         std::vector<std::pair<std::string, std::string>> imports; // only available on non-alias imports

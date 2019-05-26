@@ -1,7 +1,7 @@
 #ifndef ALTACORE_ANY_HPP
 #define ALTACORE_ANY_HPP
 
-#if defined(__has_include) && __has_include(<any>)
+#if defined(__has_include) && __has_include(<any>) && !defined(ALTACORE_NO_SYSTEM_ANY)
 #include <any>
 #define ALTACORE_ANY std::any
 #define ALTACORE_ANY_CAST std::any_cast

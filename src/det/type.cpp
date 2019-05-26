@@ -35,7 +35,11 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto boolean = dynamic_cast<DH::BooleanLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (auto binOp = dynamic_cast<DH::BinaryOperation*>(expression)) {
-    return getUnderlyingType(binOp->left.get());
+    if ((uint8_t)binOp->type <= (uint8_t)Shared::OperatorType::BitwiseXor) {
+      return getUnderlyingType(binOp->left.get());
+    } else {
+      return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
+    }
   } else if (auto call = dynamic_cast<DH::FunctionCallExpression*>(expression)) {
     return call->targetType->returnType;
   } else if (auto acc = dynamic_cast<DH::Accessor*>(expression)) {
@@ -67,9 +71,19 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto subs = dynamic_cast<DH::SubscriptExpression*>(expression)) {
     return getUnderlyingType(subs->target.get())->follow();
   } else if (auto sc = dynamic_cast<DH::SuperClassFetch*>(expression)) {
-    return std::make_shared<Type>(sc->superclass, std::vector<uint8_t> { (uint8_t)Shared::TypeModifierFlag::Reference });
+    return std::make_shared<Type>(sc->superclass, std::vector<uint8_t> { (uint8_t)Modifier::Reference });
   } else if (auto instOf = dynamic_cast<DH::InstanceofExpression*>(expression)) {
-    return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Shared::TypeModifierFlag::Constant });
+    return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
+  } else if (auto unary = dynamic_cast<DH::UnaryOperation*>(expression)) {
+    if (unary->type == Shared::UOperatorType::Not) {
+      return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
+    } else {
+      return getUnderlyingType(unary->target.get())->copy();
+    }
+  } else if (auto op = dynamic_cast<DH::SizeofOperation*>(expression)) {
+    return std::make_shared<Type>(NativeType::Integer, std::vector<uint8_t> { (uint8_t)Modifier::Constant, (uint8_t)Modifier::Long, (uint8_t)Modifier::Long });
+  } else if (auto deci = dynamic_cast<DH::FloatingPointLiteralNode*>(expression)) {
+    return std::make_shared<Type>(NativeType::Double, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   }
 
   return nullptr;
@@ -81,6 +95,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
 
   if (itemType == ItemType::Function) {
     auto func = std::dynamic_pointer_cast<Function>(item);
+    if (func->genericParameterCount > 0 && func->genericArguments.size() < 1) return nullptr;
     std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> params;
     for (auto& [name, type, isVariable, id]: func->parameters) {
       params.push_back(std::make_tuple(name, type, isVariable, id));
@@ -181,6 +196,13 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::deconstify() const {
   }
   return other;
 };
+std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::destroyReferences() const {
+  auto other = copy();
+  while (other->referenceLevel() > 0) {
+    other = other->dereference();
+  }
+  return other;
+};
 const size_t AltaCore::DET::Type::indirectionLevel() const {
   size_t count = 0;
 
@@ -222,6 +244,7 @@ const size_t AltaCore::DET::Type::referenceLevel() const {
 };
 
 size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
+  if (other.isAccessor) return compatiblity(*other.returnType);
   size_t compat = 2;
 
   if (isAny || other.isAny) return 1;
@@ -260,7 +283,7 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
     if ((nativeTypeName == NativeType::Void) != (other.nativeTypeName == NativeType::Void)) {
       return 0;
     }
-    if (nativeTypeName == other.nativeTypeName) {
+    if (nativeTypeName == other.nativeTypeName && (nativeTypeName != NativeType::UserDefined || userDefinedName == other.userDefinedName)) {
       compat++;
     }
   } else {
@@ -273,6 +296,7 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
 };
 
 bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
+  if (other.isAccessor) return commonCompatiblity(*other.returnType);
   if (isAny || other.isAny) return true;
   if (isFunction != other.isFunction) return false;
   if (isNative != other.isNative) return false;
@@ -301,6 +325,7 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
 };
 
 bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& other) {
+  if (other.isAccessor) return isExactlyCompatibleWith(*other.returnType);
   if (!commonCompatiblity(other)) return false;
   if (isAny || other.isAny) return false;
 
@@ -317,6 +342,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
     }
   } else if (isNative) {
     if (nativeTypeName != other.nativeTypeName) return false;
+    if (userDefinedName != other.userDefinedName) return false;
   } else {
     if (klass->id != other.klass->id) return false;
   }
@@ -325,6 +351,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
 };
 
 bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
+  if (other.isAccessor) return isCompatibleWith(*other.returnType);
   if (!commonCompatiblity(other)) return false;
   if (isAny || other.isAny) return true;
 
@@ -345,12 +372,13 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
   return true;
 };
 
-AltaCore::DET::Type::Type(AltaCore::DET::NativeType _nativeTypeName, std::vector<uint8_t> _modifiers):
+AltaCore::DET::Type::Type(AltaCore::DET::NativeType _nativeTypeName, std::vector<uint8_t> _modifiers, std::string _userDefinedName):
   ScopeItem(""),
   isNative(true),
   isFunction(false),
   nativeTypeName(_nativeTypeName),
-  modifiers(_modifiers)
+  modifiers(_modifiers),
+  userDefinedName(_userDefinedName)
   {};
 AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> _parameters, std::vector<uint8_t> _modifiers):
   ScopeItem(""),
@@ -371,7 +399,6 @@ AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Class> _klass, std::vec
 bool AltaCore::DET::Type::operator %(const AltaCore::DET::Type& other) {
   return isCompatibleWith(other);
 };
-
 
 const size_t AltaCore::DET::Type::requiredArgumentCount() const {
   size_t count = 0;

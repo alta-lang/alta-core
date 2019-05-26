@@ -47,5 +47,14 @@
 #include "ast/super-class-fetch.hpp"
 #include "ast/instanceof-expression.hpp"
 #include "ast/generic.hpp"
+#include "ast/for-loop-statement.hpp"
+#include "ast/ranged-for-loop-statement.hpp"
+#include "ast/unary-operation.hpp"
+#include "ast/sizeof-operation.hpp"
+#include "ast/floating-point-literal-node.hpp"
+#include "ast/structure-definition-statement.hpp"
+#include "ast/export-statement.hpp"
+#include "ast/variable-declaration-statement.hpp"
+#include "ast/alias-statement.hpp"
 
 #endif // ALTACORE_AST_HPP

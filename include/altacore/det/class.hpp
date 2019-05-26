@@ -21,7 +21,13 @@ namespace AltaCore {
         virtual std::shared_ptr<Node> clone();
         virtual std::shared_ptr<Node> deepClone();
 
-        static std::shared_ptr<Class> create(std::string name, std::shared_ptr<Scope> parentScope, std::vector<std::shared_ptr<Class>> parents = {});
+        static std::shared_ptr<Class> create(std::string name, std::shared_ptr<Scope> parentScope, std::vector<std::shared_ptr<Class>> parents = {}, bool isStructure = false);
+
+        bool isStructure = false;
+        bool isExternal = false;
+        bool isTyped = true;
+        bool isLiteral = false;
+        bool isExport = false;
 
         std::shared_ptr<Scope> scope = nullptr;
         std::shared_ptr<Function> defaultConstructor = nullptr;

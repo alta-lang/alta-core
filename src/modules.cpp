@@ -176,6 +176,8 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
       }
       // welp, this shouldn't ever happen. but just in case...
       return stdlibResolved / "main.alta";
+    } else if ((stdlibResolved = stdlibResolved + ".alta").exists()) {
+      return stdlibResolved;
     } else {
       // otherwise, try finding the module in a package
       while (!relativeTo.isRoot()) {

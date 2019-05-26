@@ -70,6 +70,15 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/super-class-fetch.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/instanceof-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/generic.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/for-loop-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/ranged-for-loop-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/unary-operation.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/sizeof-operation.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/floating-point-literal-node.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/structure-definition-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/export-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/variable-declaration-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/alias-statement.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"
@@ -87,6 +96,11 @@ target_include_directories(altacore PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
 target_compile_definitions(altacore PUBLIC ALTACORE_LOCAL_SEMVER)
 target_compile_definitions(altacore PUBLIC ALTACORE_LOCAL_ANY)
+
+if (CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "10.14")
+  target_compile_definitions(altacore PUBLIC ALTACORE_NO_SYSTEM_ANY)
+  target_compile_definitions(altacore PUBLIC ALTACORE_NO_SYSTEM_VARIANT)
+endif()
 
 target_link_libraries(altacore PRIVATE yaml-cpp)
 target_link_libraries(altacore PUBLIC semver_c optional crossguid mpark_variant)
