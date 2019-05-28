@@ -2035,21 +2035,9 @@ namespace AltaCore {
             }
 
             if (expectKeyword("extends")) {
-              bool dot = false;
-              while (auto pid = expect(TokenType::Identifier)) {
-                if (dot) {
-                  auto& back = def->parents.back();
-                  back = std::make_shared<AST::Accessor>(back, pid.raw);
-                } else {
-                  def->parents.push_back(std::make_shared<AST::Fetch>(pid.raw));
-                }
-                if (expect(TokenType::Dot)) {
-                  dot = true;
-                } else if (!expect(TokenType::Comma)) {
-                  break;
-                }
-              }
-              if (dot) ACP_NOT_OK;
+              state.internalIndex = 3;
+              ruleNode = std::move(def);
+              ACP_RULE(StrictAccessor);
             }
 
             if (!expect(TokenType::OpeningBrace)) ACP_NOT_OK;
@@ -2076,6 +2064,21 @@ namespace AltaCore {
             } else {
               ACP_NOT_OK;
             }
+          } else if (state.internalIndex == 3) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto klass = std::dynamic_pointer_cast<AST::ClassDefinitionNode>(ruleNode);
+
+            klass->parents.push_back(std::dynamic_pointer_cast<AST::RetrievalNode>(*exps.back().item));
+
+            if (expect(TokenType::Comma)) {
+              ACP_RULE(StrictAccessor);
+            }
+
+            if (!expect(TokenType::OpeningBrace)) ACP_NOT_OK;
+
+            state.internalIndex = 1;
+            ACP_RULE(ClassStatement);
           } else {
             auto klass = std::dynamic_pointer_cast<AST::ClassDefinitionNode>(ruleNode);
 
