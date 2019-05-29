@@ -84,7 +84,7 @@ ALTACORE_AST_DETAIL_D(Fetch) {
         auto newKlass = klass->instantiateGeneric(info->genericArguments);
         info->items[i] = newKlass;
         auto thisMod = Util::getModule(info->inputScope.get()).lock();
-        thisMod->genericsUsed.push_back(newKlass);
+        //thisMod->genericsUsed.push_back(newKlass);
         auto thatMod = Util::getModule(newKlass->parentScope.lock().get()).lock();
         if (thisMod->packageInfo.name == thatMod->packageInfo.name) {
           newKlass->instantiatedFromSamePackage = true;
@@ -97,7 +97,7 @@ ALTACORE_AST_DETAIL_D(Fetch) {
         auto newFunc = func->instantiateGeneric(info->genericArguments);
         info->items[i] = newFunc;
         auto thisMod = Util::getModule(info->inputScope.get()).lock();
-        thisMod->genericsUsed.push_back(newFunc);
+        //thisMod->genericsUsed.push_back(newFunc);
         auto thatMod = Util::getModule(newFunc->parentScope.lock().get()).lock();
         if (thisMod->packageInfo.name == thatMod->packageInfo.name) {
           newFunc->instantiatedFromSamePackage = true;

@@ -5,6 +5,7 @@
 #include "../../include/altacore/det/namespace.hpp"
 #include "../../include/altacore/det/variable.hpp"
 #include "../../include/altacore/det/class.hpp"
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Scope::nodeType() {
   return NodeType::Scope;
@@ -166,6 +167,10 @@ void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::ScopeItem> gener
     scope->hoist(generic);
   } else {
     throw std::runtime_error("failed to hoist generic anywhere");
+  }
+  if (auto mod = Util::getModule(this).lock()) {
+    mod->genericsUsed.push_back(generic);
+    Util::getModule(generic->parentScope.lock().get()).lock()->dependents.push_back(mod);
   }
 };
 
