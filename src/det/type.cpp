@@ -26,7 +26,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto varDef = dynamic_cast<DH::VariableDefinitionExpression*>(expression)) {
     return std::dynamic_pointer_cast<Type>(varDef->variable->type->clone())->reference();
   } else if (auto assign = dynamic_cast<DH::AssignmentExpression*>(expression)) {
-    return getUnderlyingType(assign->target.get());
+    return getUnderlyingType(assign->target.get())->reference();
   } else if (auto fetch = dynamic_cast<DH::Fetch*>(expression)) {
     if (!fetch->narrowedTo) {
       throw std::runtime_error("the given fetch has not been narrowed. either narrow it or use `AltaCore::DET::Type::getUnderlyingTypes` instead");
@@ -36,7 +36,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (auto binOp = dynamic_cast<DH::BinaryOperation*>(expression)) {
     if ((uint8_t)binOp->type <= (uint8_t)Shared::OperatorType::BitwiseXor) {
-      return getUnderlyingType(binOp->left.get());
+      return getUnderlyingType(binOp->left.get())->destroyReferences();
     } else {
       return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
     }
@@ -58,10 +58,14 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     if (inst->superclass) {
       return getUnderlyingType(inst->target.get());
     } else {
-      return std::make_shared<Type>(inst->klass);
+      auto type = std::make_shared<Type>(inst->klass);
+      if (inst->persistent) {
+        type = type->reference();
+      }
+      return type;
     }
   } else if (auto ptr = dynamic_cast<DH::PointerExpression*>(expression)) {
-    return getUnderlyingType(ptr->target.get())->point();
+    return getUnderlyingType(ptr->target.get())->destroyReferences()->point();
   } else if (auto deref = dynamic_cast<DH::DereferenceExpression*>(expression)) {
     return getUnderlyingType(deref->target.get())->follow();
   } else if (auto cast = dynamic_cast<DH::CastExpression*>(expression)) {
@@ -78,7 +82,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     if (unary->type == Shared::UOperatorType::Not) {
       return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
     } else {
-      return getUnderlyingType(unary->target.get())->copy();
+      return getUnderlyingType(unary->target.get())->destroyReferences();
     }
   } else if (auto op = dynamic_cast<DH::SizeofOperation*>(expression)) {
     return std::make_shared<Type>(NativeType::Integer, std::vector<uint8_t> { (uint8_t)Modifier::Constant, (uint8_t)Modifier::Long, (uint8_t)Modifier::Long });
@@ -142,7 +146,9 @@ std::vector<std::shared_ptr<AltaCore::DET::Type>> AltaCore::DET::Type::getUnderl
 
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::reference() const {
   auto other = copy();
-  other->modifiers.insert(other->modifiers.begin(), (uint8_t)Shared::TypeModifierFlag::Reference);
+  if (other->referenceLevel() < 1) {
+    other->modifiers.insert(other->modifiers.begin(), (uint8_t)Shared::TypeModifierFlag::Reference);
+  }
   return other;
 };
 std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::dereference() const {
@@ -215,6 +221,7 @@ const size_t AltaCore::DET::Type::indirectionLevel() const {
   return count;
 };
 const size_t AltaCore::DET::Type::pointerLevel() const {
+  if (referenceLevel() > 0) return destroyReferences()->pointerLevel();
   size_t count = 0;
 
   for (auto& modLevel: modifiers) {
@@ -277,6 +284,7 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
     for (size_t i = 0; i < parameters.size(); i++) {
       auto paramCompat = std::get<1>(parameters[i])->compatiblity(*std::get<1>(other.parameters[i]));
       if (paramCompat == 0) return 0;
+      if (std::get<0>(parameters[0]) == std::get<0>(other.parameters[0])) ++paramCompat;
       compat += paramCompat;
     }
   } else if (isNative) {
@@ -296,6 +304,8 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
 };
 
 bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
+  if (referenceLevel() > 0) return destroyReferences()->commonCompatiblity(other);
+  if (other.referenceLevel() > 0) return commonCompatiblity(*other.destroyReferences());
   if (other.isAccessor) return commonCompatiblity(*other.returnType);
   if (isAny || other.isAny) return true;
   if (isFunction != other.isFunction) return false;
@@ -351,6 +361,8 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
 };
 
 bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
+  if (referenceLevel() > 0) return destroyReferences()->isCompatibleWith(other);
+  if (other.referenceLevel() > 0) return isCompatibleWith(*other.destroyReferences());
   if (other.isAccessor) return isCompatibleWith(*other.returnType);
   if (!commonCompatiblity(other)) return false;
   if (isAny || other.isAny) return true;

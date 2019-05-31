@@ -185,6 +185,8 @@ namespace AltaCore {
       Export,
       VariableDeclaration,
       Alias,
+      Delete,
+      ControlDirective,
     };
 
     enum class PrepoRuleType {

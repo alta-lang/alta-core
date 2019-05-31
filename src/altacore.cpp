@@ -1,32 +1,36 @@
 #include "../include/altacore.hpp"
 
+#define AC_ATTRIBUTE_FUNC [](std::shared_ptr<AST::Node> _target, std::shared_ptr<DH::Node> _info, std::vector<Attributes::AttributeArgument> args) -> void
+#define AC_ATTRIBUTE_CAST(x) auto target = std::dynamic_pointer_cast<AST::x>(_target);\
+  auto info = std::dynamic_pointer_cast<DH::x>(_info);\
+  if (!target || !info) throw std::runtime_error("this isn't supposed to happen");
+#define AC_ATTRIBUTE(x, ...) Attributes::registerAttribute({ __VA_ARGS__ }, { AST::NodeType::x }, AC_ATTRIBUTE_FUNC {\
+  AC_ATTRIBUTE_CAST(x);
+#define AC_END_ATTRIBUTE })
+
 void AltaCore::registerGlobalAttributes() {
-  Attributes::registerAttribute({ "read" }, { AST::NodeType::FunctionDefinitionNode }, [](std::shared_ptr<AST::Node> _target, std::shared_ptr<DH::Node> _info, std::vector<Attributes::AttributeArgument> args) -> void {
-    auto target = std::dynamic_pointer_cast<AST::FunctionDefinitionNode>(_target);
-    auto info = std::dynamic_pointer_cast<DH::FunctionDefinitionNode>(_info);
-    if (!target || !info) throw std::runtime_error("this isn't supposed to happen 1");
-
+  AC_ATTRIBUTE(FunctionDefinitionNode, "read");
     info->function->isAccessor = true;
-  });
-  Attributes::registerAttribute({ "copy" }, { AST::NodeType::ClassSpecialMethodDefinitionStatement }, [](std::shared_ptr<AST::Node> _target, std::shared_ptr<DH::Node> _info, std::vector<Attributes::AttributeArgument> args) -> void {
-    auto target = std::dynamic_pointer_cast<AST::ClassSpecialMethodDefinitionStatement>(_target);
-    auto info = std::dynamic_pointer_cast<DH::ClassSpecialMethodDefinitionStatement>(_info);
-    if (!target || !info) throw std::runtime_error("this isn't supposed to happen 2");
+  AC_END_ATTRIBUTE;
 
+  AC_ATTRIBUTE(ClassSpecialMethodDefinitionStatement, "copy");
     info->isCopyConstructor = true;
-  });
-  Attributes::registerAttribute({ "external" }, { AST::NodeType::StructureDefinitionStatement }, [](std::shared_ptr<AST::Node> _target, std::shared_ptr<DH::Node> _info, std::vector<Attributes::AttributeArgument> args) -> void {
-    auto target = std::dynamic_pointer_cast<AST::StructureDefinitionStatement>(_target);
-    auto info = std::dynamic_pointer_cast<DH::StructureDefinitionStatement>(_info);
-    if (!target || !info) throw std::runtime_error("this isn't suppossed to happen 3");
+  AC_END_ATTRIBUTE;
 
+  AC_ATTRIBUTE(StructureDefinitionStatement, "external");
     target->isExternal = info->isExternal = info->structure->isExternal = true;
-  });
-  Attributes::registerAttribute({ "typed" }, { AST::NodeType::StructureDefinitionStatement }, [](std::shared_ptr<AST::Node> _target, std::shared_ptr<DH::Node> _info, std::vector<Attributes::AttributeArgument> args) -> void {
-    auto target = std::dynamic_pointer_cast<AST::StructureDefinitionStatement>(_target);
-    auto info = std::dynamic_pointer_cast<DH::StructureDefinitionStatement>(_info);
-    if (!target || !info) throw std::runtime_error("this isn't suppossed to happen 3");
+  AC_END_ATTRIBUTE;
 
+  AC_ATTRIBUTE(StructureDefinitionStatement, "typed");
     target->isTyped = info->isTyped = info->structure->isTyped = true;
-  });
+  AC_END_ATTRIBUTE;
+
+  AC_ATTRIBUTE(AssignmentExpression, "strict");
+    info->strict = true;
+  AC_END_ATTRIBUTE;
 };
+
+#undef AC_END_ATTRIBUTE
+#undef AC_ATTIBUTE
+#undef AC_ATTRIBUTE_CAST
+#undef AC_ATTRIBUTE_FUNC

@@ -847,6 +847,8 @@ namespace AltaCore {
                 RuleType::TypeAlias,
                 RuleType::VariableDeclaration,
                 RuleType::Alias,
+                RuleType::Delete,
+                RuleType::ControlDirective,
                 RuleType::Export,
                 RuleType::Expression,
 
@@ -871,6 +873,8 @@ namespace AltaCore {
                 RuleType::TypeAlias,
                 RuleType::VariableDeclaration,
                 RuleType::Alias,
+                RuleType::Delete,
+                RuleType::ControlDirective,
                 RuleType::Expression,
 
                 // general attributes must come last because
@@ -1359,6 +1363,26 @@ namespace AltaCore {
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
 
+            auto assignment = std::make_shared<AST::AssignmentExpression>();
+            assignment->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+            ruleNode = std::move(assignment);
+
+            state.internalIndex = 3;
+            exps.clear();
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 3) {
+            if (exps.back()) {
+              ACP_RULE(Attribute);
+            }
+
+            exps.pop_back();
+
+            auto assignment = std::dynamic_pointer_cast<AST::AssignmentExpression>(ruleNode);
+            for (auto& exp: exps) {
+              assignment->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+            }
+
             using AT = AST::AssignmentType;
 
             AT type = AT::Simple;
@@ -1386,22 +1410,20 @@ namespace AltaCore {
             } else if (expect(TokenType::BitwiseAndEquals)) {
               type = AT::BitwiseXor;
             }else {
-              ACP_EXP(exps.back().item);
+              ACP_NODE(assignment->target);
             }
 
-            ruleNode = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
             state.internalIndex = 2;
-            state.internalValue = type;
+            assignment->type = type;
 
             ACP_RULE(Assignment);
           } else {
             if (!exps.back()) ACP_NOT_OK;
 
-            auto lhs = std::dynamic_pointer_cast<AST::ExpressionNode>(ruleNode);
-            auto node = std::make_shared<AST::AssignmentExpression>(lhs, std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item));
-            node->type = ALTACORE_ANY_CAST<AST::AssignmentType>(state.internalValue);
+            auto assignment = std::dynamic_pointer_cast<AST::AssignmentExpression>(ruleNode);
+            assignment->value = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
-            ACP_NODE(node);
+            ACP_NODE(assignment);
           }
         } else if (rule == RuleType::AdditionOrSubtraction) {
           if (expectBinaryOperation(rule, RuleType::MultiplicationOrDivisionOrModulo, {
@@ -2238,6 +2260,7 @@ namespace AltaCore {
             if (!expectKeyword("new")) {
               state.internalIndex = 4;
               if (inClass) {
+                ruleNode = std::make_shared<AST::ClassInstantiationExpression>();
                 state.internalIndex = 5;
                 ACP_RULE(SuperClassFetch);
               }
@@ -2251,6 +2274,14 @@ namespace AltaCore {
                 RuleType::DecimalLiteral
               );
             }
+
+            auto inst = std::make_shared<AST::ClassInstantiationExpression>();
+
+            if (expectKeyword("persistent") || expect(TokenType::Asterisk)) {
+              inst->persistent = true;
+            }
+
+            ruleNode = std::move(inst);
             state.internalIndex = 1;
             ACP_RULE(Accessor);
           } else if (state.internalIndex == 1 || state.internalIndex == 5) {
@@ -2270,7 +2301,7 @@ namespace AltaCore {
               );
             }
 
-            auto inst = std::make_shared<AST::ClassInstantiationExpression>();
+            auto inst = std::dynamic_pointer_cast<AST::ClassInstantiationExpression>(ruleNode);
 
             inst->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
             bool isSuperclassFetch = inst->target->nodeType() == AST::NodeType::SuperClassFetch;
@@ -2288,7 +2319,6 @@ namespace AltaCore {
               });
 
               state.internalIndex = 2;
-              ruleNode = std::move(inst);
               ACP_RULE(Expression);
             } else if (isSuperclassFetch) {
               restoreState();
@@ -2676,15 +2706,15 @@ namespace AltaCore {
             if (inClass) {
               ACP_RULE_LIST(
                 RuleType::SuperClassFetch,
+                RuleType::StrictAccessor,
                 RuleType::Fetch,
                 RuleType::GroupedExpression,
-                RuleType::StrictAccessor,
               );
             } else {
               ACP_RULE_LIST(
+                RuleType::StrictAccessor,
                 RuleType::Fetch,
                 RuleType::GroupedExpression,
-                RuleType::StrictAccessor,
               );
             }
           } else {
@@ -3007,6 +3037,38 @@ namespace AltaCore {
 
             ACP_NODE(alias);
           }
+        } else if (rule == RuleType::Delete) {
+          if (state.internalIndex == 0) {
+            if (!expectKeyword("delete")) ACP_NOT_OK;
+
+            auto del = std::make_shared<AST::DeleteStatement>();
+
+            if (expectKeyword("persistent") || expect(TokenType::Asterisk)) {
+              del->persistent = true;
+            }
+
+            ruleNode = std::move(del);
+            state.internalIndex = 1;
+
+            ACP_RULE(Expression);
+          } else {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto del = std::dynamic_pointer_cast<AST::DeleteStatement>(ruleNode);
+            del->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+            ACP_NODE(del);
+          }
+        } else if (rule == RuleType::ControlDirective) {
+          auto ctrl = std::make_shared<AST::ControlDirective>();
+          if (expectKeyword("continue")) {
+            ctrl->isBreak = false;
+          } else if (expectKeyword("break")) {
+            ctrl->isBreak = true;
+          } else {
+            ACP_NOT_OK;
+          }
+          ACP_NODE(ctrl);
         }
 
         next();

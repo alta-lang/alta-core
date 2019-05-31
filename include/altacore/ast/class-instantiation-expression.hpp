@@ -20,6 +20,7 @@ namespace AltaCore {
         //       something specifically for scope retrieval classes
         std::shared_ptr<ExpressionNode> target;
         std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments;
+        bool persistent = false;
 
         ClassInstantiationExpression() {};
 

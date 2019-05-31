@@ -192,11 +192,13 @@ ALTACORE_AST_DETAIL_D(FunctionCallExpression) {
     if (target->nodeType() == NodeType::Fetch) {
       auto fetch = std::dynamic_pointer_cast<AST::Fetch>(target);
       auto fetchDet = std::dynamic_pointer_cast<DH::Fetch>(info->target);
-      fetch->narrowTo(fetchDet, mostCompatibleType);
+      fetchDet->narrowedTo = fetchDet->items[index];
+      //fetch->narrowTo(fetchDet, mostCompatibleType);
     } else if (target->nodeType() == NodeType::Accessor) {
       auto acc = std::dynamic_pointer_cast<AST::Accessor>(target);
       auto accDet = std::dynamic_pointer_cast<DH::Accessor>(info->target);
-      acc->narrowTo(accDet, mostCompatibleType);
+      accDet->narrowedTo = accDet->items[index];
+      //acc->narrowTo(accDet, mostCompatibleType);
     }
     if (info->targetType->isMethod) {
       info->isMethodCall = true;

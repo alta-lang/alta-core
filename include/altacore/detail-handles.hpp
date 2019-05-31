@@ -110,6 +110,10 @@ namespace AltaCore {
       std::shared_ptr<ExpressionNode> target = nullptr;
       std::shared_ptr<ExpressionNode> value = nullptr;
       Shared::AssignmentType type = Shared::AssignmentType::Simple;
+
+      bool strict = false;
+
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
     };
     class AttributeNode: public Node {
       ALTACORE_DH_CTOR(AttributeNode, Node);
@@ -188,6 +192,7 @@ namespace AltaCore {
       std::shared_ptr<DET::Class> klass = nullptr;
       ALTACORE_MAP<size_t, size_t> argumentMap;
       std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>, std::vector<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>>>> adjustedArguments;
+      bool persistent = false;
     };
     class ClassMemberDefinitionStatement: public ClassStatementNode {
       ALTACORE_DH_CTOR(ClassMemberDefinitionStatement, ClassStatementNode);
@@ -458,6 +463,12 @@ namespace AltaCore {
 
       std::shared_ptr<RetrievalNode> target = nullptr;
       std::vector<std::shared_ptr<DET::Alias>> aliases;
+    };
+    class DeleteStatement: public StatementNode {
+      ALTACORE_DH_CTOR(DeleteStatement, StatementNode);
+
+      std::shared_ptr<ExpressionNode> target = nullptr;
+      bool persistent = false;
     };
 
     #undef ALTACORE_DH_CTOR

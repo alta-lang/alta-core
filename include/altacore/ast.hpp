@@ -56,5 +56,7 @@
 #include "ast/export-statement.hpp"
 #include "ast/variable-declaration-statement.hpp"
 #include "ast/alias-statement.hpp"
+#include "ast/delete-statement.hpp"
+#include "ast/control-directive.hpp"
 
 #endif // ALTACORE_AST_HPP

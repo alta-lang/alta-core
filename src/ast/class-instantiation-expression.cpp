@@ -13,6 +13,8 @@ ALTACORE_AST_DETAIL_D(ClassInstantiationExpression) {
   ALTACORE_MAKE_DH(ClassInstantiationExpression);
   info->target = target->fullDetail(scope);
 
+  info->persistent = persistent;
+
   if (auto fetch = std::dynamic_pointer_cast<DH::Fetch>(info->target)) {
     if (!fetch->narrowedTo) {
       ALTACORE_DETAILING_ERROR("the target must be narrowed before it can be instantiated");

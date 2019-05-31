@@ -16,6 +16,10 @@ ALTACORE_AST_DETAIL_D(AssignmentExpression) {
   info->target = target->fullDetail(scope);
   info->value = value->fullDetail(scope);
   info->type = type;
+  
+  for (auto& attr: attributes) {
+    info->attributes.push_back(attr->fullDetail(info->inputScope, shared_from_this(), info));
+  }
 
   return info;
 };
@@ -32,7 +36,7 @@ ALTACORE_AST_VALIDATE_D(AssignmentExpression) {
     ALTACORE_VALIDATION_ERROR("can't assign to a constant");
   }
 
-  if (!targetType->destroyReferences()->isCompatibleWith(*valueType)) {
+  if (!targetType->isCompatibleWith(*valueType)) {
     ALTACORE_VALIDATION_ERROR("source type is not compatible with the destination type for assignment expression");
   }
 
