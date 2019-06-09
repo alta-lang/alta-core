@@ -2,6 +2,7 @@
 #define ALTACORE_DET_TYPE_HPP
 
 #include "scope-item.hpp"
+#include "class.hpp"
 #include <string>
 #include <vector>
 
@@ -93,8 +94,56 @@ namespace AltaCore {
 
         // operator for `isCompatiableWith`
         bool operator %(const Type& other);
+        bool operator ==(const Type& other);
         
         const size_t requiredArgumentCount() const;
+    };
+  };
+};
+
+// std::hash implementation
+namespace std {
+  template<> struct hash<AltaCore::DET::Type> {
+    size_t operator ()(const AltaCore::DET::Type& val) const {
+      size_t result = 17;
+      result = result * 31 + hash<bool>()(val.isAny);
+      result = result * 31 + hash<bool>()(val.isNative);
+      result = result * 31 + hash<bool>()(val.isFunction);
+      result = result * 31 + hash<bool>()(val.isMethod);
+      result = result * 31 + hash<bool>()(val.isAccessor);
+      result = result * 31 + hash<int>()((int)val.nativeTypeName);
+      result = result * 31 + hash<string>()(val.userDefinedName);
+      for (auto& mod: val.modifiers) {
+        result = result * 31 + hash<uint8_t>()(mod);
+      }
+      if (val.klass) {
+        result = result * 31 + hash<string>()(val.klass->id);
+      }
+      if (val.returnType) {
+        result = result * 31 + hash<AltaCore::DET::Type>()(*val.returnType);
+      }
+      for (auto& param: val.parameters) {
+        auto& [id, type, isVariable, name] = param;
+        result = result * 31 + hash<AltaCore::DET::Type>()(*type);
+        result = result * 31 + hash<bool>()(isVariable);
+        result = result * 31 + hash<string>()(name);
+      }
+      return result;
+    };
+  };
+};
+
+namespace AltaCore {
+  namespace DET {
+    struct TypePointerHash {
+      size_t operator ()(const std::shared_ptr<AltaCore::DET::Type>& val) const {
+        return std::hash<AltaCore::DET::Type>()(*val);
+      };
+    };
+    struct TypePointerComparator {
+      bool operator() (const std::shared_ptr<AltaCore::DET::Type>& lhs, const std::shared_ptr<AltaCore::DET::Type>& rhs) const {
+        return (*lhs) == (*rhs);
+      };
     };
   };
 };

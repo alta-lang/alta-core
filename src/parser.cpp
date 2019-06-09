@@ -849,6 +849,8 @@ namespace AltaCore {
                 RuleType::Alias,
                 RuleType::Delete,
                 RuleType::ControlDirective,
+                RuleType::TryCatch,
+                RuleType::Throw,
                 RuleType::Export,
                 RuleType::Expression,
 
@@ -875,6 +877,8 @@ namespace AltaCore {
                 RuleType::Alias,
                 RuleType::Delete,
                 RuleType::ControlDirective,
+                RuleType::TryCatch,
+                RuleType::Throw,
                 RuleType::Expression,
 
                 // general attributes must come last because
@@ -3069,6 +3073,62 @@ namespace AltaCore {
             ACP_NOT_OK;
           }
           ACP_NODE(ctrl);
+        } else if (rule == RuleType::TryCatch) {
+          if (state.internalIndex == 0) {
+            if (!expectKeyword("try")) ACP_NOT_OK;
+            state.internalIndex = 1;
+            ACP_RULE(Statement);
+          } else if (state.internalIndex == 1) {
+            if (!exps.back()) ACP_NOT_OK;
+            auto blk = std::make_shared<AST::TryCatchBlock>();
+            ruleNode = blk;
+            blk->tryBlock = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
+            if (!expectKeyword("catch")) ACP_NOT_OK;
+            state.internalIndex = 2;
+            ACP_RULE(NullRule);
+          } else if (state.internalIndex == 2) {
+            if (expectKeyword("all")) {
+              state.internalIndex = 3;
+              ACP_RULE(Statement);
+            }
+            auto id = expect(TokenType::Identifier);
+            if (!id) ACP_NOT_OK;
+            if (!expect(TokenType::Colon)) ACP_NOT_OK;
+            auto blk = std::dynamic_pointer_cast<AST::TryCatchBlock>(ruleNode);
+            blk->catchIDs.push_back(id.raw);
+            state.internalIndex = 5;
+            ACP_RULE(Type);
+          } else if (state.internalIndex == 3 || state.internalIndex == 4) {
+            if (!exps.back()) ACP_NOT_OK;
+            auto blk = std::dynamic_pointer_cast<AST::TryCatchBlock>(ruleNode);
+            if (state.internalIndex == 3) {
+              blk->catchAllBlock = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
+            } else {
+              blk->catchBlocks.back().second = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
+            }
+            if (expectKeyword("catch")) {
+              state.internalIndex = 2;
+              ACP_RULE(NullRule);
+            }
+            ACP_NODE(blk);
+          } else if (state.internalIndex == 5) {
+            if (!exps.back()) ACP_NOT_OK;
+            auto blk = std::dynamic_pointer_cast<AST::TryCatchBlock>(ruleNode);
+            blk->catchBlocks.push_back(std::make_pair(std::dynamic_pointer_cast<AST::Type>(*exps.back().item), std::shared_ptr<AST::StatementNode>(nullptr)));
+            state.internalIndex = 4;
+            ACP_RULE(Statement);
+          }
+        } else if (rule == RuleType::Throw) {
+          if (state.internalIndex == 0) {
+            if (!expectKeyword("throw")) ACP_NOT_OK;
+            state.internalIndex = 1;
+            ACP_RULE(Expression);
+          } else if (state.internalIndex == 1) {
+            if (!exps.back()) ACP_NOT_OK;
+            auto stmt = std::make_shared<AST::ThrowStatement>();
+            stmt->expression = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            ACP_NODE(stmt);
+          }
         }
 
         next();

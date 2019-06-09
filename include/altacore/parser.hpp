@@ -187,6 +187,8 @@ namespace AltaCore {
       Alias,
       Delete,
       ControlDirective,
+      TryCatch,
+      Throw,
     };
 
     enum class PrepoRuleType {

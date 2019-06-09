@@ -227,3 +227,28 @@ bool AltaCore::DET::Scope::canSee(std::shared_ptr<ScopeItem> item) const {
   }
   return true;
 };
+
+std::weak_ptr<AltaCore::DET::Scope> AltaCore::DET::Scope::findTry() {
+  std::weak_ptr<AltaCore::DET::Scope> result;
+  if (auto scope = parent.lock()) {
+    if (scope->isTry) {
+      result = scope;
+      return result;
+    }
+    return scope->findTry();
+  }
+  return result;
+};
+
+void AltaCore::DET::Scope::addPossibleError(std::shared_ptr<Type> errorType) {
+  if (isTry) {
+    typesThrown.insert(errorType);
+  } else {
+    auto tgt = findTry().lock();
+    if (tgt) {
+      tgt->addPossibleError(errorType);
+    } else {
+      throw std::runtime_error("Couldn't annotate error anywhere!");
+    }
+  }
+};

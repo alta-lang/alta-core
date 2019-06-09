@@ -2,7 +2,6 @@
 #define ALTACORE_DET_CLASS_HPP
 
 #include "scope-item.hpp"
-#include "scope.hpp"
 #include <string>
 
 namespace AltaCore {
@@ -14,6 +13,8 @@ namespace AltaCore {
   };
   namespace DET {
     class Variable;
+    class Scope;
+    class Type;
 
     class Class: public ScopeItem {
       public:

@@ -2,7 +2,6 @@
 #define ALTACORE_DET_SCOPE_ITEM_HPP
 
 #include "node.hpp"
-#include "scope.hpp"
 #include <string>
 #include <vector>
 
@@ -11,6 +10,8 @@ namespace AltaCore {
     class Node; // forward declaration
   };
   namespace DET {
+    class Scope; // forward declaration
+
     class ScopeItem: public Node {
       public:
         virtual const NodeType nodeType();

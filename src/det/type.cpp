@@ -412,6 +412,10 @@ bool AltaCore::DET::Type::operator %(const AltaCore::DET::Type& other) {
   return isCompatibleWith(other);
 };
 
+bool AltaCore::DET::Type::operator ==(const AltaCore::DET::Type& other) {
+  return isExactlyCompatibleWith(other);
+};
+
 const size_t AltaCore::DET::Type::requiredArgumentCount() const {
   size_t count = 0;
   for (auto [name, type, isVariable, id]: parameters) {

@@ -130,6 +130,10 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
     }
   }
 
+  if (info->function->throws) {
+    info->function->scope->isTry = true;
+  }
+
   return info;
 };
 

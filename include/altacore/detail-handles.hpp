@@ -325,7 +325,7 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> expression = nullptr;
 
-      std::shared_ptr<DET::Type> functionReturnType = nullptr;
+      std::shared_ptr<DET::Function> parentFunction = nullptr;
     };
     class RootNode: public Node {
       ALTACORE_DH_CTOR(RootNode, Node);
@@ -469,6 +469,23 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> target = nullptr;
       bool persistent = false;
+    };
+    class TryCatchBlock: public StatementNode {
+      ALTACORE_DH_CTOR(TryCatchBlock, StatementNode);
+
+      std::shared_ptr<StatementNode> tryBlock = nullptr;
+      std::vector<std::pair<std::shared_ptr<Type>, std::shared_ptr<StatementNode>>> catchBlocks;
+      std::shared_ptr<StatementNode> catchAllBlock = nullptr;
+
+      std::shared_ptr<DET::Scope> tryScope = nullptr;
+      std::vector<std::shared_ptr<DET::Scope>> catchScopes;
+      std::shared_ptr<DET::Scope> catchAllScope = nullptr;
+      std::vector<std::shared_ptr<DET::Variable>> errorVariables;
+    };
+    class ThrowStatement: public StatementNode {
+      ALTACORE_DH_CTOR(ThrowStatement, StatementNode);
+
+      std::shared_ptr<ExpressionNode> expression = nullptr;
     };
 
     #undef ALTACORE_DH_CTOR

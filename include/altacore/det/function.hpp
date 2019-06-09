@@ -32,6 +32,7 @@ namespace AltaCore {
         bool isExport = false;
         bool isMethod = false;
         bool isAccessor = false;
+        bool throws = false;
 
         std::shared_ptr<Type> parentClassType = nullptr;
 

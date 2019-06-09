@@ -28,6 +28,10 @@ void AltaCore::registerGlobalAttributes() {
   AC_ATTRIBUTE(AssignmentExpression, "strict");
     info->strict = true;
   AC_END_ATTRIBUTE;
+
+  AC_ATTRIBUTE(FunctionDefinitionNode, "throwing");
+    info->function->throws = true;
+  AC_END_ATTRIBUTE;
 };
 
 #undef AC_END_ATTRIBUTE

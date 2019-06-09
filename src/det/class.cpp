@@ -1,6 +1,7 @@
 #include "../../include/altacore/det/class.hpp"
 #include "../../include/altacore/det/variable.hpp"
 #include "../../include/altacore/ast/class-definition-node.hpp"
+#include "../../include/altacore/det/scope.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Class::nodeType() {
   return NodeType::Class;

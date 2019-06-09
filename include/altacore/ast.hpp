@@ -58,5 +58,7 @@
 #include "ast/alias-statement.hpp"
 #include "ast/delete-statement.hpp"
 #include "ast/control-directive.hpp"
+#include "ast/try-catch-block.hpp"
+#include "ast/throw-statement.hpp"
 
 #endif // ALTACORE_AST_HPP

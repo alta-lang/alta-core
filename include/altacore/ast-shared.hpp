@@ -68,6 +68,8 @@ namespace AltaCore {
       AliasStatement,
       DeleteStatement,
       ControlDirective,
+      TryCatchBlock,
+      ThrowStatement,
     };
 
     static const char* const NodeType_names[] = {
@@ -127,6 +129,8 @@ namespace AltaCore {
       "AliasStatement",
       "DeleteStatement",
       "ControlDirective",
+      "TryCatchBlock",
+      "ThrowStatement",
     };
   };
 };

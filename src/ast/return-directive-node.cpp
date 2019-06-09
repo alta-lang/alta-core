@@ -13,7 +13,7 @@ ALTACORE_AST_DETAIL_D(ReturnDirectiveNode) {
   ALTACORE_MAKE_DH(ReturnDirectiveNode);
   if (expression != nullptr) {
     auto func = Util::getFunction(scope).lock();
-    info->functionReturnType = func->returnType;
+    info->parentFunction = func;
     info->expression = expression->fullDetail(scope);
   }
   return info;
