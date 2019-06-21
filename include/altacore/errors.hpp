@@ -3,6 +3,7 @@
 
 #include <functional>
 #include "fs.hpp"
+#include <stdexcept>
 
 namespace AltaCore {
   namespace Errors {

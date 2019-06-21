@@ -105,6 +105,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
       params.push_back(std::make_tuple(name, type, isVariable, id));
     }
     auto type = std::make_shared<Type>(func->returnType, params);
+    type->throws = func->throws;
     if (auto parent = item->parentScope.lock()) {
       if (auto klass = parent->parentClass.lock()) {
         type->isMethod = true;

@@ -1,4 +1,5 @@
 #include "../include/altacore/util.hpp"
+#include <stdexcept>
 #include <cctype>
 
 bool AltaCore::Util::isInFunction(const AltaCore::DET::ScopeItem* item) {

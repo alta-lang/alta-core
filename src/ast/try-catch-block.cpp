@@ -29,7 +29,19 @@ ALTACORE_AST_DETAIL_D(TryCatchBlock) {
     info->catchAllBlock = catchAllBlock->fullDetail(info->catchAllScope);
   } else {
     for (auto& type: info->tryScope->typesThrown) {
-      if (caught.find(type) == caught.end()) {
+      auto typeHash = std::hash<DET::Type>()(*type);
+      bool found = false;
+      for (auto& item: caught) {
+        if (std::hash<DET::Type>()(*item) == typeHash) {
+          found = true;
+          break;
+        }
+        if (!type->isNative && !item->isNative && type->klass->hasParent(item->klass)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
         info->inputScope->addPossibleError(type);
       }
     }

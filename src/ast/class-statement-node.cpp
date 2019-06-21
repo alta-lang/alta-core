@@ -1,4 +1,5 @@
 #include "../../include/altacore/ast/class-statement-node.hpp"
+#include <stdexcept>
 
 const AltaCore::AST::NodeType AltaCore::AST::ClassStatementNode::nodeType() {
   return NodeType::ClassStatementNode;

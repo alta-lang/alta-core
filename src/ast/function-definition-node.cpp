@@ -125,13 +125,13 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
       }
     }
 
+    if (info->function->throws) {
+      info->function->scope->isTry = true;
+    }
+
     if (!info->body && !noBody) {
       info->body = body->fullDetail(info->function->scope);
     }
-  }
-
-  if (info->function->throws) {
-    info->function->scope->isTry = true;
   }
 
   return info;
