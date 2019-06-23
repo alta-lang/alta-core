@@ -22,6 +22,7 @@ namespace AltaCore {
         std::weak_ptr<Scope> parentScope;
         std::string name;
         size_t genericParameterCount = 0;
+        size_t moduleIndex = 0;
 
         std::vector<std::shared_ptr<ScopeItem>> privateHoistedGenerics;
         std::vector<std::shared_ptr<ScopeItem>> publicHoistedGenerics;

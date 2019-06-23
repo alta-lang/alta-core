@@ -38,6 +38,7 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
 
         std::vector<std::shared_ptr<ScopeItem>> hoistedGenerics;
+        size_t rootItemCount = 0;
 
         Module();
     };

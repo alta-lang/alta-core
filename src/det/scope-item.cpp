@@ -19,7 +19,13 @@ std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::ScopeItem::deepClone() {
 AltaCore::DET::ScopeItem::ScopeItem(std::string _name, std::shared_ptr<AltaCore::DET::Scope> _parentScope):
   name(_name),
   parentScope(_parentScope)
-  {};
+{
+  if (auto scope = parentScope.lock()) {
+    if (auto mod = scope->parentModule.lock()) {
+      moduleIndex = mod->rootItemCount++;
+    }
+  }
+};
 
 std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::ScopeItem::getUnderlyingItems(std::shared_ptr<AltaCore::DH::Node> node) {
   if (auto fetch = std::dynamic_pointer_cast<DH::Fetch>(node)) {
