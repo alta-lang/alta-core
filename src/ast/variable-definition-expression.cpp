@@ -1,5 +1,6 @@
 #include "../../include/altacore/ast/variable-definition-expression.hpp"
 #include "../../include/altacore/util.hpp"
+#include "../../include/altacore/ast/nullptr-expression.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::VariableDefinitionExpression::nodeType() {
   return NodeType::VariableDefinitionExpression;
@@ -42,6 +43,9 @@ ALTACORE_AST_VALIDATE_D(VariableDefinitionExpression) {
     // then there's a problem...
     ALTACORE_VALIDATION_ERROR("class has no default constructor; must be manually initialized");
   }
+  if (info->type->isAny) {
+    ALTACORE_VALIDATION_ERROR("variables can't have `any` type");
+  }
   ALTACORE_VS_E;
 };
 
@@ -54,6 +58,10 @@ ALTACORE_AST_INFO_DETAIL_D(VariableDefinitionExpression) {
 
   if (!info->type) {
     if (!type && info->initializationExpression) {
+      // specific check to help people remember you can't infer a type from `nullptr`
+      if (std::dynamic_pointer_cast<AST::NullptrExpression>(info->initializationExpression)) {
+        ALTACORE_DETAILING_ERROR("can't infer variable type from `nullptr` (i.e. type must be explicitly declared for this variable)");
+      }
       info->type = std::make_shared<DH::Type>(info->inputScope);
       info->type->type = DET::Type::getUnderlyingType(info->initializationExpression.get())->deconstify();
       info->type->isAny = info->type->type->isAny;

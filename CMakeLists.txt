@@ -83,6 +83,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/control-directive.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/try-catch-block.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/throw-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/nullptr-expression.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

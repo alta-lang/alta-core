@@ -189,6 +189,7 @@ namespace AltaCore {
       ControlDirective,
       TryCatch,
       Throw,
+      Nullptr,
     };
 
     enum class PrepoRuleType {

@@ -4,6 +4,7 @@
 #include "../det-shared.hpp"
 #include <memory>
 #include <string>
+#include <stdexcept>
 
 namespace AltaCore {
   namespace DetailHandles {

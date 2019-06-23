@@ -70,6 +70,7 @@ namespace AltaCore {
       ControlDirective,
       TryCatchBlock,
       ThrowStatement,
+      NullptrExpression,
     };
 
     static const char* const NodeType_names[] = {
@@ -131,6 +132,7 @@ namespace AltaCore {
       "ControlDirective",
       "TryCatchBlock",
       "ThrowStatement",
+      "NullptrExpression",
     };
   };
 };

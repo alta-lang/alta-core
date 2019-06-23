@@ -30,7 +30,7 @@ void AltaCore::registerGlobalAttributes() {
   AC_END_ATTRIBUTE;
 
   AC_ATTRIBUTE(FunctionDefinitionNode, "throwing");
-    info->function->throws = true;
+    info->function->throws(true);
   AC_END_ATTRIBUTE;
 };
 

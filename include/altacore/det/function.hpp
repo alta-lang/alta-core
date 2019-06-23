@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include "../event-manager.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -17,6 +18,8 @@ namespace AltaCore {
   };
   namespace DET {
     class Function: public ScopeItem {
+      private:
+        bool _throws = false;
       public:
         virtual const NodeType nodeType();
         virtual std::shared_ptr<Node> clone();
@@ -32,7 +35,18 @@ namespace AltaCore {
         bool isExport = false;
         bool isMethod = false;
         bool isAccessor = false;
-        bool throws = false;
+        bool isDestructor = false;
+
+        bool throws() const {
+          return _throws;
+        };
+        void throws(bool value) {
+          if (isDestructor) {
+            throw std::runtime_error("destructors can't throw (error for function `" + name + "`)");
+          }
+          _throws = value;
+          if (value) beganThrowing.dispatch();
+        };
 
         std::shared_ptr<Type> parentClassType = nullptr;
 
@@ -46,6 +60,9 @@ namespace AltaCore {
 
         std::weak_ptr<AST::FunctionDefinitionNode> ast;
         std::weak_ptr<DetailHandles::FunctionDefinitionNode> info;
+
+        EventManager<true> beganThrowing;
+        EventManager<true> doneDetailing;
 
         Function(std::shared_ptr<Scope> parentScope, std::string name);
 

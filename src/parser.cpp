@@ -2270,6 +2270,7 @@ namespace AltaCore {
               }
               ACP_RULE_LIST(
                 RuleType::Sizeof,
+                RuleType::Nullptr,
                 RuleType::BooleanLiteral,
                 RuleType::IntegralLiteral,
                 RuleType::String,
@@ -2296,6 +2297,7 @@ namespace AltaCore {
               state.internalIndex = 4;
               ACP_RULE_LIST(
                 RuleType::Sizeof,
+                RuleType::Nullptr,
                 RuleType::BooleanLiteral,
                 RuleType::IntegralLiteral,
                 RuleType::String,
@@ -2329,6 +2331,7 @@ namespace AltaCore {
               state.internalIndex = 4;
               ACP_RULE_LIST(
                 RuleType::Sizeof,
+                RuleType::Nullptr,
                 RuleType::BooleanLiteral,
                 RuleType::IntegralLiteral,
                 RuleType::String,
@@ -3129,6 +3132,10 @@ namespace AltaCore {
             stmt->expression = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
             ACP_NODE(stmt);
           }
+        } else if (rule == RuleType::Nullptr) {
+          if (!expectKeyword("nullptr")) ACP_NOT_OK;
+          auto node = std::make_shared<AST::NullptrExpression>();
+          ACP_NODE(node);
         }
 
         next();

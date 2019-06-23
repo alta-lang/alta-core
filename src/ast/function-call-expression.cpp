@@ -210,10 +210,12 @@ ALTACORE_AST_DETAIL_D(FunctionCallExpression) {
       info->methodClassTarget = tgt->target;
       info->methodClassTargetInfo = tgtInfo->target;
     }
-    if (func && func->throws) {
-      for (auto& type: func->scope->typesThrown) {
-        info->inputScope->addPossibleError(type);
-      }
+    if (func) {
+      func->doneDetailing.listen([=]() {
+        for (auto& type: func->scope->typesThrown) {
+          info->inputScope->addPossibleError(type);
+        }
+      });
     }
   }
 

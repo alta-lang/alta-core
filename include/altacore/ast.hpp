@@ -60,5 +60,6 @@
 #include "ast/control-directive.hpp"
 #include "ast/try-catch-block.hpp"
 #include "ast/throw-statement.hpp"
+#include "ast/nullptr-expression.hpp"
 
 #endif // ALTACORE_AST_HPP

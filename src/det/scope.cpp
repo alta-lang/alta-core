@@ -231,6 +231,10 @@ bool AltaCore::DET::Scope::canSee(std::shared_ptr<ScopeItem> item) const {
 std::weak_ptr<AltaCore::DET::Scope> AltaCore::DET::Scope::findTry() {
   std::weak_ptr<AltaCore::DET::Scope> result;
   if (auto scope = parent.lock()) {
+    if (auto func = scope->parentFunction.lock()) {
+      func->throws(true);
+      scope->isTry = true;
+    }
     if (scope->isTry) {
       result = scope;
       return result;
@@ -242,6 +246,10 @@ std::weak_ptr<AltaCore::DET::Scope> AltaCore::DET::Scope::findTry() {
 
 void AltaCore::DET::Scope::addPossibleError(std::shared_ptr<Type> errorType) {
   if (isTry) {
+    typesThrown.insert(errorType);
+  } else if (auto func = parentFunction.lock()) {
+    func->throws(true);
+    isTry = true;
     typesThrown.insert(errorType);
   } else {
     auto tgt = findTry().lock();

@@ -64,6 +64,7 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
   } else {
     if (!info->method) {
       info->method = DET::Function::create(info->inputScope, "destructor", {}, voidType);
+      info->method->isDestructor = true;
       info->method->visibility = visibilityModifier;
     }
     if (!noBody && !info->body) {

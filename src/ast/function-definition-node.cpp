@@ -125,12 +125,13 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
       }
     }
 
-    if (info->function->throws) {
+    info->function->beganThrowing.listen([=]() {
       info->function->scope->isTry = true;
-    }
+    });
 
     if (!info->body && !noBody) {
       info->body = body->fullDetail(info->function->scope);
+      info->function->doneDetailing.dispatch();
     }
   }
 
@@ -211,6 +212,7 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::AST::FunctionDefinitionNode::
   }
 
   inst->body = body->fullDetail(inst->function->scope);
+  inst->function->doneDetailing.dispatch();
 
   return inst->function;
 };

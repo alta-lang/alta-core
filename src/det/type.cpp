@@ -88,6 +88,10 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     return std::make_shared<Type>(NativeType::Integer, std::vector<uint8_t> { (uint8_t)Modifier::Constant, (uint8_t)Modifier::Long, (uint8_t)Modifier::Long });
   } else if (auto deci = dynamic_cast<DH::FloatingPointLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Double, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
+  } else if (auto null = dynamic_cast<DH::NullptrExpression*>(expression)) {
+    auto type = std::make_shared<Type>();
+    type->modifiers.push_back((uint8_t)Shared::TypeModifierFlag::Pointer);
+    return type;
   }
 
   return nullptr;
@@ -105,7 +109,10 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
       params.push_back(std::make_tuple(name, type, isVariable, id));
     }
     auto type = std::make_shared<Type>(func->returnType, params);
-    type->throws = func->throws;
+    type->throws = false;
+    func->beganThrowing.listen([=]() {
+      type->throws = true;
+    });
     if (auto parent = item->parentScope.lock()) {
       if (auto klass = parent->parentClass.lock()) {
         type->isMethod = true;
@@ -308,7 +315,14 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
   if (referenceLevel() > 0) return destroyReferences()->commonCompatiblity(other);
   if (other.referenceLevel() > 0) return commonCompatiblity(*other.destroyReferences());
   if (other.isAccessor) return commonCompatiblity(*other.returnType);
-  if (isAny || other.isAny) return true;
+  if (isAny || other.isAny) {
+    // little hack to only assign `nullptr` to pointers
+    if (
+      (isAny && pointerLevel() == 1 && other.pointerLevel() == 0) ||
+      (other.isAny && other.pointerLevel() == 1 && pointerLevel() == 0)
+    ) return false;
+    return true;
+  }
   if (isFunction != other.isFunction) return false;
   if (isNative != other.isNative) return false;
   if (!isNative && klass->id != other.klass->id && !other.klass->hasParent(klass)) return false;
