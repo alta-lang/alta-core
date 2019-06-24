@@ -1,5 +1,5 @@
-#ifndef AlTACORE_EVENT_MANAGER
-#define AlTACORE_EVENT_MANAGER
+#ifndef ALTACORE_EVENT_MANAGER
+#define ALTACORE_EVENT_MANAGER
 
 #include <forward_list>
 #include "optional.hpp"
@@ -81,4 +81,4 @@ struct AltaCore::valueify<false> {
   static const bool value = false;
 };
 
-#endif AlTACORE_EVENT_MANAGER
+#endif // ALTACORE_EVENT_MANAGER
