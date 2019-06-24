@@ -190,6 +190,7 @@ namespace AltaCore {
       TryCatch,
       Throw,
       Nullptr,
+      CodeLiteral,
     };
 
     enum class PrepoRuleType {

@@ -27,6 +27,7 @@ namespace AltaCore {
       Integer,
       String,
       Character,
+      Code,
       PreprocessorSubstitution,
       // </special-rules>
 
@@ -86,6 +87,7 @@ namespace AltaCore {
     static const char* const TokenType_simpleCharacters[] = {
       "",
 
+      "",
       "",
       "",
       "",
@@ -155,6 +157,7 @@ namespace AltaCore {
       "Integer",
       "String",
       "Character",
+      "Code",
       "Preprocessor substitution",
 
       "Equality",
@@ -243,6 +246,8 @@ namespace AltaCore {
         bool characterLiteralEscaped = false;
         bool foundDecimalPoint = false;
         bool foundFraction = false;
+        uint8_t backticksFound = 0;
+        std::pair<size_t, size_t> lastPosition;
 
         /**
          * this is where the majority of the actual lexer logic goes,

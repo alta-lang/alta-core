@@ -61,5 +61,6 @@
 #include "ast/try-catch-block.hpp"
 #include "ast/throw-statement.hpp"
 #include "ast/nullptr-expression.hpp"
+#include "ast/code-literal-node.hpp"
 
 #endif // ALTACORE_AST_HPP

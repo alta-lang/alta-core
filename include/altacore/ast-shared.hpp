@@ -71,6 +71,7 @@ namespace AltaCore {
       TryCatchBlock,
       ThrowStatement,
       NullptrExpression,
+      CodeLiteralNode,
     };
 
     static const char* const NodeType_names[] = {
@@ -133,6 +134,7 @@ namespace AltaCore {
       "TryCatchBlock",
       "ThrowStatement",
       "NullptrExpression",
+      "CodeLiteralNode",
     };
   };
 };

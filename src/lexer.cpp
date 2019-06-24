@@ -108,6 +108,39 @@ namespace AltaCore {
             return true;
           }
         } break;
+        case TokenType::Code: {
+          *contigious = true;
+          if (backticksFound < 3) {
+            if (character != '`') return false;
+            ++backticksFound;
+            if (backticksFound == 2 || backticksFound == 3) {
+              if (currentLine != lastPosition.first || currentColumn != lastPosition.second + 1) {
+                backticksFound = 1;
+              }
+            }
+            if (backticksFound == 1 || backticksFound == 2) {
+              lastPosition = { currentLine, currentColumn };
+            }
+            return true;
+          } else {
+            if (character == '`') {
+              ++backticksFound;
+              if (backticksFound == 5 || backticksFound == 6) {
+                if (currentLine != lastPosition.first || currentColumn != lastPosition.second + 1) {
+                  backticksFound = 4;
+                }
+              }
+              if (backticksFound == 4 || backticksFound == 5) {
+                lastPosition = { currentLine, currentColumn };
+              } else if (backticksFound == 6) {
+                backticksFound = 0;
+                *ended = true;
+              }
+            }
+            // all other characters are included
+            return true;
+          }
+        } break;
         case TokenType::PreprocessorSubstitution: {
           *contigious = true;
           if (first) {

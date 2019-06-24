@@ -851,6 +851,7 @@ namespace AltaCore {
                 RuleType::ControlDirective,
                 RuleType::TryCatch,
                 RuleType::Throw,
+                RuleType::CodeLiteral,
                 RuleType::Export,
                 RuleType::Expression,
 
@@ -879,6 +880,7 @@ namespace AltaCore {
                 RuleType::ControlDirective,
                 RuleType::TryCatch,
                 RuleType::Throw,
+                RuleType::CodeLiteral,
                 RuleType::Expression,
 
                 // general attributes must come last because
@@ -3135,6 +3137,11 @@ namespace AltaCore {
         } else if (rule == RuleType::Nullptr) {
           if (!expectKeyword("nullptr")) ACP_NOT_OK;
           auto node = std::make_shared<AST::NullptrExpression>();
+          ACP_NODE(node);
+        } else if (rule == RuleType::CodeLiteral) {
+          auto lit = expect(TokenType::Code);
+          if (!lit) ACP_NOT_OK;
+          auto node = std::make_shared<AST::CodeLiteralNode>(lit.raw.substr(3, lit.raw.size() - 6));
           ACP_NODE(node);
         }
 
