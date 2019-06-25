@@ -35,6 +35,7 @@ ALTACORE_AST_VALIDATE_D(VariableDefinitionExpression) {
   if (
     // if it's not a native type
     !info->type->type->isNative &&
+    !info->type->type->isUnion() &&
     // and the class has no default constructor
     !info->type->type->klass->defaultConstructor &&
     // and no initialization expression was provided

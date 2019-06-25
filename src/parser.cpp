@@ -1203,7 +1203,22 @@ namespace AltaCore {
             auto type = std::dynamic_pointer_cast<AST::Type>(ruleNode);
 
             type->returnType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+            if (expect(TokenType::Pipe)) {
+              state.internalIndex = 4;
+              ACP_RULE(Type);
+            }
+
             ACP_NODE(type);
+          } else if (state.internalIndex == 4) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto leftType = std::dynamic_pointer_cast<AST::Type>(ruleNode);
+            auto rightType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+            auto resultType = rightType->unionOf.size() > 0 ? rightType : std::make_shared<AST::Type>(std::vector<std::shared_ptr<AST::Type>> { rightType });
+            resultType->unionOf.insert(resultType->unionOf.begin(), leftType);
+            ACP_NODE(resultType);
           } else {
             auto type = std::dynamic_pointer_cast<AST::Type>(ruleNode);
 
@@ -1233,6 +1248,11 @@ namespace AltaCore {
             } else {
               type->lookup = expr;
               type->isNative = false;
+            }
+
+            if (expect(TokenType::Pipe)) {
+              state.internalIndex = 4;
+              ACP_RULE(Type);
             }
 
             ACP_NODE(type);

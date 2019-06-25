@@ -90,14 +90,21 @@ namespace AltaCoreClassHelpers {
       if (var->type->isNative) continue;
       if (var->type->indirectionLevel() > 0) continue;
 
-      if (var->type->klass->destructor) {
+      if (var->type->isUnion()) {
         requiresDtor = true;
-        info->klass->itemsToDestroy.push_back(var);
-      }
-
-      if (var->type->klass->copyConstructor) {
         requiresCopyCtor = true;
+        info->klass->itemsToDestroy.push_back(var);
         info->klass->itemsToCopy.push_back(var);
+      } else {
+        if (var->type->klass->destructor) {
+          requiresDtor = true;
+          info->klass->itemsToDestroy.push_back(var);
+        }
+
+        if (var->type->klass->copyConstructor) {
+          requiresCopyCtor = true;
+          info->klass->itemsToCopy.push_back(var);
+        }
       }
     }
     for (auto& parent: info->klass->parents) {

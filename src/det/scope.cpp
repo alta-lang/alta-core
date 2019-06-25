@@ -133,7 +133,7 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
 };
 
 void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::Type> type) {
-  if (!type->isFunction) return; // we don't need to hoist it if it's not a function pointer type
+  if (!type->isFunction && type->unionOf.size() == 0) return; // we don't need to hoist it if it's not a function pointer type or a union
   if (auto mod = parentModule.lock()) {
     mod->hoistedFunctionalTypes.push_back(type);
   } else if (auto func = parentFunction.lock()) {
@@ -185,7 +185,7 @@ std::shared_ptr<AltaCore::DET::Scope> AltaCore::DET::Scope::getMemberScope(std::
     return func->scope;
   } else if (detType == NodeType::Variable) {
     auto var = std::dynamic_pointer_cast<Variable>(item);
-    if (var->type->isNative) return nullptr;
+    if (var->type->isNative || var->type->isUnion()) return nullptr;
     return var->type->klass->scope;
   }
 

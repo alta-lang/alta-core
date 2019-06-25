@@ -36,7 +36,7 @@ ALTACORE_AST_DETAIL_D(TryCatchBlock) {
           found = true;
           break;
         }
-        if (!type->isNative && !item->isNative && type->klass->hasParent(item->klass)) {
+        if (!type->isNative && !item->isNative && type->klass && type->klass->hasParent(item->klass)) {
           found = true;
           break;
         }

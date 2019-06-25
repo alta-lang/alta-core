@@ -41,6 +41,7 @@ namespace AltaCore {
         std::shared_ptr<Class> klass = nullptr;
         std::shared_ptr<Type> returnType = nullptr;
         std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters;
+        std::vector<std::shared_ptr<Type>> unionOf;
 
         const size_t indirectionLevel() const;
         const size_t referenceLevel() const;
@@ -92,12 +93,19 @@ namespace AltaCore {
         Type(NativeType nativeTypeName, std::vector<uint8_t> modifiers = {}, std::string userDefinedName = "");
         Type(std::shared_ptr<Type> returnType, std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters, std::vector<uint8_t> modifiers = {});
         Type(std::shared_ptr<Class> klass, std::vector<uint8_t> modifiers = {});
+        Type(std::vector<std::shared_ptr<Type>> unionOf, std::vector<uint8_t> modifiers = {});
 
         // operator for `isCompatiableWith`
         bool operator %(const Type& other);
         bool operator ==(const Type& other);
-        
+
+        inline bool isUnion() const {
+          return unionOf.size() > 0;
+        };
+
         const size_t requiredArgumentCount() const;
+
+        bool includes(const std::shared_ptr<Type> otherType) const;
     };
   };
 };
@@ -128,6 +136,9 @@ namespace std {
         result = result * 31 + hash<AltaCore::DET::Type>()(*type);
         result = result * 31 + hash<bool>()(isVariable);
         result = result * 31 + hash<string>()(name);
+      }
+      for (auto& item: val.unionOf) {
+        result = result * 31 + hash<AltaCore::DET::Type>()(*item);
       }
       return result;
     };

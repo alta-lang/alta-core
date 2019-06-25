@@ -35,7 +35,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
   }
 
   if (targetAcc && targetAccDH->readAccessor) {
-    if (targetAccDH->readAccessor->returnType->isNative) {
+    if (targetAccDH->readAccessor->returnType->isNative || targetAccDH->readAccessor->returnType->isUnion()) {
       ALTACORE_DETAILING_ERROR("native types can't be accessed");
     }
     targetScope = targetAccDH->readAccessor->returnType->klass->scope;
@@ -64,7 +64,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
         auto types = DET::Type::getUnderlyingTypes(info->target.get());
         if (types.size() == 1) {
           info->targetType = types[0];
-          if (types[0]->isNative) {
+          if (types[0]->isNative || types[0]->isUnion()) {
             ALTACORE_DETAILING_ERROR("native types can't be accessed");
           }
           targetScope = types[0]->klass->scope;

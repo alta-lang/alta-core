@@ -17,10 +17,22 @@ AltaCore::AST::Type::Type(std::shared_ptr<AltaCore::AST::Type> _returnType, std:
   parameters(_parameters),
   modifiers(_modifiers)
   {};
+AltaCore::AST::Type::Type(std::vector<std::shared_ptr<Type>> _unionOf):
+  unionOf(_unionOf)
+  {};
 
 std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bool hoist) {
   ALTACORE_MAKE_DH(Type);
-  if (isFunction) {
+  if (unionOf.size() > 0) {
+    std::vector<std::shared_ptr<DET::Type>> detUnion;
+    for (auto& item: unionOf) {
+      auto det = item->fullDetail(info->inputScope);
+      info->unionOf.push_back(det);
+      detUnion.push_back(det->type);
+    }
+    info->type = std::make_shared<DET::Type>(detUnion);
+    if (hoist) scope->hoist(info->type);
+  } else if (isFunction) {
     std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> detParams;
     info->returnType = returnType->fullDetail(scope);
     for (auto& [param, isVariable, id]: parameters) {

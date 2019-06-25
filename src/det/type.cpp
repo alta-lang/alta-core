@@ -124,9 +124,8 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
   } else if (itemType == ItemType::Variable) {
     auto var = std::dynamic_pointer_cast<Variable>(item);
     return std::dynamic_pointer_cast<Type>(var->type);
-  } else {
-    throw std::runtime_error("Only functions and variables have underlying types");
   }
+  return nullptr;
 };
 std::vector<std::shared_ptr<AltaCore::DET::Type>> AltaCore::DET::Type::getUnderlyingTypes(AltaCore::DH::ExpressionNode* expression) {
   using Modifier = AST::TypeModifierFlag;
@@ -302,6 +301,39 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
     if (nativeTypeName == other.nativeTypeName && (nativeTypeName != NativeType::UserDefined || userDefinedName == other.userDefinedName)) {
       compat++;
     }
+  } else if (isUnion()) {
+    if (unionOf.size() == other.unionOf.size()) ++compat;
+    // in its current state, this code causes
+    // wider unions to be detected as more compatible
+    // than narrower unions (when it should be the opposite)
+    // TODO: correct this behavior
+    if (other.unionOf.size() > 0) {
+      for (auto& otherItem: other.unionOf) {
+        size_t greatestCompat = 0;
+        for (auto& item: unionOf) {
+          auto curr = item->compatiblity(*otherItem);
+          if (curr > greatestCompat) {
+            greatestCompat = curr;
+          }
+        }
+        if (greatestCompat == 0) {
+          return 0;
+        }
+        compat += greatestCompat;
+      }
+    } else {
+      size_t greatestCompat = 0;
+      for (auto& item: unionOf) {
+        auto curr = item->compatiblity(other);
+        if (curr > greatestCompat) {
+          greatestCompat = curr;
+        }
+      }
+      if (greatestCompat == 0) {
+        return 0;
+      }
+      compat += greatestCompat;
+    }
   } else {
     if (klass->id == other.klass->id) {
       compat++;
@@ -325,8 +357,33 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
   }
   if (isFunction != other.isFunction) return false;
   if (isNative != other.isNative) return false;
-  if (!isNative && klass->id != other.klass->id && !other.klass->hasParent(klass)) return false;
+  if (!isNative && !isUnion() && klass->id != other.klass->id && !other.klass->hasParent(klass)) return false;
   if (pointerLevel() != other.pointerLevel()) return false;
+
+  // we can widen from the source (e.g. `other`) to the destination (e.g. `this`),
+  // but not the other way around
+  if (unionOf.size() < other.unionOf.size()) return false;
+  if (other.unionOf.size() > 0) {
+    for (auto& otherItem: other.unionOf) {
+      bool found = false;
+      for (auto& item: unionOf) {
+        if (item->commonCompatiblity(*otherItem)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) return false;
+    }
+  } else if (isUnion()) {
+    bool found = false;
+    for (auto& item: unionOf) {
+      if (item->commonCompatiblity(other)) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) return false;
+  }
 
   /**
    * here's the reasoning behind this check:
@@ -353,6 +410,20 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
   if (other.isAccessor) return isExactlyCompatibleWith(*other.returnType);
   if (!commonCompatiblity(other)) return false;
   if (isAny || other.isAny) return false;
+  if (unionOf.size() != other.unionOf.size()) return false;
+
+  if (isUnion()) {
+    for (auto& otherItem: other.unionOf) {
+      bool found = false;
+      for (auto& item: unionOf) {
+        if (item->isExactlyCompatibleWith(*otherItem)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) return false;
+    }
+  }
 
   // here, we care about *exact* compatability, and that includes all modifiers
   if (modifiers.size() != other.modifiers.size()) return false;
@@ -381,6 +452,28 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
   if (other.isAccessor) return isCompatibleWith(*other.returnType);
   if (!commonCompatiblity(other)) return false;
   if (isAny || other.isAny) return true;
+
+  if (other.unionOf.size() > 0) {
+    for (auto& otherItem: other.unionOf) {
+      bool found = false;
+      for (auto& item: unionOf) {
+        if (item->isCompatibleWith(*otherItem)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) return false;
+    }
+  } else if (isUnion()) {
+    bool found = false;
+    for (auto& item: unionOf) {
+      if (item->isCompatibleWith(other)) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) return false;
+  }
 
   if (isFunction) {
     if (!returnType->isCompatibleWith(*other.returnType)) return false;
@@ -422,6 +515,29 @@ AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Class> _klass, std::vec
   klass(_klass),
   modifiers(_modifiers)
   {};
+AltaCore::DET::Type::Type(std::vector<std::shared_ptr<AltaCore::DET::Type>> _unionOf, std::vector<uint8_t> _modifiers):
+  ScopeItem(""),
+  isNative(false),
+  isFunction(false),
+  modifiers(_modifiers)
+{
+  // loop through the _unionOf types and unpack any union types
+  std::stack<std::pair<decltype(_unionOf), size_t>> indexes;
+  indexes.push(std::make_pair(_unionOf, 0));
+  while (indexes.size() > 0) {
+    auto& [uni, idx] = indexes.top();
+    if (idx >= uni.size()) {
+      indexes.pop();
+      continue;
+    }
+    auto& type = uni[idx++];
+    if (type->unionOf.size() > 0) {
+      indexes.push(std::make_pair(type->unionOf, 0));
+    } else {
+      unionOf.push_back(type);
+    }
+  }
+};
 
 bool AltaCore::DET::Type::operator %(const AltaCore::DET::Type& other) {
   return isCompatibleWith(other);
@@ -439,4 +555,13 @@ const size_t AltaCore::DET::Type::requiredArgumentCount() const {
     }
   }
   return count;
+};
+
+bool AltaCore::DET::Type::includes(const std::shared_ptr<Type> otherType) const {
+  for (auto& item: unionOf) {
+    if (item->isExactlyCompatibleWith(*otherType)) {
+      return true;
+    }
+  }
+  return false;
 };

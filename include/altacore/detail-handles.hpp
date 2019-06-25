@@ -353,6 +353,7 @@ namespace AltaCore {
       std::shared_ptr<Type> returnType = nullptr;
       std::vector<std::shared_ptr<Type>> parameters;
       std::shared_ptr<ExpressionNode> lookup = nullptr;
+      std::vector<std::shared_ptr<Type>> unionOf;
 
       std::shared_ptr<DET::Type> type = nullptr;
       bool isAny = false;

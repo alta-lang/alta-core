@@ -29,6 +29,7 @@ namespace AltaCore {
         std::vector<uint8_t> modifiers;
         bool isNative = true;
         std::shared_ptr<ExpressionNode> lookup = nullptr;
+        std::vector<std::shared_ptr<Type>> unionOf;
 
         // a little hack to be used by ClassDefinitionNodes
         std::shared_ptr<DET::Type> _injected_type = nullptr;
@@ -36,6 +37,7 @@ namespace AltaCore {
         Type() {};
         Type(std::string name, std::vector<uint8_t> modifiers);
         Type(std::shared_ptr<Type> returnType, std::vector<std::tuple<std::shared_ptr<Type>, bool, std::string>> parameters, std::vector<uint8_t> modifiers);
+        Type(std::vector<std::shared_ptr<Type>> unionOf);
 
         virtual std::shared_ptr<DH::Node> detail(std::shared_ptr<DET::Scope> scope, bool hoist = true);
         std::shared_ptr<DH::Type> fullDetail(std::shared_ptr<DET::Scope> scope, bool hoist = true) {
