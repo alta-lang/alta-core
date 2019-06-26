@@ -68,7 +68,7 @@ ALTACORE_AST_INFO_DETAIL_D(VariableDefinitionExpression) {
       info->type->isAny = info->type->type->isAny;
       info->type->isNative = info->type->type->isNative;
       info->type->isFunction = info->type->type->isFunction;
-      if (info->type->type->isFunction) {
+      if (info->type->type->isFunction || info->type->type->isUnion()) {
         info->inputScope->hoist(info->type->type);
       } else if (!info->type->type->isNative && info->type->type->klass->genericParameterCount > 0) {
         info->inputScope->hoist(info->type->type->klass);

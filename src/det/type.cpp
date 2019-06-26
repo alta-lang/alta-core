@@ -355,10 +355,12 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
     ) return false;
     return true;
   }
-  if (isFunction != other.isFunction) return false;
-  if (isNative != other.isNative) return false;
-  if (!isNative && !isUnion() && klass->id != other.klass->id && !other.klass->hasParent(klass)) return false;
-  if (pointerLevel() != other.pointerLevel()) return false;
+  if (!isUnion() && !other.isUnion()) {
+    if (isFunction != other.isFunction) return false;
+    if (isNative != other.isNative) return false;
+    if (!isNative && klass->id != other.klass->id && !other.klass->hasParent(klass)) return false;
+    if (pointerLevel() != other.pointerLevel()) return false;
+  }
 
   // we can widen from the source (e.g. `other`) to the destination (e.g. `this`),
   // but not the other way around
@@ -439,7 +441,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
   } else if (isNative) {
     if (nativeTypeName != other.nativeTypeName) return false;
     if (userDefinedName != other.userDefinedName) return false;
-  } else {
+  } else if (!isUnion()) {
     if (klass->id != other.klass->id) return false;
   }
 

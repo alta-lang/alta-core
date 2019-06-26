@@ -178,13 +178,21 @@ ALTACORE_AST_DETAIL_D(FunctionCallExpression) {
 
   auto targetTypes = DET::Type::getUnderlyingTypes(info->target.get());
 
+  bool genericFunctionError = false;
   for (auto& type: targetTypes) {
+    if (!type) {
+      genericFunctionError = true;
+    }
     if (type->isAccessor) {
       type = type->returnType;
     }
   }
 
   auto [index, argMap, adjArgs] = findCompatibleCall(argsWithDet, targetTypes);
+  
+  if (index == SIZE_MAX && genericFunctionError) {
+    ALTACORE_DETAILING_ERROR("target function not found (and was possibly generic and wasn't instantiated)");
+  }
 
   if (index != SIZE_MAX) {
     auto mostCompatibleType = targetTypes[index];
