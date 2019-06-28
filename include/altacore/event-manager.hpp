@@ -34,9 +34,6 @@ namespace AltaCore {
 //
 
 namespace AltaCore {
-  template<bool T>
-  struct valueify;
-
   template<bool once = false, typename... Args>
   class EventManager {
     private:
@@ -50,14 +47,14 @@ namespace AltaCore {
 
     public:
       void listen(const std::function<void(Args...)> callback) {
-        if (valueify<once>::value && _dispatched) {
+        if (once && _dispatched) {
           return applyTuple(callback, dispatchedArguments.value());
         }
         callbacks.push_front(callback);
       };
 
       void dispatch(Args... args) {
-        if (valueify<once>::value && _dispatched) return;
+        if (once && _dispatched) return;
         _dispatched = true;
         dispatchedArguments = ALTACORE_MAKE_OPTIONAL(std::make_tuple(args...));
         for (const auto& callback: callbacks) {
@@ -69,16 +66,6 @@ namespace AltaCore {
         return dispatched;
       };
   };
-};
-
-template<>
-struct AltaCore::valueify<true> {
-  static const bool value = true;
-};
-
-template<>
-struct AltaCore::valueify<false> {
-  static const bool value = false;
 };
 
 #endif // ALTACORE_EVENT_MANAGER
