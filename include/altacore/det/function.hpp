@@ -41,9 +41,6 @@ namespace AltaCore {
           return _throws;
         };
         void throws(bool value) {
-          if (isDestructor) {
-            throw std::runtime_error("destructors can't throw (error for function `" + name + "`)");
-          }
           _throws = value;
           if (value) beganThrowing.dispatch();
         };

@@ -25,7 +25,7 @@ ALTACORE_AST_DETAIL_D(FunctionDeclarationNode) {
 
   for (auto& param: parameters) {
     auto det = param->fullDetail(scope, false);
-    if (det->type->type->isFunction) {
+    if (det->type->type->isFunction || det->type->type->isUnion()) {
       publicFunctionalTypes.push_back(det->type->type);
     }
     info->parameters.push_back(det);
@@ -33,7 +33,7 @@ ALTACORE_AST_DETAIL_D(FunctionDeclarationNode) {
   }
 
   info->returnType = returnType->fullDetail(scope, false);
-  if (info->returnType->type->isFunction) {
+  if (info->returnType->type->isFunction || info->returnType->type->isUnion()) {
     publicFunctionalTypes.push_back(info->returnType->type);
   }
 
