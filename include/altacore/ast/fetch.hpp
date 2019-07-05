@@ -18,6 +18,8 @@ namespace AltaCore {
         Fetch(std::string query);
 
         void narrowTo(std::shared_ptr<DH::Fetch> info, std::shared_ptr<DET::Type> type);
+        void narrowTo(std::shared_ptr<DH::Fetch> info, size_t i);
+        void widen(std::shared_ptr<DH::Fetch> info);
         
         ALTACORE_AST_DETAIL(Fetch);
         ALTACORE_AST_VALIDATE;

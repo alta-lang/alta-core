@@ -452,6 +452,10 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
   if (referenceLevel() > 0) return destroyReferences()->isCompatibleWith(other);
   if (other.referenceLevel() > 0) return isCompatibleWith(*other.destroyReferences());
   if (other.isAccessor) return isCompatibleWith(*other.returnType);
+
+  // integers can be converted to pointers
+  if (other.isNative && other.pointerLevel() < 1 && pointerLevel() > 0) return true;
+
   if (!commonCompatiblity(other)) return false;
   if (isAny || other.isAny) return true;
 

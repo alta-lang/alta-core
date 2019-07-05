@@ -40,6 +40,7 @@ ALTACORE_AST_DETAIL_D(ExportStatement) {
 
     for (auto& item: info->localTarget->items) {
       if (auto var = std::dynamic_pointer_cast<DET::Variable>(item)) {
+        Util::exportClassIfNecessary(var->parentScope.lock(), var->type, true);
         var->isExport = true;
       } else if (auto func = std::dynamic_pointer_cast<DET::Function>(item)) {
         func->isExport = true;

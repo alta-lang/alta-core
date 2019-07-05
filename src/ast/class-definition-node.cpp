@@ -87,6 +87,8 @@ namespace AltaCoreClassHelpers {
 
       auto var = std::dynamic_pointer_cast<DET::Variable>(item);
 
+      AltaCore::Util::exportClassIfNecessary(info->klass->scope, var->type);
+
       if (var->type->isNative) continue;
       if (var->type->indirectionLevel() > 0) continue;
 
@@ -251,6 +253,8 @@ std::shared_ptr<AltaCore::DET::Class> AltaCore::AST::ClassDefinitionNode::instan
     auto det = generic->fullDetail(inst->klass->scope);
     det->alias->target = genericArg;
     inst->genericDetails.push_back(det);
+
+    Util::exportClassIfNecessary(info->klass->scope, genericArg);
 
     if (genericArg->klass) {
       auto thatMod = Util::getModule(genericArg->klass->parentScope.lock().get()).lock();

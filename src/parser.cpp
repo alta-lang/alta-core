@@ -1396,6 +1396,7 @@ namespace AltaCore {
 
             state.internalIndex = 3;
             exps.clear();
+            saveState();
             ACP_RULE(Attribute);
           } else if (state.internalIndex == 3) {
             if (exps.back()) {
@@ -1435,7 +1436,8 @@ namespace AltaCore {
               type = AT::BitwiseOr;
             } else if (expect(TokenType::BitwiseAndEquals)) {
               type = AT::BitwiseXor;
-            }else {
+            } else {
+              restoreState();
               ACP_NODE(assignment->target);
             }
 
@@ -3159,10 +3161,24 @@ namespace AltaCore {
           auto node = std::make_shared<AST::NullptrExpression>();
           ACP_NODE(node);
         } else if (rule == RuleType::CodeLiteral) {
-          auto lit = expect(TokenType::Code);
-          if (!lit) ACP_NOT_OK;
-          auto node = std::make_shared<AST::CodeLiteralNode>(lit.raw.substr(3, lit.raw.size() - 6));
-          ACP_NODE(node);
+          if (state.iteration == 0) {
+            ACP_RULE(Attribute);
+          } else {
+            if (exps.back()) ACP_RULE(Attribute);
+            exps.pop_back();
+
+            auto lit = expect(TokenType::Code);
+            if (!lit) ACP_NOT_OK;
+
+            auto node = std::make_shared<AST::CodeLiteralNode>(lit.raw.substr(3, lit.raw.size() - 6));
+
+            for (auto& exp: exps) {
+              node->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+            }
+            exps.clear();
+
+            ACP_NODE(node);
+          }
         }
 
         next();

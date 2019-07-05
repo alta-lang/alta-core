@@ -24,8 +24,8 @@ namespace AltaCore {
         size_t genericParameterCount = 0;
         size_t moduleIndex = 0;
 
-        std::vector<std::shared_ptr<ScopeItem>> privateHoistedGenerics;
-        std::vector<std::shared_ptr<ScopeItem>> publicHoistedGenerics;
+        std::vector<std::shared_ptr<ScopeItem>> privateHoistedItems;
+        std::vector<std::shared_ptr<ScopeItem>> publicHoistedItems;
 
         bool instantiatedFromSamePackage = false;
 

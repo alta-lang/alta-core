@@ -39,7 +39,6 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Variable>> itemsToDestroy;
         std::vector<std::shared_ptr<Variable>> itemsToCopy;
 
-        std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
         std::vector<std::shared_ptr<Type>> genericArguments;
 
         std::weak_ptr<AST::ClassDefinitionNode> ast;

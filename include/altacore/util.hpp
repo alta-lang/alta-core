@@ -16,6 +16,7 @@ namespace AltaCore {
     std::string escape(const std::string& data);
     uint8_t hexDigitToDecimal(const char singleDigit);
     bool stringsAreEqualCaseInsensitive(const std::string& lhs, const std::string& rhs);
+    void exportClassIfNecessary(std::shared_ptr<AltaCore::DET::Scope> scope, std::shared_ptr<AltaCore::DET::Type> type, bool force = false);
   };
 };
 

@@ -49,7 +49,7 @@ void AltaCore::AST::AttributeNode::run(std::shared_ptr<DH::AttributeNode> info, 
   if (info->attribute) {
     auto attr = *info->attribute;
     if (attr.callback) {
-      attr.callback(target ? target : info->module.lock()->ast.lock(), tgtInfo, info->attributeArguments);
+      attr.callback(target ? target : info->module.lock()->ast.lock(), tgtInfo ? tgtInfo : info->module.lock()->ast.lock()->info, info->attributeArguments);
     }
   }
 };

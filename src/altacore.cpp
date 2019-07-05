@@ -6,6 +6,7 @@
   if (!target || !info) throw std::runtime_error("this isn't supposed to happen");
 #define AC_ATTRIBUTE(x, ...) Attributes::registerAttribute({ __VA_ARGS__ }, { AST::NodeType::x }, AC_ATTRIBUTE_FUNC {\
   AC_ATTRIBUTE_CAST(x);
+#define AC_GENERAL_ATTRIBUTE(...) Attributes::registerAttribute({ __VA_ARGS__ }, {}, AC_ATTRIBUTE_FUNC {
 #define AC_END_ATTRIBUTE })
 
 void AltaCore::registerGlobalAttributes() {
@@ -31,6 +32,19 @@ void AltaCore::registerGlobalAttributes() {
 
   AC_ATTRIBUTE(FunctionDefinitionNode, "throwing");
     info->function->throws(true);
+  AC_END_ATTRIBUTE;
+
+  AC_GENERAL_ATTRIBUTE("noruntime");
+    if (auto target = std::dynamic_pointer_cast<AST::RootNode>(_target)) {
+      auto info = std::dynamic_pointer_cast<DH::RootNode>(_info);
+      info->module->noRuntimeInclude = true;
+      info->module->scope->noRuntime = true;
+    } else if (auto target = std::dynamic_pointer_cast<AST::FunctionDefinitionNode>(_target)) {
+      auto info = std::dynamic_pointer_cast<DH::FunctionDefinitionNode>(_info);
+      info->function->scope->noRuntime = true;
+    } else {
+      throw std::runtime_error("noruntime attribute applied to an invalid node");
+    }
   AC_END_ATTRIBUTE;
 };
 

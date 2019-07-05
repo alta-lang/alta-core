@@ -39,21 +39,11 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::create(std::sh
     func->parameterVariables.push_back(var);
     func->scope->items.push_back(var);
 
-    if (type->isFunction || type->isUnion()) {
-      func->publicHoistedFunctionalTypes.push_back(type);
-    }
-    if (type->klass && type->klass->genericParameterCount > 0) {
-      func->publicHoistedGenerics.push_back(type->klass);
-    }
+    func->publicHoistedItems.push_back(type);
   }
 
   if (returnType) {
-    if (returnType->isFunction || returnType->isUnion()) {
-      func->publicHoistedFunctionalTypes.push_back(returnType);
-    }
-    if (returnType->klass && returnType->klass->genericParameterCount > 0) {
-      func->publicHoistedGenerics.push_back(returnType->klass);
-    }
+    func->publicHoistedItems.push_back(returnType);
   }
 
   return func;
@@ -86,20 +76,10 @@ void AltaCore::DET::Function::recreate(std::vector<std::tuple<std::string, std::
     parameterVariables.push_back(var);
     scope->items.push_back(var);
 
-    if (type->isFunction || type->isUnion()) {
-      publicHoistedFunctionalTypes.push_back(type);
-    }
-    if (type->klass && type->klass->genericParameterCount > 0) {
-      publicHoistedGenerics.push_back(type->klass);
-    }
+    publicHoistedItems.push_back(type);
   }
 
   if (returnType) {
-    if (returnType->isFunction || returnType->isUnion()) {
-      publicHoistedFunctionalTypes.push_back(returnType);
-    }
-    if (returnType->klass && returnType->klass->genericParameterCount > 0) {
-      publicHoistedGenerics.push_back(returnType->klass);
-    }
+    publicHoistedItems.push_back(returnType);
   }
 };

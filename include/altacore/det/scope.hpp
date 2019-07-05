@@ -28,6 +28,7 @@ namespace AltaCore {
         std::vector<std::shared_ptr<ScopeItem>> items;
         size_t relativeID = 0;
         size_t nextChildID = 0;
+        bool noRuntime = false;
 
         bool isTry = false;
         std::unordered_set<std::shared_ptr<Type>, TypePointerHash, TypePointerComparator> typesThrown;
@@ -40,8 +41,8 @@ namespace AltaCore {
         Scope(std::shared_ptr<Class> parentClass);
 
         std::vector<std::shared_ptr<ScopeItem>> findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes = {}, bool searchParents = true, std::shared_ptr<Scope> originScope = nullptr);
-        void hoist(std::shared_ptr<Type> whatToHoist);
-        void hoist(std::shared_ptr<ScopeItem> generic);
+        void hoist(std::shared_ptr<ScopeItem> item);
+        void unhoist(std::shared_ptr<ScopeItem> item);
 
         bool hasParent(std::shared_ptr<Scope> parent) const;
 

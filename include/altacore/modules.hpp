@@ -51,6 +51,8 @@ namespace AltaCore {
       PackageInfo();
     };
 
+    extern std::vector<Filesystem::Path> prioritySearchPaths;
+    extern std::vector<Filesystem::Path> searchPaths;
     extern Filesystem::Path standardLibraryPath;
     extern ALTACORE_MAP<std::string, Parser::PrepoExpression>* parsingDefinitions;
     extern std::function<std::shared_ptr<AST::RootNode>(std::string importRequest, Filesystem::Path requestingModulePath)> parseModule;

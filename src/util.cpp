@@ -190,3 +190,24 @@ bool AltaCore::Util::stringsAreEqualCaseInsensitive(const std::string& lhs, cons
   }
   return true;
 };
+
+void AltaCore::Util::exportClassIfNecessary(std::shared_ptr<AltaCore::DET::Scope> scope, std::shared_ptr<AltaCore::DET::Type> type, bool force) {
+  auto parentFunc = getFunction(scope).lock();
+  auto parentClass = getClass(scope).lock();
+  bool found = false;
+  if (force) found = true;
+  if (parentFunc && parentFunc->isExport) found = true;
+  if (parentFunc && parentFunc->isMethod && getClass(parentFunc->parentScope.lock()).lock()->isExport) found = true;
+  if (parentClass && parentClass->isExport) found = true;
+  if (!found) return;
+  if (type->klass) {
+    auto thisMod = getModule(scope.get()).lock();
+    auto thatMod = getModule(type->klass->parentScope.lock().get()).lock();
+    if (thisMod->id == thatMod->id) {
+      // same module
+      if (!type->klass->isExport) {
+        type->klass->isExport = true;
+      }
+    }
+  }
+};

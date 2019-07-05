@@ -1,4 +1,5 @@
 #include "../../include/altacore/ast/class-special-method-definition-statement.hpp"
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::ClassSpecialMethodDefinitionStatement::nodeType() {
   return NodeType::ClassSpecialMethodDefinitionStatement;
@@ -52,6 +53,7 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
       for (auto& param: parameters) {
         auto det = param->fullDetail(info->inputScope, false);
         info->parameters.push_back(det);
+        Util::exportClassIfNecessary(info->inputScope, det->type->type);
         params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
       }
 

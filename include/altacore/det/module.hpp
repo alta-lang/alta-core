@@ -34,10 +34,9 @@ namespace AltaCore {
         std::vector<std::shared_ptr<ScopeItem>> genericsUsed;
         std::weak_ptr<AST::RootNode> ast;
         Modules::PackageInfo packageInfo;
+        bool noRuntimeInclude = false;
 
-        std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
-
-        std::vector<std::shared_ptr<ScopeItem>> hoistedGenerics;
+        std::vector<std::shared_ptr<ScopeItem>> hoistedItems;
         size_t rootItemCount = 0;
 
         Module();

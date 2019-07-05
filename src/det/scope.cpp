@@ -29,22 +29,35 @@ std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Scope::deepClone() {
 AltaCore::DET::Scope::Scope() {};
 AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Scope> _parent):
   parent(_parent),
-  relativeID(parent.lock()->nextChildID)
+  relativeID(_parent->nextChildID)
 {
-  parent.lock()->nextChildID++;
+  _parent->nextChildID++;
+  noRuntime = _parent->noRuntime;
 };
 AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Module> _parentModule):
   parentModule(_parentModule)
   {};
 AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Function> _parentFunction):
   parentFunction(_parentFunction)
-  {};
+{
+  if (auto parent = parentFunction.lock()->parentScope.lock()) {
+    noRuntime = parent->noRuntime;
+  }
+};
 AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Namespace> _parentNamespace):
   parentNamespace(_parentNamespace)
-  {};
+{
+  if (auto parent = parentNamespace.lock()->parentScope.lock()) {
+    noRuntime = parent->noRuntime;
+  }
+};
 AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Class> _parentClass):
   parentClass(_parentClass)
-  {};
+{
+  if (auto parent = parentClass.lock()->parentScope.lock()) {
+    noRuntime = parent->noRuntime;
+  }
+};
 
 std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes, bool searchParents, std::shared_ptr<Scope> originScope) {
   std::vector<std::shared_ptr<ScopeItem>> results;
@@ -132,45 +145,72 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
   }
 };
 
-void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::Type> type) {
-  if (!type->isFunction && type->unionOf.size() == 0) return; // we don't need to hoist it if it's not a function pointer type or a union
+void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::ScopeItem> item) {
+  if (item->nodeType() == NodeType::Namespace) return;
   if (auto mod = parentModule.lock()) {
-    mod->hoistedFunctionalTypes.push_back(type);
+    mod->hoistedItems.push_back(item);
   } else if (auto func = parentFunction.lock()) {
-    func->hoistedFunctionalTypes.push_back(type);
-  } else if (auto scope = parent.lock()) {
-    scope->hoist(type);
-  } else if (auto ns = parentNamespace.lock()) {
-    ns->hoistedFunctionalTypes.push_back(type);
+    func->privateHoistedItems.push_back(item);
   } else if (auto klass = parentClass.lock()) {
-    klass->hoistedFunctionalTypes.push_back(type);
+    klass->privateHoistedItems.push_back(item);
+  } else if (auto ns = parentNamespace.lock()) {
+    if (auto scope = ns->parentScope.lock()) {
+      scope->hoist(item);
+    } else {
+      throw std::runtime_error("failed to hoist item anywhere");
+    }
+  } else if (auto scope = parent.lock()) {
+    scope->hoist(item);
   } else {
-    throw std::runtime_error("failed to hoist type anywhere. no parent functions, modules, or scopes were found");
+    throw std::runtime_error("failed to hoist item anywhere");
+  }
+  if (item->genericParameterCount > 0) {
+    if (auto mod = Util::getModule(this).lock()) {
+      mod->genericsUsed.push_back(item);
+      Util::getModule(item->parentScope.lock().get()).lock()->dependents.push_back(mod);
+    }
   }
 };
 
-void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::ScopeItem> generic) {
-  if (generic->genericParameterCount < 1) return; // we don't need to hoist it if it's not a generic
+void AltaCore::DET::Scope::unhoist(std::shared_ptr<AltaCore::DET::ScopeItem> item) {
+  if (item->nodeType() == NodeType::Namespace) return;
   if (auto mod = parentModule.lock()) {
-    mod->hoistedGenerics.push_back(generic);
+    for (size_t i = 0; i < mod->hoistedItems.size(); i++) {
+      if (mod->hoistedItems[i]->id == item->id) {
+        mod->hoistedItems.erase(mod->hoistedItems.begin() + i);
+        break;
+      }
+    }
   } else if (auto func = parentFunction.lock()) {
-    func->privateHoistedGenerics.push_back(generic);
+    for (size_t i = 0; i < func->privateHoistedItems.size(); i++) {
+      if (func->privateHoistedItems[i]->id == item->id) {
+        func->privateHoistedItems.erase(func->privateHoistedItems.begin() + i);
+        break;
+      }
+    }
   } else if (auto klass = parentClass.lock()) {
-    klass->privateHoistedGenerics.push_back(generic);
+    for (size_t i = 0; i < klass->privateHoistedItems.size(); i++) {
+      if (klass->privateHoistedItems[i]->id == item->id) {
+        klass->privateHoistedItems.erase(klass->privateHoistedItems.begin() + i);
+        break;
+      }
+    }
   } else if (auto ns = parentNamespace.lock()) {
     if (auto scope = ns->parentScope.lock()) {
-      scope->hoist(generic);
-    } else {
-      throw std::runtime_error("failed to hoist generic anywhere");
+      scope->unhoist(item);
     }
   } else if (auto scope = parent.lock()) {
-    scope->hoist(generic);
-  } else {
-    throw std::runtime_error("failed to hoist generic anywhere");
+    scope->unhoist(item);
   }
-  if (auto mod = Util::getModule(this).lock()) {
-    mod->genericsUsed.push_back(generic);
-    Util::getModule(generic->parentScope.lock().get()).lock()->dependents.push_back(mod);
+  if (item->genericParameterCount > 0) {
+    if (auto mod = Util::getModule(this).lock()) {
+      for (size_t i = 0; i < mod->genericsUsed.size(); i++) {
+        if (mod->genericsUsed[i]->id == item->id) {
+          mod->genericsUsed.erase(mod->genericsUsed.begin() + i);
+          break;
+        }
+      }
+    }
   }
 };
 

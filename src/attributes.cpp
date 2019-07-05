@@ -35,6 +35,7 @@ AltaCore::Attributes::Attribute::Attribute(
   {};
 
 bool AltaCore::Attributes::Attribute::checkIfAppliesTo(AltaCore::AST::NodeType type) {
+  if (appliesTo.size() == 0) return true;
   for (auto& appl: appliesTo) {
     if (appl == type) return true;
   }

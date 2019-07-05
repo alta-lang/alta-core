@@ -18,6 +18,8 @@ namespace AltaCore {
         Accessor(std::shared_ptr<AST::ExpressionNode> target, std::string query);
 
         void narrowTo(std::shared_ptr<DH::Accessor> info, std::shared_ptr<DET::Type> type);
+        void narrowTo(std::shared_ptr<DH::Accessor> info, size_t i);
+        void widen(std::shared_ptr<DH::Accessor> info);
         
         ALTACORE_AST_DETAIL(Accessor);
         ALTACORE_AST_VALIDATE;

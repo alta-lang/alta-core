@@ -41,8 +41,6 @@ namespace AltaCore {
     ALTACORE_DH_SIMPLE_ALIAS(StringLiteralNode, LiteralNode);
     ALTACORE_DH_SIMPLE_ALIAS(CharacterLiteralNode, LiteralNode);
     ALTACORE_DH_SIMPLE_ALIAS(FloatingPointLiteralNode, LiteralNode);
-
-    ALTACORE_DH_SIMPLE_ALIAS(CodeLiteralNode, StatementNode);
     
     // forward declaration
     class Accessor;
@@ -490,6 +488,11 @@ namespace AltaCore {
       ALTACORE_DH_CTOR(ThrowStatement, StatementNode);
 
       std::shared_ptr<ExpressionNode> expression = nullptr;
+    };
+    class CodeLiteralNode: public StatementNode {
+      ALTACORE_DH_CTOR(CodeLiteralNode, StatementNode);
+
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
     };
 
     #undef ALTACORE_DH_CTOR

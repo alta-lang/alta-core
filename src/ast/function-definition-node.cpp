@@ -95,12 +95,12 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
     }
 
     std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
-    std::vector<std::shared_ptr<DET::Type>> publicFunctionalTypes;
 
     if (info->parameters.size() != parameters.size()) {
       for (auto& param: parameters) {
         auto det = param->fullDetail(info->function->scope, false);
         info->parameters.push_back(det);
+        Util::exportClassIfNecessary(info->function->scope, det->type->type);
         params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
       }
     } else {
@@ -113,6 +113,7 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
 
     if (!info->returnType) {
       info->returnType = returnType->fullDetail(info->function->scope, false);
+      Util::exportClassIfNecessary(info->function->scope, info->returnType->type);
     }
 
     if (!info->function->returnType) {
@@ -168,7 +169,6 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::AST::FunctionDefinitionNode::
   info->genericInstantiations.push_back(inst);
 
   std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
-  std::vector<std::shared_ptr<DET::Type>> publicFunctionalTypes;
 
   inst->function = DET::Function::create(inst->inputScope, name, {}, nullptr);
   inst->function->ast = shared_from_this();
@@ -191,6 +191,8 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::AST::FunctionDefinitionNode::
     det->alias->target = genericArg;
     inst->genericDetails.push_back(det);
 
+    Util::exportClassIfNecessary(inst->function->scope, genericArg);
+
     if (genericArg->klass) {
       auto thatMod = Util::getModule(genericArg->klass->parentScope.lock().get()).lock();
       gDepEntry.push_back(thatMod);
@@ -200,10 +202,12 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::AST::FunctionDefinitionNode::
   for (auto& param: parameters) {
     auto det = param->fullDetail(inst->function->scope, false);
     inst->parameters.push_back(det);
+    Util::exportClassIfNecessary(inst->function->scope, det->type->type);
     params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
   }
 
   inst->returnType = returnType->fullDetail(inst->function->scope, false);
+  Util::exportClassIfNecessary(inst->function->scope, inst->returnType->type);
 
   inst->function->recreate(params, inst->returnType->type);
 

@@ -156,8 +156,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
     ALTACORE_DETAILING_ERROR("no items found for `" + query + "` in target");
   } else if (info->items.size() == 1) {
     if (info->items[0]->nodeType() != DET::NodeType::Function || !std::dynamic_pointer_cast<DET::Function>(info->items[0])->isAccessor) {
-      info->narrowedTo = info->items[0];
-      info->narrowedToIndex = 0;
+      narrowTo(info, 0);
     }
   }
 
@@ -177,7 +176,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
       auto type = item->nodeType();
       bool isNarrowedTo = false;
 
-      if (info->narrowedTo == info->items[i]) {
+      if (info->narrowedTo->id == info->items[i]->id) {
         isNarrowedTo = true;
       }
 
@@ -192,7 +191,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
       if (item->genericParameterCount < genericArguments.size()) {
         info->items.erase(info->items.begin() + i);
         if (isNarrowedTo) {
-          info->narrowedTo = nullptr;
+          widen(info);
         }
         i--; // recheck this index since we shrunk the vector
         continue;
@@ -209,7 +208,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
         }
         info->inputScope->hoist(info->items[i]);
         if (isNarrowedTo) {
-          info->narrowedTo = info->items[i];
+          narrowTo(info, i);
         }
       } else if (auto func = std::dynamic_pointer_cast<DET::Function>(item)) {
         auto newFunc = func->instantiateGeneric(info->genericArguments);
@@ -222,7 +221,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
         }
         info->inputScope->hoist(info->items[i]);
         if (isNarrowedTo) {
-          info->narrowedTo = info->items[i];
+          narrowTo(info, i);
         }
       } else {
         ALTACORE_DETAILING_ERROR("generic type wasn't a class or function (btw, this is impossible)");
@@ -234,6 +233,9 @@ ALTACORE_AST_DETAIL_D(Accessor) {
 };
 
 void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<DH::Accessor> info, std::shared_ptr<AltaCore::DET::Type> type) {
+  if (info->narrowedTo) {
+    info->inputScope->unhoist(info->narrowedTo);
+  }
   size_t highestCompat = 0;
   for (size_t i = 0; i < info->items.size(); i++) {
     auto& item = info->items[i];
@@ -247,6 +249,34 @@ void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<DH::Accessor> info, std::
       }
     }
   }
+  if (info->narrowedTo) {
+    if (auto parentScope = info->narrowedTo->parentScope.lock()) {
+      if (auto parentModule = parentScope->parentModule.lock()) {
+        info->inputScope->hoist(info->narrowedTo);
+      }
+    }
+  }
+};
+void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<DH::Accessor> info, size_t i) {
+  if (info->narrowedTo) {
+    info->inputScope->unhoist(info->narrowedTo);
+  }
+  info->narrowedTo = info->items[i];
+  info->narrowedToIndex = i;
+  if (info->narrowedTo) {
+    if (auto parentScope = info->narrowedTo->parentScope.lock()) {
+      if (auto parentModule = parentScope->parentModule.lock()) {
+        info->inputScope->hoist(info->narrowedTo);
+      }
+    }
+  }
+};
+void AltaCore::AST::Accessor::widen(std::shared_ptr<DH::Accessor> info) {
+  if (info->narrowedTo) {
+    info->inputScope->unhoist(info->narrowedTo);
+  }
+  info->narrowedTo = nullptr;
+  info->narrowedToIndex = SIZE_MAX;
 };
 
 ALTACORE_AST_VALIDATE_D(Accessor) {

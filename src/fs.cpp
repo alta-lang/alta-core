@@ -64,7 +64,7 @@ std::string AltaCore::Filesystem::cwd() {
   GetCurrentDirectory(requiredBufferLength, buf.get());
   return std::string(buf.get());
 #else
-  char tmp[MAXPATHLEN];
+  char tmp[MAXPATHLEN] = {0};
   return (getcwd(tmp, MAXPATHLEN) ? std::string(tmp) : std::string());
 #endif
 };

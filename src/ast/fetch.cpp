@@ -11,6 +11,9 @@ AltaCore::AST::Fetch::Fetch(std::string _query):
   {};
 
 void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<DH::Fetch> info, std::shared_ptr<AltaCore::DET::Type> type) {
+  if (info->narrowedTo) {
+    info->inputScope->unhoist(info->narrowedTo);
+  }
   size_t highestCompat = 0;
   for (auto& item: info->items) {
     auto itemType = DET::Type::getUnderlyingType(item);
@@ -20,16 +23,38 @@ void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<DH::Fetch> info, std::shared
       info->narrowedTo = item;
     }
   }
+  if (info->narrowedTo) {
+    if (auto parentScope = info->narrowedTo->parentScope.lock()) {
+      if (auto parentModule = parentScope->parentModule.lock()) {
+        info->inputScope->hoist(info->narrowedTo);
+      }
+    }
+  }
+};
+void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<DH::Fetch> info, size_t i) {
+  if (info->narrowedTo) {
+    info->inputScope->unhoist(info->narrowedTo);
+  }
+  info->narrowedTo = info->items[i];
+  if (info->narrowedTo) {
+    if (auto parentScope = info->narrowedTo->parentScope.lock()) {
+      if (auto parentModule = parentScope->parentModule.lock()) {
+        info->inputScope->hoist(info->narrowedTo);
+      }
+    }
+  }
+};
+void AltaCore::AST::Fetch::widen(std::shared_ptr<DH::Fetch> info) {
+  if (info->narrowedTo) {
+    info->inputScope->unhoist(info->narrowedTo);
+  }
+  info->narrowedTo = nullptr;
 };
 
 ALTACORE_AST_DETAIL_D(Fetch) {
   ALTACORE_MAKE_DH(Fetch);
 
   auto items = scope->findAll(query, {}, true, scope);
-
-  if (items.size() == 1) {
-    info->narrowedTo = items[0];
-  }
 
   if (items.size() < 1) {
     // nothing was found for our query, throw an error.
@@ -42,6 +67,10 @@ ALTACORE_AST_DETAIL_D(Fetch) {
   }
 
   info->items = items;
+
+  if (items.size() == 1) {
+    narrowTo(info, 0);
+  }
 
   for (size_t i = 0; i < genericArguments.size(); i++) {
     auto& arg = genericArguments[i];
@@ -59,7 +88,7 @@ ALTACORE_AST_DETAIL_D(Fetch) {
       auto type = item->nodeType();
       bool isNarrowedTo = false;
 
-      if (info->narrowedTo == info->items[i]) {
+      if (info->narrowedTo->id == info->items[i]->id) {
         isNarrowedTo = true;
       }
 
@@ -74,7 +103,7 @@ ALTACORE_AST_DETAIL_D(Fetch) {
       if (item->genericParameterCount < genericArguments.size()) {
         info->items.erase(info->items.begin() + i);
         if (isNarrowedTo) {
-          info->narrowedTo = nullptr;
+          widen(info);
         }
         i--; // recheck this index since we shrunk the vector
         continue;
@@ -91,7 +120,7 @@ ALTACORE_AST_DETAIL_D(Fetch) {
         }
         info->inputScope->hoist(info->items[i]);
         if (isNarrowedTo) {
-          info->narrowedTo = info->items[i];
+          narrowTo(info, i);
         }
       } else if (auto func = std::dynamic_pointer_cast<DET::Function>(item)) {
         auto newFunc = func->instantiateGeneric(info->genericArguments);
@@ -104,7 +133,7 @@ ALTACORE_AST_DETAIL_D(Fetch) {
         }
         info->inputScope->hoist(info->items[i]);
         if (isNarrowedTo) {
-          info->narrowedTo = info->items[i];
+          narrowTo(info, i);
         }
       } else {
         ALTACORE_DETAILING_ERROR("generic type wasn't a class or function (btw, this is impossible)");
