@@ -77,6 +77,7 @@ namespace AltaCore {
       Class,
       TypeAlias,
       Structure,
+      Bitfield,
     };
 
     /**
@@ -117,6 +118,9 @@ namespace AltaCore {
       },
       {
         "literal",
+        "export",
+      },
+      {
         "export",
       },
     };
@@ -191,6 +195,7 @@ namespace AltaCore {
       Throw,
       Nullptr,
       CodeLiteral,
+      Bitfield,
     };
 
     enum class PrepoRuleType {

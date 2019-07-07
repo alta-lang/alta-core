@@ -72,6 +72,7 @@ namespace AltaCore {
       ThrowStatement,
       NullptrExpression,
       CodeLiteralNode,
+      BitfieldDefinitionNode,
     };
 
     static const char* const NodeType_names[] = {
@@ -135,6 +136,7 @@ namespace AltaCore {
       "ThrowStatement",
       "NullptrExpression",
       "CodeLiteralNode",
+      "BitfieldDefinitionNode",
     };
   };
 };

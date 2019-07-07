@@ -29,6 +29,7 @@ namespace AltaCore {
         bool isTyped = true;
         bool isLiteral = false;
         bool isExport = false;
+        bool isBitfield = false;
 
         std::shared_ptr<Scope> scope = nullptr;
         std::shared_ptr<Function> defaultConstructor = nullptr;
@@ -40,6 +41,8 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Variable>> itemsToCopy;
 
         std::vector<std::shared_ptr<Type>> genericArguments;
+
+        std::weak_ptr<Type> underlyingBitfieldType;
 
         std::weak_ptr<AST::ClassDefinitionNode> ast;
         std::weak_ptr<DetailHandles::ClassDefinitionNode> info;

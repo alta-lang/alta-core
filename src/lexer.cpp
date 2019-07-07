@@ -20,6 +20,21 @@ namespace AltaCore {
           if (character >= '0' && character <= '9') {
             return true;
           }
+          if (!first) {
+            if (
+              !foundBase && (
+                character == 'b' || character == 'B' ||
+                character == 'o' || character == 'O' ||
+                character == 'x' || character == 'X'
+              )
+            ) {
+              foundBase = true;
+              return true;
+            }
+            if (foundBase && ((character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z'))) {
+              return true;
+            }
+          }
         } break;
         case TokenType::Decimal: {
           *contigious = true;
@@ -264,12 +279,14 @@ namespace AltaCore {
             token.raw.append(1, character);
             if (ended) {
               hangingRule = TokenType::None;
+              foundBase = false;
               ruleIteration = 0;
             }
             backlog.pop_front();
             continue;
           } else {
             hangingRule = TokenType::None;
+            foundBase = false;
             ruleIteration = 0;
             if (contigious && !ended) {
               auto& back = tokens.back();

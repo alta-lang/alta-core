@@ -110,6 +110,9 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Type::detail(std::shared_ptr<
   } else {
     info->type = _injected_type;
   }
+  if (info->type->klass && info->type->klass->isBitfield) {
+    info->type = info->type->klass->underlyingBitfieldType.lock();
+  }
   return info;
 };
 

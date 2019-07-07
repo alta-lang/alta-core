@@ -85,6 +85,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/throw-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/nullptr-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/code-literal-node.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/bitfield-definition-node.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

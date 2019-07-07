@@ -11,6 +11,7 @@ namespace AltaCore {
     class ExpressionNode;
   };
   namespace DET {
+    using Shared::TypeModifierFlag;
     class Type: public ScopeItem {
       private:
         bool commonCompatiblity(const Type& other);
@@ -42,6 +43,7 @@ namespace AltaCore {
         std::shared_ptr<Type> returnType = nullptr;
         std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters;
         std::vector<std::shared_ptr<Type>> unionOf;
+        std::shared_ptr<Class> bitfield = nullptr;
 
         const size_t indirectionLevel() const;
         const size_t referenceLevel() const;
@@ -85,6 +87,18 @@ namespace AltaCore {
         size_t compatiblity(const Type& other);
         bool isExactlyCompatibleWith(const Type& other);
         bool isCompatibleWith(const Type& other);
+
+        static inline std::vector<uint8_t> createModifierVector(std::vector<std::vector<TypeModifierFlag>> modifiers) {
+          std::vector<uint8_t> result;
+          for (auto& level: modifiers) {
+            uint8_t levelNumber = 0;
+            for (auto& modifier: level) {
+              levelNumber |= (uint8_t)modifier;
+            }
+            result.push_back(levelNumber);
+          }
+          return result;
+        };
 
         Type():
           ScopeItem(""),

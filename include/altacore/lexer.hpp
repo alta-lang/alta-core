@@ -248,6 +248,7 @@ namespace AltaCore {
         bool foundFraction = false;
         uint8_t backticksFound = 0;
         std::pair<size_t, size_t> lastPosition;
+        bool foundBase = false;
 
         /**
          * this is where the majority of the actual lexer logic goes,

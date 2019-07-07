@@ -494,6 +494,17 @@ namespace AltaCore {
 
       std::vector<std::shared_ptr<AttributeNode>> attributes;
     };
+    class BitfieldDefinitionNode: public StatementNode {
+      ALTACORE_DH_CTOR(BitfieldDefinitionNode, StatementNode);
+
+      bool isExport = false;
+      std::shared_ptr<Type> underlyingType;
+      std::vector<std::shared_ptr<Type>> memberTypes;
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
+      std::vector<std::shared_ptr<DET::Variable>> memberVariables;
+
+      std::shared_ptr<DET::Class> bitfield = nullptr;
+    };
 
     #undef ALTACORE_DH_CTOR
   };

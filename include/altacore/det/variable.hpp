@@ -17,6 +17,8 @@ namespace AltaCore {
         bool isLiteral = false;
         bool isExport = false;
         bool isVariable = false;
+        bool isBitfieldEntry = false;
+        std::pair<size_t, size_t> bitfieldBits;
 
         Variable(std::string name, std::shared_ptr<Type> type, std::shared_ptr<Scope> parentScope = nullptr);
     };

@@ -852,6 +852,7 @@ namespace AltaCore {
                 RuleType::TryCatch,
                 RuleType::Throw,
                 RuleType::CodeLiteral,
+                RuleType::Bitfield,
                 RuleType::Export,
                 RuleType::Expression,
 
@@ -881,6 +882,7 @@ namespace AltaCore {
                 RuleType::TryCatch,
                 RuleType::Throw,
                 RuleType::CodeLiteral,
+                RuleType::Bitfield,
                 RuleType::Expression,
 
                 // general attributes must come last because
@@ -3178,6 +3180,104 @@ namespace AltaCore {
             exps.clear();
 
             ACP_NODE(node);
+          }
+        } else if (rule == RuleType::Bitfield) {
+          if (state.internalIndex == 0) {
+            state.internalIndex = 1;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 1) {
+            if (exps.back()) ACP_RULE(Attribute);
+
+            exps.pop_back();
+
+            auto bits = std::make_shared<AST::BitfieldDefinitionNode>();
+            bits->modifiers = expectModifiers(ModifierTargetType::Bitfield);
+
+            ruleNode = std::move(bits);
+            state.internalIndex = 2;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 2) {
+            if (exps.back()) ACP_RULE(Attribute);
+
+            exps.pop_back();
+
+            auto bits = std::dynamic_pointer_cast<AST::BitfieldDefinitionNode>(ruleNode);
+
+            for (auto& exp: exps) {
+              bits->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+            }
+            exps.clear();
+
+            if (!expectKeyword("bitfield")) ACP_NOT_OK;
+
+            auto name = expect(TokenType::Identifier);
+            if (!name) ACP_NOT_OK;
+            bits->name = name.raw;
+
+            if (expect(TokenType::Colon)) {
+              state.internalIndex = 3;
+              ACP_RULE(Type);
+            } else {
+              state.internalIndex = 4;
+              ACP_RULE(NullRule);
+            }
+          } else if (state.internalIndex == 3 || state.internalIndex == 4) {
+            auto bits = std::dynamic_pointer_cast<AST::BitfieldDefinitionNode>(ruleNode);
+
+            if (state.internalIndex == 3) {
+              if (!exps.back()) ACP_NOT_OK;
+              bits->underlyingType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+            }
+
+            if (!expect(TokenType::OpeningBrace)) ACP_NOT_OK;
+            if (expect(TokenType::ClosingBrace)) ACP_NODE(bits);
+
+            state.internalIndex = 5;
+            ACP_RULE(NullRule);
+          } else {
+            auto bits = std::dynamic_pointer_cast<AST::BitfieldDefinitionNode>(ruleNode);
+
+            if (state.internalIndex == 5) {
+              auto field = expect(TokenType::Identifier);
+              if (!field) ACP_NOT_OK;
+              bits->members.push_back(std::make_tuple(nullptr, field.raw, 0, 0));
+
+              if (expect(TokenType::Colon)) {
+                state.internalIndex = 6;
+                ACP_RULE(Type);
+              } else {
+                state.internalIndex = 7;
+                ACP_RULE(NullRule);
+              }
+            } else if (state.internalIndex == 6) {
+              if (!exps.back()) ACP_NOT_OK;
+              std::get<0>(bits->members.back()) = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+              state.internalIndex = 7;
+              ACP_RULE(NullRule);
+            } else {
+              auto& [type, name, start, end] = bits->members.back();
+
+              if (!expect(TokenType::EqualSign)) ACP_NOT_OK;
+              auto startStr = expect(TokenType::Integer);
+              if (!startStr) ACP_NOT_OK;
+              start = end = AST::IntegerLiteralNode::parseInteger(startStr.raw);
+              if (expect(TokenType::Dot)) {
+                if (!expect(TokenType::Dot)) ACP_NOT_OK;
+                bool inclusive = (bool)expect(TokenType::Dot);
+                auto endStr = expect(TokenType::Integer);
+                if (!endStr) ACP_NOT_OK;
+                end = AST::IntegerLiteralNode::parseInteger(endStr.raw) - (inclusive ? 0 : 1);
+              }
+              // optional semicolons
+              while (expect(TokenType::Semicolon));
+
+              if (expect(TokenType::ClosingBrace)) {
+                ACP_NODE(bits);
+              } else {
+                state.internalIndex = 5;
+                ACP_RULE(NullRule);
+              }
+            }
           }
         }
 
