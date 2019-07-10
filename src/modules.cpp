@@ -267,5 +267,5 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
     }
   }
 
-  throw ModuleResolutionError();
+  throw ModuleResolutionError(relativeTo, importRequest);
 };

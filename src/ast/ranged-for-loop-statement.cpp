@@ -7,6 +7,7 @@ const AltaCore::AST::NodeType AltaCore::AST::RangedForLoopStatement::nodeType() 
 ALTACORE_AST_DETAIL_D(RangedForLoopStatement) {
   ALTACORE_MAKE_DH(RangedForLoopStatement);
   info->scope = std::make_shared<DET::Scope>(scope);
+  info->scope->isLoopScope = true;
 
   info->counterType = counterType->fullDetail(info->scope);
   info->start = start->fullDetail(info->scope);

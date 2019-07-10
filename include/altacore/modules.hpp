@@ -6,6 +6,7 @@
 #include <string>
 #include <exception>
 #include <functional>
+#include <stdexcept>
 #include "simple-map.hpp"
 
 #ifdef ALTACORE_LOCAL_SEMVER
@@ -22,10 +23,37 @@ namespace AltaCore {
     class PrepoExpression;
   };
   namespace Modules {
-    class ModuleError: public std::exception {};
-    class ModuleResolutionError: public ModuleError {};
-    class InvalidPackageInformationError: public ModuleError {};
-    class PackageInformationNotFoundError: public ModuleError {};
+    class ModuleError: public std::runtime_error {
+      public:
+        ModuleError():
+          runtime_error("ModuleError")
+          {};
+        ModuleError(std::string what):
+          runtime_error("ModuleError: " + what)
+          {};
+      protected:
+        ModuleError(std::string what, bool override):
+          runtime_error(what)
+          {};
+    };
+    class ModuleResolutionError: public ModuleError {
+      public:
+        ModuleResolutionError(AltaCore::Filesystem::Path from, std::string to):
+          ModuleError("ModuleResolutionError: failed to resolve \"" + to + "\" from " + from.toString(), true)
+          {};
+    };
+    class InvalidPackageInformationError: public ModuleError {
+      public:
+        InvalidPackageInformationError():
+          ModuleError("InvalidPackageInformationError", true)
+          {};
+    };
+    class PackageInformationNotFoundError: public ModuleError {
+      public:
+        PackageInformationNotFoundError():
+          ModuleError("PackageInformationNotFoundError", true)
+          {};
+    };
 
     enum class OutputBinaryType {
       Library,

@@ -29,6 +29,7 @@ namespace AltaCore {
         size_t relativeID = 0;
         size_t nextChildID = 0;
         bool noRuntime = false;
+        bool isLoopScope = false;
 
         bool isTry = false;
         std::unordered_set<std::shared_ptr<Type>, TypePointerHash, TypePointerComparator> typesThrown;

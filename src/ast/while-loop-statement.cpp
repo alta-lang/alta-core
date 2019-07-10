@@ -7,6 +7,7 @@ const AltaCore::AST::NodeType AltaCore::AST::WhileLoopStatement::nodeType() {
 ALTACORE_AST_DETAIL_D(WhileLoopStatement) {
   ALTACORE_MAKE_DH(WhileLoopStatement);
   info->scope = std::make_shared<DET::Scope>(scope);
+  info->scope->isLoopScope = true;
 
   info->test = test->fullDetail(info->scope);
   info->body = body->fullDetail(info->scope);
