@@ -88,7 +88,7 @@ ALTACORE_AST_DETAIL_D(Fetch) {
       auto type = item->nodeType();
       bool isNarrowedTo = false;
 
-      if (info->narrowedTo->id == info->items[i]->id) {
+      if (info->narrowedTo && info->narrowedTo->id == info->items[i]->id) {
         isNarrowedTo = true;
       }
 

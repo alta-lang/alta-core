@@ -184,7 +184,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
       auto type = item->nodeType();
       bool isNarrowedTo = false;
 
-      if (info->narrowedTo->id == info->items[i]->id) {
+      if (info->narrowedTo && info->narrowedTo->id == info->items[i]->id) {
         isNarrowedTo = true;
       }
 
@@ -258,6 +258,7 @@ void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<DH::Accessor> info, std::
     }
   }
   if (info->narrowedTo) {
+    info->targetType = DET::Type::getUnderlyingType(info->narrowedTo);
     if (auto parentScope = info->narrowedTo->parentScope.lock()) {
       if (auto parentModule = parentScope->parentModule.lock()) {
         info->inputScope->hoist(info->narrowedTo);
@@ -272,6 +273,7 @@ void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<DH::Accessor> info, size_
   info->narrowedTo = info->items[i];
   info->narrowedToIndex = i;
   if (info->narrowedTo) {
+    info->targetType = DET::Type::getUnderlyingType(info->narrowedTo);
     if (auto parentScope = info->narrowedTo->parentScope.lock()) {
       if (auto parentModule = parentScope->parentModule.lock()) {
         info->inputScope->hoist(info->narrowedTo);
@@ -285,6 +287,7 @@ void AltaCore::AST::Accessor::widen(std::shared_ptr<DH::Accessor> info) {
   }
   info->narrowedTo = nullptr;
   info->narrowedToIndex = SIZE_MAX;
+  info->targetType = nullptr;
 };
 
 ALTACORE_AST_VALIDATE_D(Accessor) {
