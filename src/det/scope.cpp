@@ -164,10 +164,12 @@ void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::ScopeItem> item)
   } else {
     throw std::runtime_error("failed to hoist item anywhere");
   }
-  if (item->genericParameterCount > 0) {
-    if (auto mod = Util::getModule(this).lock()) {
-      mod->genericsUsed.push_back(item);
-      Util::getModule(item->parentScope.lock().get()).lock()->dependents.push_back(mod);
+  if (auto mod = Util::getModule(this).lock()) {
+    if (auto otherMod = Util::getModule(item->parentScope.lock().get()).lock()) {
+      otherMod->dependents.push_back(mod);
+      if (item->genericParameterCount > 0) {
+        mod->genericsUsed.push_back(item);
+      }
     }
   }
 };
