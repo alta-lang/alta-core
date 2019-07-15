@@ -2,6 +2,9 @@
 #include <memory>
 #include <functional>
 #include <fstream>
+#include <locale>
+#include <codecvt>
+#include <boost/filesystem.hpp>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
@@ -79,57 +82,15 @@ void AltaCore::Filesystem::copyFile(AltaCore::Filesystem::Path source, AltaCore:
 
 std::vector<AltaCore::Filesystem::Path> AltaCore::Filesystem::getDirectoryListing(AltaCore::Filesystem::Path directory, bool recursive) {
   std::vector<Path> results;
+  const auto dirStr = directory.toString();
 
-#ifdef WIN32
-  // https://docs.microsoft.com/en-us/windows/desktop/fileio/listing-the-files-in-a-directory
-  WIN32_FIND_DATAW directoryFindData;
-  HANDLE findHandle;
-
-  auto dirStr = directory.toString();
-  std::wstring dirWStr(dirStr.size(), L' ');
-  std::copy(dirStr.begin(), dirStr.end(), dirWStr.begin());
-  dirWStr += L"\\*";
-
-  findHandle = FindFirstFileW(dirWStr.c_str(), &directoryFindData);
-
-  if (findHandle == INVALID_HANDLE_VALUE) {
-    throw std::runtime_error("invalid copy handle");
-  }
-
-  do {
-    std::wstring wideFileName(directoryFindData.cFileName);
-    if (wideFileName != L"." && wideFileName != L"..") {
-      std::string narrowFileName(wideFileName.size(), ' ');
-      std::copy(wideFileName.begin(), wideFileName.end(), narrowFileName.begin());
-      results.push_back(Path(narrowFileName).absolutify(directory));
-    }
-  } while (FindNextFileW(findHandle, &directoryFindData) != 0);
-
-  FindClose(findHandle);
-#else
-  auto stringifiedPath = directory.toString('/');
-
-  // thanks, Peter Parker (https://stackoverflow.com/a/612176)
-  DIR* dir = NULL;
-  struct dirent* ent = NULL;
-  if ((dir = opendir(stringifiedPath.c_str())) != NULL) {
-    while ((ent = readdir(dir)) != NULL) {
-      if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
-        results.push_back(Path(ent->d_name).absolutify(directory));
-      }
-    }
-    closedir(dir);
-  } else {
-    throw std::runtime_error("failed to open directory");
-  }
-#endif
-
-  if (recursive) {
-    for (auto& result: results) {
-      if (result.isDirectory()) {
-        auto arr = getDirectoryListing(result, true);
-        results.insert(results.end(), arr.begin(), arr.end());
-      }
+  for (auto file: boost::filesystem::directory_iterator(dirStr)) {
+    auto tmp = file.path();
+    auto path = Path(tmp.string());
+    results.push_back(path);
+    if (recursive && boost::filesystem::is_directory(file)) {
+      auto arr = getDirectoryListing(path, true);
+      results.insert(results.end(), arr.begin(), arr.end());
     }
   }
 
