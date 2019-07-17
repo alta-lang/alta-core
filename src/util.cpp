@@ -214,8 +214,10 @@ void AltaCore::Util::exportClassIfNecessary(std::shared_ptr<AltaCore::DET::Scope
 
 std::shared_ptr<AltaCore::DET::Scope> AltaCore::Util::findLoopScope(std::shared_ptr<AltaCore::DET::Scope> scope) {
   if (scope->isLoopScope) return scope;
-  while (auto parentScope = scope->parent.lock()) {
+  auto tmp = scope;
+  while (auto parentScope = tmp->parent.lock()) {
     if (parentScope->isLoopScope) return parentScope;
+    tmp = parentScope;
   }
   return nullptr;
 };
