@@ -20,6 +20,8 @@ ALTACORE_AST_DETAIL_D(Accessor) {
   std::shared_ptr<DET::Scope> targetScope = nullptr;
   auto targetAcc = std::dynamic_pointer_cast<Accessor>(target);
   auto targetAccDH = std::dynamic_pointer_cast<DH::Accessor>(info->target);
+  auto targetFetch = std::dynamic_pointer_cast<Fetch>(target);
+  auto targetFetchDH = std::dynamic_pointer_cast<DH::Fetch>(info->target);
   bool notAccessingNamespace = false;
   
   if (auto retr = std::dynamic_pointer_cast<Fetch>(target)) {
@@ -150,10 +152,12 @@ ALTACORE_AST_DETAIL_D(Accessor) {
         if (info->readAccessor) ALTACORE_DETAILING_ERROR("encountered two read accessors with the same name");
         info->readAccessor = acc;
         info->readAccessorIndex = i;
+        info->inputScope->hoist(info->readAccessor);
       } else if (acc->parameters.size() == 1) {
         if (info->writeAccessor) ALTACORE_DETAILING_ERROR("encountered two write accessors with the same name");
         info->writeAccessor = acc;
         info->writeAccessorIndex = i;
+        info->inputScope->hoist(info->writeAccessor);
       } else {
         ALTACORE_DETAILING_ERROR("invalid accessor");
       }

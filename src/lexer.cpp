@@ -172,6 +172,7 @@ namespace AltaCore {
           }
 
           if (
+            character == '_' ||
             (character >= 'a' && character <= 'z') ||
             (character >= 'A' && character <= 'Z') ||
             (ruleIteration > 2 && character >= '0' && character <= '9')

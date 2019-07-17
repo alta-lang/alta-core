@@ -68,7 +68,27 @@ ALTACORE_AST_DETAIL_D(Fetch) {
 
   info->items = items;
 
-  if (items.size() == 1) {
+  for (size_t i = 0; i < info->items.size(); i++) {
+    auto& item = info->items[i];
+    if (item->nodeType() == DET::NodeType::Function && std::dynamic_pointer_cast<DET::Function>(item)->isAccessor) {
+      auto acc = std::dynamic_pointer_cast<DET::Function>(item);
+      if (acc->parameters.size() == 0) {
+        if (info->readAccessor) ALTACORE_DETAILING_ERROR("encountered two read accessors with the same name");
+        info->readAccessor = acc;
+        info->readAccessorIndex = i;
+        info->inputScope->hoist(info->readAccessor);
+      } else if (acc->parameters.size() == 1) {
+        if (info->writeAccessor) ALTACORE_DETAILING_ERROR("encountered two write accessors with the same name");
+        info->writeAccessor = acc;
+        info->writeAccessorIndex = i;
+        info->inputScope->hoist(info->writeAccessor);
+      } else {
+        ALTACORE_DETAILING_ERROR("invalid accessor");
+      }
+    }
+  }
+
+  if (items.size() == 1 && (info->items[0]->nodeType() != DET::NodeType::Function || !std::dynamic_pointer_cast<DET::Function>(info->items[0])->isAccessor)) {
     narrowTo(info, 0);
   }
 

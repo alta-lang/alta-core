@@ -29,6 +29,9 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     return getUnderlyingType(assign->target.get())->reference();
   } else if (auto fetch = dynamic_cast<DH::Fetch*>(expression)) {
     if (!fetch->narrowedTo) {
+      if (fetch->readAccessor) {
+        return fetch->readAccessor->returnType;
+      }
       throw std::runtime_error("the given fetch has not been narrowed. either narrow it or use `AltaCore::DET::Type::getUnderlyingTypes` instead");
     }
     return getUnderlyingType(fetch->narrowedTo);

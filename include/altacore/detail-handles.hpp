@@ -261,6 +261,10 @@ namespace AltaCore {
       std::shared_ptr<DET::ScopeItem> narrowedTo;
       std::vector<std::shared_ptr<Type>> genericArgumentDetails;
       std::vector<std::shared_ptr<DET::Type>> genericArguments;
+      std::shared_ptr<DET::Function> readAccessor = nullptr;
+      size_t readAccessorIndex = 0;
+      std::shared_ptr<DET::Function> writeAccessor = nullptr;
+      size_t writeAccessorIndex = 0;
     };
     class FunctionCallExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(FunctionCallExpression, ExpressionNode);
