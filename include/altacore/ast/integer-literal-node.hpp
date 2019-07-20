@@ -30,7 +30,7 @@ namespace AltaCore {
             } else if (base == 1) {
               throw std::runtime_error("can't have an integer with a base of 1");
             }
-            integer = std::stoull(numberString, nullptr, base);
+            integer = std::stoull(numberString, nullptr, static_cast<int>(base));
           } else {
             integer = std::stoull(_raw, nullptr, 10);
           }

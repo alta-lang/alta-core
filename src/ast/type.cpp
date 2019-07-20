@@ -23,7 +23,11 @@ AltaCore::AST::Type::Type(std::vector<std::shared_ptr<Type>> _unionOf):
 
 std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Type::detail(std::shared_ptr<AltaCore::DET::Scope> scope, bool hoist) {
   ALTACORE_MAKE_DH(Type);
-  if (unionOf.size() > 0) {
+  if (isOptional) {
+    info->optionalTarget = optionalTarget->fullDetail(info->inputScope);
+    info->type = std::make_shared<DET::Type>(true, info->optionalTarget->type, modifiers);
+    if (hoist) scope->hoist(info->type);
+  } else if (unionOf.size() > 0) {
     std::vector<std::shared_ptr<DET::Type>> detUnion;
     for (auto& item: unionOf) {
       auto det = item->fullDetail(info->inputScope);

@@ -70,7 +70,13 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto ptr = dynamic_cast<DH::PointerExpression*>(expression)) {
     return getUnderlyingType(ptr->target.get())->destroyReferences()->point();
   } else if (auto deref = dynamic_cast<DH::DereferenceExpression*>(expression)) {
-    return getUnderlyingType(deref->target.get())->follow();
+    auto target = getUnderlyingType(deref->target.get());
+    if (target->pointerLevel() < 1 && target->isOptional) {
+      target = target->optionalTarget->copy();
+    } else {
+      target = target->follow();
+    }
+    return target;
   } else if (auto cast = dynamic_cast<DH::CastExpression*>(expression)) {
     return cast->type->type;
   } else if (auto chara = dynamic_cast<DH::CharacterLiteralNode*>(expression)) {
@@ -269,6 +275,12 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) {
   if (isExactlyCompatibleWith(other)) return SIZE_MAX;
   if (!commonCompatiblity(other)) return 0;
 
+  if (isOptional) {
+    if (!other.isOptional && pointerLevel() > 0) return 0;
+    if (other.isOptional && pointerLevel() != other.pointerLevel()) return 0;
+    return optionalTarget->compatiblity(other.isOptional ? *other.optionalTarget : other);
+  }
+
   if (referenceLevel() == other.referenceLevel()) {
     compat++;
   }
@@ -358,6 +370,12 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
     ) return false;
     return true;
   }
+  if (!isOptional && other.isOptional) return false;
+  if (isOptional) {
+    if (!other.isOptional && pointerLevel() > 0) return false;
+    if (other.isOptional && pointerLevel() != other.pointerLevel()) return false;
+    return optionalTarget->commonCompatiblity(other.isOptional ? *other.optionalTarget : other);
+  }
   if (!isUnion() && !other.isUnion()) {
     if (isFunction != other.isFunction) return false;
     if (isNative != other.isNative) return false;
@@ -415,6 +433,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
   if (other.isAccessor) return isExactlyCompatibleWith(*other.returnType);
   if (!commonCompatiblity(other)) return false;
   if (isAny || other.isAny) return false;
+  if (isOptional != other.isOptional) return false;
   if (unionOf.size() != other.unionOf.size()) return false;
 
   if (isUnion()) {
@@ -460,6 +479,7 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
   if (other.isNative && other.pointerLevel() < 1 && pointerLevel() > 0) return true;
 
   if (!commonCompatiblity(other)) return false;
+  if (isOptional) return optionalTarget->isCompatibleWith(other.isOptional ? *other.optionalTarget : other);
   if (isAny || other.isAny) return true;
 
   if (other.unionOf.size() > 0) {

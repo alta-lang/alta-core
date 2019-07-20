@@ -361,6 +361,9 @@ namespace AltaCore {
       bool isAny = false;
       bool isFunction = false;
       bool isNative = true;
+
+      bool isOptional = false;
+      std::shared_ptr<Type> optionalTarget = nullptr;
     };
     class VariableDefinitionExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(VariableDefinitionExpression, ExpressionNode);

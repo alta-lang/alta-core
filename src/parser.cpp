@@ -1224,13 +1224,21 @@ namespace AltaCore {
               state.internalIndex = 2;
               ACP_RULE(Type);
             } else if (type->parameters.size() > 1) {
-              // somehow, we detected parameters, but there's no ACP_NODE((indicator,
+              // somehow, we detected parameters, but there's no return indicator,
               // so this isn't a type
               ACP_NOT_OK;
             } else {
               auto otherType = std::get<0>(type->parameters[0]);
-              otherType->modifiers.insert(otherType->modifiers.begin(), type->modifiers.begin(), type->modifiers.end());
-              ACP_NODE(otherType);
+              if (expect(TokenType::QuestionMark)) {
+                auto newType = std::make_shared<AST::Type>();
+                newType->modifiers = type->modifiers;
+                newType->isOptional = true;
+                newType->optionalTarget = otherType;
+                ACP_NODE(newType);
+              } else {
+                otherType->modifiers.insert(otherType->modifiers.begin(), type->modifiers.begin(), type->modifiers.end());
+                ACP_NODE(otherType);
+              }
             }
           } else if (state.internalIndex == 2) {
             if (!exps.back()) ACP_NOT_OK;
@@ -1283,6 +1291,18 @@ namespace AltaCore {
             } else {
               type->lookup = expr;
               type->isNative = false;
+            }
+
+            if (expect(TokenType::QuestionMark)) {
+              auto wrapped = std::make_shared<AST::Type>();
+              wrapped->lookup = type->lookup;
+              wrapped->isNative = type->isNative;
+              wrapped->name = type->name;
+              type->lookup = nullptr;
+              type->isNative = false;
+              type->name = "";
+              type->isOptional = true;
+              type->optionalTarget = wrapped;
             }
 
             if (expect(TokenType::Pipe)) {
@@ -3192,7 +3212,7 @@ namespace AltaCore {
             ACP_NODE(stmt);
           }
         } else if (rule == RuleType::Nullptr) {
-          if (!expectKeyword("nullptr")) ACP_NOT_OK;
+          if (!expectKeyword("nullptr") && !expectKeyword("null")) ACP_NOT_OK;
           auto node = std::make_shared<AST::NullptrExpression>();
           ACP_NODE(node);
         } else if (rule == RuleType::CodeLiteral) {

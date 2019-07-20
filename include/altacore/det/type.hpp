@@ -45,6 +45,9 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Type>> unionOf;
         std::shared_ptr<Class> bitfield = nullptr;
 
+        bool isOptional = false;
+        std::shared_ptr<Type> optionalTarget = nullptr;
+
         const size_t indirectionLevel() const;
         const size_t referenceLevel() const;
         const size_t pointerLevel() const;
@@ -108,8 +111,14 @@ namespace AltaCore {
         Type(std::shared_ptr<Type> returnType, std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters, std::vector<uint8_t> modifiers = {});
         Type(std::shared_ptr<Class> klass, std::vector<uint8_t> modifiers = {});
         Type(std::vector<std::shared_ptr<Type>> unionOf, std::vector<uint8_t> modifiers = {});
+        Type(bool _isOptional, std::shared_ptr<Type> _optionalTarget, std::vector<uint8_t> _modifiers = {}):
+          ScopeItem(""),
+          isOptional(_isOptional),
+          optionalTarget(_optionalTarget),
+          modifiers(_modifiers)
+          {};
 
-        // operator for `isCompatiableWith`
+        // operator for `isCompatibleWith`
         bool operator %(const Type& other);
         bool operator ==(const Type& other);
 
