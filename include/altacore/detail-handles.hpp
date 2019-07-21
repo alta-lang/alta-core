@@ -278,6 +278,8 @@ namespace AltaCore {
       std::shared_ptr<DET::Type> targetType = nullptr;
       ALTACORE_MAP<size_t, size_t> argumentMap;
       std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>, std::vector<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>>>> adjustedArguments;
+
+      bool maybe = false;
     };
     class FunctionDeclarationNode: public StatementNode {
       ALTACORE_DH_CTOR(FunctionDeclarationNode, StatementNode);

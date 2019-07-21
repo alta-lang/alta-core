@@ -166,6 +166,7 @@ std::tuple<size_t, ALTACORE_MAP<size_t, size_t>, std::vector<ALTACORE_VARIANT<st
 
 ALTACORE_AST_DETAIL_D(FunctionCallExpression) {
   ALTACORE_MAKE_DH(FunctionCallExpression);
+  info->maybe = maybe;
   info->target = target->fullDetail(scope);
 
   std::vector<std::tuple<std::string, std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>> argsWithDet;
@@ -228,6 +229,10 @@ ALTACORE_AST_DETAIL_D(FunctionCallExpression) {
 
   if (index == SIZE_MAX) {
     ALTACORE_DETAILING_ERROR("no functions were found that match the call signature");
+  }
+
+  if (maybe) {
+    info->inputScope->hoist(info->targetType->returnType->makeOptional());
   }
 
   info->adjustedArguments = adjArgs;

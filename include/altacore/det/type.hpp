@@ -87,6 +87,8 @@ namespace AltaCore {
          */
         std::shared_ptr<Type> destroyReferences() const;
 
+        std::shared_ptr<Type> makeOptional() const;
+
         size_t compatiblity(const Type& other);
         bool isExactlyCompatibleWith(const Type& other);
         bool isCompatibleWith(const Type& other);

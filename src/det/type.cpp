@@ -44,7 +44,11 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
       return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
     }
   } else if (auto call = dynamic_cast<DH::FunctionCallExpression*>(expression)) {
-    return call->targetType->returnType;
+    auto type = call->targetType->returnType;
+    if (call->maybe) {
+      type = std::make_shared<DET::Type>(true, type);
+    }
+    return type;
   } else if (auto acc = dynamic_cast<DH::Accessor*>(expression)) {
     if (!acc->narrowedTo) {
       if (acc->readAccessor) {
@@ -225,6 +229,9 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::destroyReferences() co
   }
   return other;
 };
+std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::makeOptional() const {
+  return std::make_shared<DET::Type>(true, copy());
+}
 const size_t AltaCore::DET::Type::indirectionLevel() const {
   size_t count = 0;
 

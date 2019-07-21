@@ -17,6 +17,8 @@ namespace AltaCore {
         std::shared_ptr<ExpressionNode> target = nullptr;
         std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments;
 
+        bool maybe = false;
+
         FunctionCallExpression() {};
         FunctionCallExpression(std::shared_ptr<ExpressionNode> target, std::vector<std::pair<std::string, std::shared_ptr<ExpressionNode>>> arguments = {});
 

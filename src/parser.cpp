@@ -1632,7 +1632,13 @@ namespace AltaCore {
             bool isPostIncrement = false;
             bool isPostDecrement = false;
 
+            bool isMaybe = false;
+
             saveState();
+
+            if (expect(TokenType::QuestionMark)) {
+              isMaybe = true;
+            }
 
             if (expect(TokenType::OpeningParenthesis)) {
               isCall = true;
@@ -1652,6 +1658,7 @@ namespace AltaCore {
             if (isCall) {
               auto funcCall = std::make_shared<AST::FunctionCallExpression>();
               funcCall->target = target;
+              funcCall->maybe = isMaybe;
 
               auto tmpState = currentState;
               auto name = expect(TokenType::Identifier);
