@@ -369,6 +369,7 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
   if (referenceLevel() > 0) return destroyReferences()->commonCompatiblity(other);
   if (other.referenceLevel() > 0) return commonCompatiblity(*other.destroyReferences());
   if (other.isAccessor) return commonCompatiblity(*other.returnType);
+  if (isOptional && other.isAny && other.pointerLevel() == 1) return true;
   if (isAny || other.isAny) {
     // little hack to only assign `nullptr` to pointers
     if (
@@ -486,6 +487,7 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) {
   if (other.isNative && other.pointerLevel() < 1 && pointerLevel() > 0) return true;
 
   if (!commonCompatiblity(other)) return false;
+  if (isOptional && other.isAny && other.pointerLevel() == 1) return true;
   if (isOptional) return optionalTarget->isCompatibleWith(other.isOptional ? *other.optionalTarget : other);
   if (isAny || other.isAny) return true;
 

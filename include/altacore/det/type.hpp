@@ -117,7 +117,8 @@ namespace AltaCore {
           ScopeItem(""),
           isOptional(_isOptional),
           optionalTarget(_optionalTarget),
-          modifiers(_modifiers)
+          modifiers(_modifiers),
+          isNative(false)
           {};
 
         // operator for `isCompatibleWith`
