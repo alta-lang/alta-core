@@ -105,6 +105,8 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     auto type = std::make_shared<Type>();
     type->modifiers.push_back((uint8_t)Shared::TypeModifierFlag::Pointer);
     return type;
+  } else if (auto lambda = dynamic_cast<DH::LambdaExpression*>(expression)) {
+    return getUnderlyingType(lambda->function);
   }
 
   return nullptr;
@@ -119,9 +121,10 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
     if (func->genericParameterCount > 0 && func->genericArguments.size() < 1) return nullptr;
     std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> params;
     for (auto& [name, type, isVariable, id]: func->parameters) {
-      params.push_back(std::make_tuple(name, type, isVariable, id));
+      params.push_back(std::make_tuple(func->isLambda ? "" : name, type, isVariable, id));
     }
     auto type = std::make_shared<Type>(func->returnType, params);
+    type->isRawFunction = !func->isLambda;
     type->throws = false;
     func->beganThrowing.listen([=]() {
       type->throws = true;
@@ -432,7 +435,10 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other) {
    * (because in C, for example, you can just keep following pointers as many times as you need to)
    */
 
-  if (isFunction && parameters.size() != other.parameters.size()) return false;
+  if (isFunction) {
+    if (parameters.size() != other.parameters.size()) return false;
+    if (isRawFunction && !other.isRawFunction) return false;
+  }
 
   return true;
 };
@@ -468,6 +474,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
     for (size_t i = 0; i < parameters.size(); i++) {
       if (!std::get<1>(parameters[i])->isExactlyCompatibleWith(*std::get<1>(other.parameters[i]))) return false;
     }
+    if (isRawFunction != other.isRawFunction) return false;
   } else if (isNative) {
     if (nativeTypeName != other.nativeTypeName) return false;
     if (userDefinedName != other.userDefinedName) return false;
@@ -538,13 +545,14 @@ AltaCore::DET::Type::Type(AltaCore::DET::NativeType _nativeTypeName, std::vector
   modifiers(_modifiers),
   userDefinedName(_userDefinedName)
   {};
-AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> _parameters, std::vector<uint8_t> _modifiers):
+AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> _parameters, std::vector<uint8_t> _modifiers, bool _isRawFunction):
   ScopeItem(""),
   isNative(true),
   isFunction(true),
   returnType(_returnType),
   parameters(_parameters),
-  modifiers(_modifiers)
+  modifiers(_modifiers),
+  isRawFunction(_isRawFunction)
   {};
 AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Class> _klass, std::vector<uint8_t> _modifiers):
   ScopeItem(""),

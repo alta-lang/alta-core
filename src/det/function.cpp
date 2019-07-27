@@ -69,6 +69,17 @@ void AltaCore::DET::Function::recreate(std::vector<std::tuple<std::string, std::
   parameters = _parameters;
   returnType = _returnType;
 
+  for (auto& var: parameterVariables) {
+    for (size_t i = 0; i < scope->items.size(); ++i) {
+      if (scope->items[i]->id == var->id) {
+        scope->items.erase(scope->items.begin() + 1);
+        --i;
+      }
+    }
+  }
+
+  parameterVariables.clear();
+
   for (auto& [name, type, isVariable, id]: parameters) {
     auto var = std::make_shared<Variable>(name, isVariable ? type->point() : type);
     var->parentScope = scope;

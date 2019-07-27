@@ -44,7 +44,7 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Type::detail(std::shared_ptr<
       info->parameters.push_back(det);
       detParams.push_back({ "", det->type, isVariable, id });
     }
-    info->type = std::make_shared<DET::Type>(info->returnType->type, detParams, modifiers);
+    info->type = std::make_shared<DET::Type>(info->returnType->type, detParams, modifiers, !isLambda);
     if (hoist) scope->hoist(info->type);
   } else if (!_injected_type) {
     std::shared_ptr<DET::ScopeItem> item = nullptr;

@@ -11,42 +11,54 @@ AltaCore::AST::Fetch::Fetch(std::string _query):
   {};
 
 void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<DH::Fetch> info, std::shared_ptr<AltaCore::DET::Type> type) {
-  if (info->narrowedTo) {
-    info->inputScope->unhoist(info->narrowedTo);
-  }
   size_t highestCompat = 0;
-  for (auto& item: info->items) {
+  size_t idx = 0;
+  for (size_t i = 0; i < info->items.size(); i++) {
+    auto& item = info->items[i];
     auto itemType = DET::Type::getUnderlyingType(item);
     auto compat = itemType->compatiblity(*type);
     if (compat > highestCompat) {
       highestCompat = compat;
-      info->narrowedTo = item;
+      idx = i;
     }
   }
-  if (info->narrowedTo) {
-    if (auto parentScope = info->narrowedTo->parentScope.lock()) {
-      if (auto parentModule = parentScope->parentModule.lock()) {
-        info->inputScope->hoist(info->narrowedTo);
-      }
-    }
-  }
+  narrowTo(info, idx);
 };
 void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<DH::Fetch> info, size_t i) {
   if (info->narrowedTo) {
     info->inputScope->unhoist(info->narrowedTo);
   }
   info->narrowedTo = info->items[i];
-  if (info->narrowedTo) {
-    if (auto parentScope = info->narrowedTo->parentScope.lock()) {
-      if (auto parentModule = parentScope->parentModule.lock()) {
-        info->inputScope->hoist(info->narrowedTo);
+  if (auto lambda = info->inputScope->findParentLambda()) {
+    if (!lambda->scope->contains(info->narrowedTo)) {
+      bool found = false;
+      for (auto& var: lambda->referencedVariables) {
+        if (var->id == info->narrowedTo->id) {
+          found = true;
+          break;
+        }
       }
+      if (!found) {
+        lambda->referencedVariables.push_back(std::dynamic_pointer_cast<DET::Variable>(info->narrowedTo));
+      }
+      info->referencesOutsideLambda = true;
     }
+  }
+  if (info->narrowedTo) {
+    info->inputScope->hoist(info->narrowedTo);
   }
 };
 void AltaCore::AST::Fetch::widen(std::shared_ptr<DH::Fetch> info) {
   if (info->narrowedTo) {
     info->inputScope->unhoist(info->narrowedTo);
+  }
+  if (auto lambda = info->inputScope->findParentLambda()) {
+    for (size_t i = 0; i < lambda->referencedVariables.size(); i++) {
+      if (lambda->referencedVariables[i]->id == info->narrowedTo->id) {
+        lambda->referencedVariables.erase(lambda->referencedVariables.begin() + i);
+        info->referencesOutsideLambda = false;
+      }
+    }
   }
   info->narrowedTo = nullptr;
 };

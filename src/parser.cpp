@@ -1218,8 +1218,15 @@ namespace AltaCore {
             if (!expect(TokenType::ClosingParenthesis)) ACP_NOT_OK;
 
             if (expect(TokenType::Returns)) {
+              // if we continue, we're parsing a raw function pointer type
+              type->isFunction = true;
+
+              state.internalIndex = 2;
+              ACP_RULE(Type);
+            } else if (expect(TokenType::FatReturns)) {
               // if we continue, we're parsing a function pointer type
               type->isFunction = true;
+              type->isLambda = true;
 
               state.internalIndex = 2;
               ACP_RULE(Type);
@@ -1870,7 +1877,15 @@ namespace AltaCore {
               state.internalIndex = 1;
               ruleNode = std::move(attr);
 
-              ACP_RULE(AnyLiteral);
+              ACP_RULE_LIST(
+                RuleType::IntegralLiteral,
+                RuleType::BooleanLiteral,
+                RuleType::String,
+                RuleType::Character,
+                RuleType::DecimalLiteral,
+                RuleType::StrictAccessor,
+                RuleType::Fetch
+              );
             } else {
               ACP_NODE((std::move(attr)));
             }
@@ -1878,10 +1893,18 @@ namespace AltaCore {
             auto attr = std::dynamic_pointer_cast<AST::AttributeNode>(ruleNode);
 
             if (exps.back()) {
-              attr->arguments.push_back(std::dynamic_pointer_cast<AST::LiteralNode>(*exps.back().item));
+              attr->arguments.push_back(std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item));
 
               if (expect(TokenType::Comma)) {
-                ACP_RULE(AnyLiteral);
+                ACP_RULE_LIST(
+                  RuleType::IntegralLiteral,
+                  RuleType::BooleanLiteral,
+                  RuleType::String,
+                  RuleType::Character,
+                  RuleType::DecimalLiteral,
+                  RuleType::StrictAccessor,
+                  RuleType::Fetch
+                );
               }
             }
 
@@ -2063,7 +2086,7 @@ namespace AltaCore {
         } else if (rule == RuleType::PunctualConditonalExpression) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
-            ACP_RULE(Or);
+            ACP_RULE(Lambda);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
 
@@ -3339,6 +3362,91 @@ namespace AltaCore {
               }
             }
           }
+        } else if (rule == RuleType::Lambda) {
+          #define LAMBDA_RESTORE {  restoreState(); state.internalIndex = 1; ACP_RULE(Or); }
+          if (state.internalIndex == 0) {
+            saveState();
+
+            ruleNode = std::make_shared<AST::LambdaExpression>();
+
+            state.internalIndex = 8;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 1) {
+            ACP_EXP(exps.back().item);
+          } else if (state.internalIndex == 2) {
+            if (!expect(TokenType::OpeningParenthesis)) LAMBDA_RESTORE;
+
+            state.internalIndex = expect(TokenType::ClosingParenthesis) ? 5 : 3;
+            ACP_RULE(NullRule);
+          } else if (state.internalIndex == 3) {
+            auto lambda = std::dynamic_pointer_cast<AST::LambdaExpression>(ruleNode);
+
+            if (lambda->parameters.size() > 0) {
+              if (!expect(TokenType::Comma)) {
+                if (!expect(TokenType::ClosingParenthesis)) LAMBDA_RESTORE;
+                state.internalIndex = 5;
+                ACP_RULE(NullRule);
+              }
+            }
+
+            auto name = expect(TokenType::Identifier);
+            if (!name) LAMBDA_RESTORE;
+
+            if (!expect(TokenType::Colon)) LAMBDA_RESTORE;
+
+            auto param = std::make_shared<AST::Parameter>();
+            param->name = name.raw;
+            lambda->parameters.push_back(param);
+
+            state.internalIndex = 4;
+            ACP_RULE(Type);
+          } else if (state.internalIndex == 4) {
+            if (!exps.back()) LAMBDA_RESTORE;
+
+            auto lambda = std::dynamic_pointer_cast<AST::LambdaExpression>(ruleNode);
+
+            lambda->parameters.back()->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+            state.internalIndex = 3;
+            ACP_RULE(NullRule);
+          } else if (state.internalIndex == 5) {
+            if (!expect(TokenType::FatReturns)) LAMBDA_RESTORE;
+
+            state.internalIndex = 6;
+            ACP_RULE(Type);
+          } else if (state.internalIndex == 6) {
+            if (!exps.back()) LAMBDA_RESTORE;
+
+            auto lambda = std::dynamic_pointer_cast<AST::LambdaExpression>(ruleNode);
+
+            lambda->returnType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+            state.internalIndex = 7;
+            ACP_RULE(Block);
+          } else if (state.internalIndex == 7) {
+            if (!exps.back()) LAMBDA_RESTORE;
+
+            auto lambda = std::dynamic_pointer_cast<AST::LambdaExpression>(ruleNode);
+
+            lambda->body = std::dynamic_pointer_cast<AST::BlockNode>(*exps.back().item);
+
+            ACP_NODE(lambda);
+          } else if (state.internalIndex == 8) {
+            if (exps.back()) ACP_RULE(Attribute);
+
+            auto lambda = std::dynamic_pointer_cast<AST::LambdaExpression>(ruleNode);
+
+            exps.pop_back();
+
+            for (auto& exp: exps) {
+              lambda->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+            }
+            exps.clear();
+
+            state.internalIndex = 2;
+            ACP_RULE(NullRule);
+          }
+          #undef LAMBDA_RESTORE
         }
 
         next();

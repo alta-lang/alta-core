@@ -36,6 +36,10 @@ namespace AltaCore {
         bool isMethod = false;
         bool isAccessor = false;
         bool isDestructor = false;
+        bool isLambda = false;
+
+        // only used for lambdas
+        std::vector<std::shared_ptr<Variable>> referencedVariables;
 
         bool throws() const {
           return _throws;

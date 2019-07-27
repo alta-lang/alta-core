@@ -119,7 +119,7 @@ namespace AltaCore {
     class AttributeNode: public Node {
       ALTACORE_DH_CTOR(AttributeNode, Node);
 
-      std::vector<std::shared_ptr<LiteralNode>> arguments;
+      std::vector<std::shared_ptr<ExpressionNode>> arguments;
 
       std::shared_ptr<AST::Node> target = nullptr;
       std::shared_ptr<Node> targetInfo = nullptr;
@@ -265,6 +265,8 @@ namespace AltaCore {
       size_t readAccessorIndex = 0;
       std::shared_ptr<DET::Function> writeAccessor = nullptr;
       size_t writeAccessorIndex = 0;
+
+      bool referencesOutsideLambda = false;
     };
     class FunctionCallExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(FunctionCallExpression, ExpressionNode);
@@ -513,6 +515,21 @@ namespace AltaCore {
       std::vector<std::shared_ptr<DET::Variable>> memberVariables;
 
       std::shared_ptr<DET::Class> bitfield = nullptr;
+    };
+    class LambdaExpression: public ExpressionNode {
+      ALTACORE_DH_CTOR(LambdaExpression, ExpressionNode);
+
+      std::vector<std::shared_ptr<Parameter>> parameters;
+      std::shared_ptr<Type> returnType = nullptr;
+
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
+
+      std::shared_ptr<BlockNode> body = nullptr;
+
+      std::shared_ptr<DET::Function> function = nullptr;
+
+      std::vector<std::shared_ptr<DET::Variable>> toCopy;
+      std::vector<std::shared_ptr<DET::Variable>> toReference;
     };
 
     #undef ALTACORE_DH_CTOR

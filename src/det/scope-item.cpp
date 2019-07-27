@@ -20,6 +20,9 @@ AltaCore::DET::ScopeItem::ScopeItem(std::string _name, std::shared_ptr<AltaCore:
   name(_name),
   parentScope(_parentScope)
 {
+  if (_parentScope) {
+    itemID = _parentScope->nextItemID++;
+  }
   if (auto scope = parentScope.lock()) {
     if (auto mod = scope->parentModule.lock()) {
       moduleIndex = mod->rootItemCount++;

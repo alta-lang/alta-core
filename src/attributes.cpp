@@ -20,6 +20,14 @@ AltaCore::Attributes::AttributeArgument::AttributeArgument(bool _boolean):
   isBoolean(true),
   boolean(_boolean)
   {};
+AltaCore::Attributes::AttributeArgument::AttributeArgument(std::shared_ptr<DET::ScopeItem> _item):
+  isScopeItem(true),
+  item(_item)
+  {};
+AltaCore::Attributes::AttributeArgument::AttributeArgument(double _decimal):
+  isDecimal(true),
+  decimal(_decimal)
+  {};
 
 AltaCore::Attributes::Attribute::Attribute(
   std::string _name,
@@ -76,6 +84,14 @@ bool AltaCore::Attributes::registerAttribute(std::vector<std::string> fullDomain
   auto& last = fullDomainPath[fullDomainPath.size() - 1];
   for (auto& attribute: *target) {
     if (attribute.name == last) {
+      bool applies = false;
+      for (auto& app: appliesTo) {
+        if (attribute.checkIfAppliesTo(app)) {
+          applies = true;
+          break;
+        }
+      }
+      if (!applies) continue;
       return false;
     }
   }

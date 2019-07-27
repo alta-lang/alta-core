@@ -7,6 +7,7 @@
 #include <string>
 #include <functional>
 #include "ast-shared.hpp"
+#include "det.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -22,14 +23,20 @@ namespace AltaCore {
         bool isString = false;
         bool isInteger = false;
         bool isBoolean = false;
+        bool isScopeItem = false;
+        bool isDecimal = false;
 
-        std::string string;
+        std::string string = "";
         int integer = 0;
         bool boolean = false;
+        std::shared_ptr<DET::ScopeItem> item = nullptr;
+        double decimal = 0;
 
         AttributeArgument(std::string string);
         AttributeArgument(int integer);
         AttributeArgument(bool boolean);
+        AttributeArgument(std::shared_ptr<DET::ScopeItem> item);
+        AttributeArgument(double decimal);
     };
 
     class Attribute {

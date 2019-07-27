@@ -23,6 +23,7 @@ namespace AltaCore {
         std::string name;
         size_t genericParameterCount = 0;
         size_t moduleIndex = 0;
+        size_t itemID = 0;
 
         std::vector<std::shared_ptr<ScopeItem>> privateHoistedItems;
         std::vector<std::shared_ptr<ScopeItem>> publicHoistedItems;

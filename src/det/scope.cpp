@@ -303,3 +303,21 @@ void AltaCore::DET::Scope::addPossibleError(std::shared_ptr<Type> errorType) {
     }
   }
 };
+
+bool AltaCore::DET::Scope::contains(std::shared_ptr<ScopeItem> item) {
+  auto lockedParent = item->parentScope.lock();
+  if (!lockedParent) return false;
+  if (id == lockedParent->id) return true;
+  return lockedParent->hasParent(shared_from_this());
+};
+
+std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Scope::findParentLambda() {
+  if (auto func = parentFunction.lock()) {
+    if (func->isLambda) {
+      return func;
+    }
+  } else if (auto scope = parent.lock()) {
+    return scope->findParentLambda();
+  }
+  return nullptr;
+};

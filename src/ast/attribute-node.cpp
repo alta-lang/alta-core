@@ -5,7 +5,7 @@ const AltaCore::AST::NodeType AltaCore::AST::AttributeNode::nodeType() {
   return NodeType::AttributeNode;
 };
 
-AltaCore::AST::AttributeNode::AttributeNode(std::vector<std::string> _accessors, std::vector<std::shared_ptr<AltaCore::AST::LiteralNode>> _arguments):
+AltaCore::AST::AttributeNode::AttributeNode(std::vector<std::string> _accessors, std::vector<std::shared_ptr<AltaCore::AST::ExpressionNode>> _arguments):
   accessors(_accessors),
   arguments(_arguments)
   {};
@@ -27,13 +27,40 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::AttributeNode::detail(std::sh
   info->module = Util::getModule(scope.get());
 
   for (auto& arg: arguments) {
-    info->arguments.push_back(arg->fullDetail(scope));
+    auto argDet = arg->fullDetail(scope);
+    info->arguments.push_back(argDet);
     if (arg->nodeType() == NodeType::StringLiteralNode) {
       info->attributeArguments.emplace_back(std::dynamic_pointer_cast<AST::StringLiteralNode>(arg)->value);
     } else if (arg->nodeType() == NodeType::IntegerLiteralNode) {
       info->attributeArguments.emplace_back(std::stoi(std::dynamic_pointer_cast<AST::IntegerLiteralNode>(arg)->raw));
     } else if (arg->nodeType() == NodeType::BooleanLiteralNode) {
       info->attributeArguments.emplace_back(std::dynamic_pointer_cast<AST::BooleanLiteralNode>(arg)->value);
+    } else if (arg->nodeType() == NodeType::FloatingPointLiteralNode) {
+      info->attributeArguments.emplace_back(std::stod(std::dynamic_pointer_cast<AST::FloatingPointLiteralNode>(arg)->raw));
+    } else if (arg->nodeType() == NodeType::CharacterLiteralNode) {
+      info->attributeArguments.emplace_back((int)std::dynamic_pointer_cast<AST::CharacterLiteralNode>(arg)->value);
+    } else if (arg->nodeType() == NodeType::Fetch) {
+      auto fetch = std::dynamic_pointer_cast<AST::Fetch>(arg);
+      auto det = std::dynamic_pointer_cast<DH::Fetch>(argDet);
+      if (det->items.size() == 0) {
+        ALTACORE_DETAILING_ERROR("no items found in retrieval node argument for attribute");
+      }
+      if (!det->narrowedTo) {
+        fetch->narrowTo(det, 0);
+        // TODO: warn about retrieval being automatically narrowed
+      }
+      info->attributeArguments.emplace_back(det->narrowedTo);
+    } else if (arg->nodeType() == NodeType::Accessor) {
+      auto acc = std::dynamic_pointer_cast<AST::Accessor>(arg);
+      auto det = std::dynamic_pointer_cast<DH::Accessor>(argDet);
+      if (det->items.size() == 0) {
+        ALTACORE_DETAILING_ERROR("no items found in retrieval node argument for attribute");
+      }
+      if (!det->narrowedTo) {
+        acc->narrowTo(det, 0);
+        // TODO: warn about retrieval being automatically narrowed
+      }
+      info->attributeArguments.emplace_back(det->narrowedTo);
     } else {
       throw std::runtime_error("welp.");
     }

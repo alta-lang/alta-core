@@ -28,6 +28,7 @@ namespace AltaCore {
         std::vector<std::shared_ptr<ScopeItem>> items;
         size_t relativeID = 0;
         size_t nextChildID = 0;
+        size_t nextItemID = 0;
         bool noRuntime = false;
         bool isLoopScope = false;
 
@@ -53,6 +54,9 @@ namespace AltaCore {
 
         std::weak_ptr<Scope> findTry();
         void addPossibleError(std::shared_ptr<Type> errorType);
+
+        bool contains(std::shared_ptr<ScopeItem> item);
+        std::shared_ptr<DET::Function> findParentLambda();
     };
   };
 };

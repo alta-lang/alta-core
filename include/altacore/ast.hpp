@@ -63,5 +63,6 @@
 #include "ast/nullptr-expression.hpp"
 #include "ast/code-literal-node.hpp"
 #include "ast/bitfield-definition-node.hpp"
+#include "ast/lambda-expression.hpp"
 
 #endif // ALTACORE_AST_HPP

@@ -46,6 +46,19 @@ void AltaCore::registerGlobalAttributes() {
       throw std::runtime_error("noruntime attribute applied to an invalid node");
     }
   AC_END_ATTRIBUTE;
+
+  AC_ATTRIBUTE(LambdaExpression, "copy");
+    for (auto& arg: args) {
+      if (!arg.isScopeItem) {
+        throw std::runtime_error("invalid argument for lambda expression @copy attribute");
+      }
+      if (auto var = std::dynamic_pointer_cast<DET::Variable>(arg.item)) {
+        info->toCopy.push_back(var);
+      } else {
+        throw std::runtime_error("non-variable argument provided to lambda expression @copy attribute");
+      }
+    }
+  AC_END_ATTRIBUTE;
 };
 
 #undef AC_END_ATTRIBUTE

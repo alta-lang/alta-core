@@ -36,6 +36,7 @@ namespace AltaCore {
         bool isMethod = false;
         bool isAccessor = false;
         bool throws = false;
+        bool isRawFunction = true;
         std::shared_ptr<Class> methodParent = nullptr;
         NativeType nativeTypeName = NativeType::Void;
         std::string userDefinedName;
@@ -110,7 +111,7 @@ namespace AltaCore {
           isAny(true)
           {};
         Type(NativeType nativeTypeName, std::vector<uint8_t> modifiers = {}, std::string userDefinedName = "");
-        Type(std::shared_ptr<Type> returnType, std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters, std::vector<uint8_t> modifiers = {});
+        Type(std::shared_ptr<Type> returnType, std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters, std::vector<uint8_t> modifiers = {}, bool isRawFunction = true);
         Type(std::shared_ptr<Class> klass, std::vector<uint8_t> modifiers = {});
         Type(std::vector<std::shared_ptr<Type>> unionOf, std::vector<uint8_t> modifiers = {});
         Type(bool _isOptional, std::shared_ptr<Type> _optionalTarget, std::vector<uint8_t> _modifiers = {}):

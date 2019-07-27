@@ -17,6 +17,7 @@ namespace AltaCore {
 
         bool isAny = false;
         bool isFunction = false;
+        bool isLambda = false;
         std::shared_ptr<Type> returnType = nullptr;
         std::vector<std::tuple<std::shared_ptr<Type>, bool, std::string>> parameters;
         std::string name;
