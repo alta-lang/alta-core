@@ -1447,7 +1447,7 @@ namespace AltaCore {
         } else if (rule == RuleType::Assignment) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
-            ACP_RULE(VerbalConditionalExpression);
+            ACP_RULE(PunctualConditonalExpression);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
 
@@ -2022,66 +2022,6 @@ namespace AltaCore {
             intern->finalResult = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
 
             ACP_NODE(intern);
-          }
-        } else if (rule == RuleType::VerbalConditionalExpression) {
-          if (state.internalIndex == 0) {
-            state.internalIndex = 1;
-            ACP_RULE(PunctualConditonalExpression);
-          } else if (state.internalIndex == 1) {
-            if (!exps.back()) ACP_NOT_OK;
-
-            auto stateCache = currentState;
-            if (!expectKeyword("if")) ACP_EXP(exps.back().item);
-
-            auto cond = std::make_shared<AST::ConditionalExpression>();
-            cond->primaryResult = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
-
-            ruleNode = std::move(cond);
-            saveSpecificState(stateCache);
-            state.internalIndex = 2;
-
-            ACP_RULE(Expression);
-          } else if (state.internalIndex == 2) {
-            auto ruleState = std::dynamic_pointer_cast<AST::ConditionalExpression>(ruleNode);
-
-            if (!exps.back()) {
-              restoreState();
-              ACP_NODE(ruleState->primaryResult);
-            }
-
-            if (!expectKeyword("else")) {
-              restoreState();
-              ACP_NODE(ruleState->primaryResult);
-            }
-
-            ruleState->test = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
-
-            state.internalIndex = 3;
-            ACP_RULE(PunctualConditonalExpression);
-          } else if (state.internalIndex == 3) {
-            auto ruleState = std::dynamic_pointer_cast<AST::ConditionalExpression>(ruleNode);
-
-            if (!exps.back()) {
-              restoreState();
-              ACP_NODE(ruleState->primaryResult);
-            }
-
-            ruleState->secondaryResult = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
-
-            auto stateCache = currentState;
-            if (expectKeyword("if")) {
-              auto newCond = std::make_shared<AST::ConditionalExpression>();
-              newCond->primaryResult = ruleState;
-
-              state.internalValue = true;
-              ruleNode = newCond;
-              saveSpecificState(stateCache);
-              state.internalIndex = 2;
-
-              ACP_RULE(Expression);
-            }
-
-            ACP_NODE(ruleState);
           }
         } else if (rule == RuleType::PunctualConditonalExpression) {
           if (state.internalIndex == 0) {

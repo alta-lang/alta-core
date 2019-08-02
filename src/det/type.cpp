@@ -478,7 +478,7 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
   } else if (isNative) {
     if (nativeTypeName != other.nativeTypeName) return false;
     if (userDefinedName != other.userDefinedName) return false;
-  } else if (!isUnion()) {
+  } else if (!isUnion() && !isOptional) {
     if (klass->id != other.klass->id) return false;
   }
 

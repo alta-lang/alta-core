@@ -147,6 +147,28 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
 
 void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::ScopeItem> item) {
   if (item->nodeType() == NodeType::Namespace) return;
+  if (item->nodeType() == NodeType::Type) {
+    auto type = std::dynamic_pointer_cast<DET::Type>(item);
+    if (type->name.empty()) {
+      if (type->isFunction) {
+        for (auto& param: type->parameters) {
+          hoist(std::get<1>(param));
+        }
+        hoist(type->returnType);
+      } else if (type->isUnion()) {
+        for (auto& member: type->unionOf) {
+          hoist(member);
+        }
+      } else if (type->isOptional) {
+        hoist(type->optionalTarget);
+      } else {
+        if (type->klass) {
+          hoist(type->klass);
+        }
+        return;
+      }
+    }
+  }
   if (auto mod = parentModule.lock()) {
     mod->hoistedItems.push_back(item);
   } else if (auto func = parentFunction.lock()) {
