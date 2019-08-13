@@ -36,11 +36,25 @@ namespace AltaCoreClassHelpers {
               if (specialDet->isCopyConstructor) {
                 info->klass->copyConstructor = specialDet->method;
               }
-            } else {
+              if (specialDet->isCastConstructor) {
+                auto method = DET::Function::create(info->klass->scope, "@from@", {
+                  specialDet->method->parameters[0],
+                }, std::make_shared<DET::Type>(info->klass));
+                method->visibility = specialDet->method->visibility;
+                specialDet->correspondingMethod = method;
+                info->klass->fromCasts.push_back(method);
+              }
+            } else if (special->type == SpecialClassMethod::Destructor) {
               if (info->klass->destructor) {
                 throw AltaCore::Errors::ValidationError("can't have more than one destructor for a class", self->position);
               }
               info->klass->destructor = specialDet->method;
+            } else if (special->type == SpecialClassMethod::From) {
+              info->klass->fromCasts.push_back(specialDet->method);
+            } else if (special->type == SpecialClassMethod::To) {
+              info->klass->toCasts.push_back(specialDet->method);
+            } else {
+              throw AltaCore::Errors::ValidationError("impossible detailing error: unrecognized special method type", self->position);
             }
           }
         }

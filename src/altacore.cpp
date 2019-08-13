@@ -59,6 +59,10 @@ void AltaCore::registerGlobalAttributes() {
       }
     }
   AC_END_ATTRIBUTE;
+
+  AC_ATTRIBUTE(ClassSpecialMethodDefinitionStatement, "from");
+    info->isCastConstructor = true;
+  AC_END_ATTRIBUTE;
 };
 
 #undef AC_END_ATTRIBUTE

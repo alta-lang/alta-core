@@ -10,6 +10,20 @@ ALTACORE_AST_DETAIL_D(CastExpression) {
   ALTACORE_MAKE_DH(CastExpression);
   info->target = target->fullDetail(scope);
   info->type = type->fullDetail(scope);
+
+  info->targetType = DET::Type::getUnderlyingType(info->target.get());
+
+  if (info->targetType->pointerLevel() == 0 && info->targetType->klass) {
+    if (auto to = info->targetType->klass->findToCast(*info->type->type)) {
+      info->toCaster = to;
+    }
+  }
+  if (info->type->type->pointerLevel() == 0 && info->type->type->klass) {
+    if (auto from = info->type->type->klass->findFromCast(*info->targetType)) {
+      info->fromCaster = from;
+    }
+  }
+
   return info;
 };
 

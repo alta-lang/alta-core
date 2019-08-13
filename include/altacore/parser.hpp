@@ -197,6 +197,7 @@ namespace AltaCore {
       CodeLiteral,
       Bitfield,
       Lambda,
+      SpecialFetch,
     };
 
     enum class PrepoRuleType {

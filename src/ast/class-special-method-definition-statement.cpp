@@ -1,5 +1,7 @@
 #include "../../include/altacore/ast/class-special-method-definition-statement.hpp"
 #include "../../include/altacore/util.hpp"
+#include <sstream>
+#include <crossguid/guid.hpp>
 
 const AltaCore::AST::NodeType AltaCore::AST::ClassSpecialMethodDefinitionStatement::nodeType() {
   return NodeType::ClassSpecialMethodDefinitionStatement;
@@ -17,6 +19,10 @@ ALTACORE_AST_DETAIL_NO_BODY_OPT_D(ClassSpecialMethodDefinitionStatement) {
 
 ALTACORE_AST_VALIDATE_D(ClassSpecialMethodDefinitionStatement) {
   ALTACORE_VS_S(ClassSpecialMethodDefinitionStatement);
+
+  if (type == SpecialClassMethod::Constructor && info->isCastConstructor && parameters.size() != 1) {
+    ALTACORE_VALIDATION_ERROR("constructors that can be used for \"from\" casts must have a single parameter");
+  }
 
   if (type == SpecialClassMethod::Destructor && parameters.size() > 0) {
     ALTACORE_VALIDATION_ERROR("destructors can't have parameters");
@@ -45,9 +51,10 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
   }
 
   auto voidType = std::make_shared<DET::Type>(DET::NativeType::Void);
+  auto thisType = std::make_shared<DET::Type>(info->klass);
 
-  if (type == SpecialClassMethod::Constructor) {
-    if (!info->method) {
+  if (!info->method) {
+    if (type == SpecialClassMethod::Constructor) {
       std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> params;
 
       for (auto& param: parameters) {
@@ -59,19 +66,29 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
 
       info->method = DET::Function::create(info->inputScope, "constructor", params, voidType);
       info->method->visibility = visibilityModifier;
-    }
-    if (!noBody && !info->body) {
-      info->body = body->fullDetail(info->method->scope);
-    }
-  } else {
-    if (!info->method) {
+    } else if (type == SpecialClassMethod::Destructor) {
       info->method = DET::Function::create(info->inputScope, "destructor", {}, voidType);
       info->method->isDestructor = true;
       info->method->visibility = visibilityModifier;
+    } else if (type == SpecialClassMethod::From) {
+      info->specialType = specialType->fullDetail(info->inputScope);
+      std::stringstream uuidStream;
+      uuidStream << xg::newGuid();
+      info->method = DET::Function::create(info->inputScope, "@from@", {
+        { "$", info->specialType->type, false, uuidStream.str() },
+      }, thisType);
+      info->method->visibility = visibilityModifier;
+    } else if (type == SpecialClassMethod::To) {
+      info->specialType = specialType->fullDetail(info->inputScope);
+      info->method = DET::Function::create(info->inputScope, "@to@", {}, info->specialType->type);
+      info->method->visibility = visibilityModifier;
+    } else {
+      ALTACORE_DETAILING_ERROR("impossible error encountered: special method type not recognized");
     }
-    if (!noBody && !info->body) {
-      info->body = body->fullDetail(info->method->scope);
-    }
+  }
+
+  if (!noBody && !info->body) {
+    info->body = body->fullDetail(info->method->scope);
   }
 
   if (info->attributes.size() != attributes.size()) {

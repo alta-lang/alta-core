@@ -16,7 +16,7 @@ namespace AltaCore {
     class Scope;
     class Type;
 
-    class Class: public ScopeItem {
+    class Class: public ScopeItem, public std::enable_shared_from_this<Class> {
       public:
         virtual const NodeType nodeType();
         virtual std::shared_ptr<Node> clone();
@@ -39,6 +39,8 @@ namespace AltaCore {
         std::shared_ptr<Function> copyConstructor = nullptr;
         std::vector<std::shared_ptr<Variable>> itemsToDestroy;
         std::vector<std::shared_ptr<Variable>> itemsToCopy;
+        std::vector<std::shared_ptr<Function>> fromCasts;
+        std::vector<std::shared_ptr<Function>> toCasts;
 
         std::vector<std::shared_ptr<Type>> genericArguments;
 
@@ -51,6 +53,9 @@ namespace AltaCore {
 
         bool hasParent(std::shared_ptr<Class> parent) const;
         std::shared_ptr<Class> instantiateGeneric(std::vector<std::shared_ptr<Type>> genericArguments);
+
+        std::shared_ptr<Function> findFromCast(const Type& target);
+        std::shared_ptr<Function> findToCast(const Type& target);
     };
   };
 };

@@ -155,6 +155,10 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> target = nullptr;
       std::shared_ptr<Type> type = nullptr;
+
+      std::shared_ptr<DET::Type> targetType = nullptr;
+      std::shared_ptr<DET::Function> fromCaster = nullptr;
+      std::shared_ptr<DET::Function> toCaster = nullptr;
     };
     class ClassDefinitionNode: public StatementNode {
       ALTACORE_DH_CTOR(ClassDefinitionNode, StatementNode);
@@ -220,11 +224,14 @@ namespace AltaCore {
       std::vector<std::shared_ptr<Parameter>> parameters;
       std::shared_ptr<BlockNode> body = nullptr;
       std::vector<std::shared_ptr<AttributeNode>> attributes;
+      std::shared_ptr<Type> specialType;
 
       std::shared_ptr<DET::Class> klass = nullptr;
       std::shared_ptr<DET::Function> method = nullptr;
+      std::shared_ptr<DET::Function> correspondingMethod = nullptr;
       bool isCopyConstructor = false;
       bool isDefaultCopyConstructor = false;
+      bool isCastConstructor = false;
     };
     class ConditionalExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(ConditionalExpression, ExpressionNode);
@@ -530,6 +537,9 @@ namespace AltaCore {
 
       std::vector<std::shared_ptr<DET::Variable>> toCopy;
       std::vector<std::shared_ptr<DET::Variable>> toReference;
+    };
+    class SpecialFetchExpression: public RetrievalNode {
+      ALTACORE_DH_CTOR(SpecialFetchExpression, RetrievalNode);
     };
 
     #undef ALTACORE_DH_CTOR

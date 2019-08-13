@@ -74,6 +74,7 @@ namespace AltaCore {
       CodeLiteralNode,
       BitfieldDefinitionNode,
       LambdaExpression,
+      SpecialFetchExpression,
     };
 
     static const char* const NodeType_names[] = {
@@ -139,6 +140,7 @@ namespace AltaCore {
       "CodeLiteralNode",
       "BitfieldDefinitionNode",
       "LambdaExpression",
+      "SpecialFetchExpression",
     };
   };
 };

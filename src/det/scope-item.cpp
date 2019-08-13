@@ -35,6 +35,8 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::ScopeItem:
     return fetch->items;
   } else if (auto acc = std::dynamic_pointer_cast<DH::Accessor>(node)) {
     return acc->items;
+  } else if (auto special = std::dynamic_pointer_cast<DH::SpecialFetchExpression>(node)) {
+    return special->items;
   }
 
   return {};

@@ -64,5 +64,6 @@
 #include "ast/code-literal-node.hpp"
 #include "ast/bitfield-definition-node.hpp"
 #include "ast/lambda-expression.hpp"
+#include "ast/special-fetch-expression.hpp"
 
 #endif // ALTACORE_AST_HPP

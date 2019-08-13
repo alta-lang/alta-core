@@ -80,6 +80,7 @@ namespace AltaCore {
       Tilde,
       Caret,
       Pipe,
+      DollarSign,
 
       LAST, // always keep this as last, it counts the number of items in the enum
     };
@@ -145,6 +146,7 @@ namespace AltaCore {
       "~",
       "^",
       "|",
+      "$",
 
       "",
     };
@@ -210,6 +212,7 @@ namespace AltaCore {
       "Tilde",
       "Caret",
       "Pipe",
+      "Dollar sign",
 
       "LAST", // shouldn't be necessary, but just in case ;)
     };

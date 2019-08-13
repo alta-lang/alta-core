@@ -89,6 +89,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/code-literal-node.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/bitfield-definition-node.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/lambda-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/special-fetch-expression.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

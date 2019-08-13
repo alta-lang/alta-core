@@ -12,8 +12,10 @@ namespace AltaCore {
     enum class SpecialClassMethod {
       Constructor,
       Destructor,
+      From,
+      To,
     };
-    
+
     class ClassSpecialMethodDefinitionStatement: public ClassStatementNode, public std::enable_shared_from_this<ClassSpecialMethodDefinitionStatement> {
       public:
         virtual const NodeType nodeType();
@@ -23,6 +25,7 @@ namespace AltaCore {
         SpecialClassMethod type = SpecialClassMethod::Constructor;
         std::vector<std::shared_ptr<Parameter>> parameters;
         std::shared_ptr<BlockNode> body = nullptr;
+        std::shared_ptr<Type> specialType = nullptr;
 
         ClassSpecialMethodDefinitionStatement(Visibility visibilityModifier, SpecialClassMethod type);
 

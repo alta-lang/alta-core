@@ -55,3 +55,23 @@ std::shared_ptr<AltaCore::DET::Class> AltaCore::DET::Class::instantiateGeneric(s
     return nullptr;
   }
 };
+
+std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Class::findFromCast(const Type& target) {
+  for (auto& from: fromCasts) {
+    if (*std::get<1>(from->parameters[0]) == target) return from;
+  }
+  for (auto& from: fromCasts) {
+    if (*std::get<1>(from->parameters[0]) % target) return from;
+  }
+  return nullptr;
+};
+
+std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Class::findToCast(const Type& target) {
+  for (auto& to: toCasts) {
+    if (target == *to->returnType) return to;
+  }
+  for (auto& to: toCasts) {
+    if (target % *to->returnType) return to;
+  }
+  return nullptr;
+};

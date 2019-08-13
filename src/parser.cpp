@@ -2268,21 +2268,34 @@ namespace AltaCore {
               method->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*item.item));
             }
 
+            bool methodLike = true;
+
             auto kind = AST::SpecialClassMethod::Constructor;
             if (expectKeyword("constructor")) {
               kind = AST::SpecialClassMethod::Constructor;
             } else if (expectKeyword("destructor")) {
               kind = AST::SpecialClassMethod::Destructor;
+            } else if (expectKeyword("from")) {
+              methodLike = false;
+              kind = AST::SpecialClassMethod::From;
+            } else if (expectKeyword("to")) {
+              methodLike = false;
+              kind = AST::SpecialClassMethod::To;
             } else {
               ACP_NOT_OK;
             }
 
             method->type = kind;
 
-            if (!expect(TokenType::OpeningParenthesis)) ACP_NOT_OK;
-            
-            state.internalIndex = 3;
-            ACP_RULE(Parameter);
+            if (methodLike) {
+              if (!expect(TokenType::OpeningParenthesis)) ACP_NOT_OK;
+
+              state.internalIndex = 3;
+              ACP_RULE(Parameter);
+            } else {
+              state.internalIndex = 5;
+              ACP_RULE(Type);
+            }
           } else if (state.internalIndex == 3) {
             auto method = std::dynamic_pointer_cast<AST::ClassSpecialMethodDefinitionStatement>(ruleNode);
 
@@ -2298,7 +2311,7 @@ namespace AltaCore {
             state.internalIndex = 4;
             inClass = true;
             ACP_RULE(Block);
-          } else {
+          } else if (state.internalIndex == 4) {
             inClass = false;
             if (!exps.back()) ACP_NOT_OK;
 
@@ -2306,6 +2319,15 @@ namespace AltaCore {
             method->body = std::dynamic_pointer_cast<AST::BlockNode>(*exps.back().item);
 
             ACP_NODE((method));
+          } else if (state.internalIndex == 5) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto method = std::dynamic_pointer_cast<AST::ClassSpecialMethodDefinitionStatement>(ruleNode);
+            method->specialType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+            state.internalIndex = 4;
+            inClass = true;
+            ACP_RULE(Block);
           }
         } else if (rule == RuleType::ClassInstantiation) {
           if (state.internalIndex == 0) {
@@ -2764,12 +2786,14 @@ namespace AltaCore {
                 RuleType::SuperClassFetch,
                 RuleType::StrictAccessor,
                 RuleType::Fetch,
+                RuleType::SpecialFetch,
                 RuleType::GroupedExpression,
               );
             } else {
               ACP_RULE_LIST(
                 RuleType::StrictAccessor,
                 RuleType::Fetch,
+                RuleType::SpecialFetch,
                 RuleType::GroupedExpression,
               );
             }
@@ -3387,6 +3411,12 @@ namespace AltaCore {
             ACP_RULE(NullRule);
           }
           #undef LAMBDA_RESTORE
+        } else if (rule == RuleType::SpecialFetch) {
+          if (!expect(TokenType::DollarSign)) ACP_NOT_OK;
+
+          auto special = std::make_shared<AST::SpecialFetchExpression>();
+
+          ACP_NODE(special);
         }
 
         next();
