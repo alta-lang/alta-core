@@ -13,7 +13,8 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/deps/variant")
 
 include("${PROJECT_SOURCE_DIR}/deps/CMakeLists-semver.c.cmake")
 
-find_package(Boost REQUIRED COMPONENTS filesystem)
+# currently uses Boost 1.70.0
+add_subdirectory("${PROJECT_SOURCE_DIR}/deps/boost-cmake")
 
 add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/lexer.cpp"

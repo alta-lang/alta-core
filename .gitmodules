@@ -16,3 +16,6 @@
 [submodule "deps/variant"]
 	path = deps/variant
 	url = https://github.com/mpark/variant.git
+[submodule "deps/boost-cmake"]
+	path = deps/boost-cmake
+	url = https://github.com/Orphis/boost-cmake.git
