@@ -198,6 +198,7 @@ namespace AltaCore {
       Bitfield,
       Lambda,
       SpecialFetch,
+      OperatorDefinition,
     };
 
     enum class PrepoRuleType {

@@ -29,6 +29,7 @@ namespace AltaCore {
       Character,
       Code,
       PreprocessorSubstitution,
+      SpecialIdentifier,
       // </special-rules>
 
       // <multi-character-rules>
@@ -80,7 +81,6 @@ namespace AltaCore {
       Tilde,
       Caret,
       Pipe,
-      DollarSign,
 
       LAST, // always keep this as last, it counts the number of items in the enum
     };
@@ -89,6 +89,7 @@ namespace AltaCore {
     static const char* const TokenType_simpleCharacters[] = {
       "",
 
+      "",
       "",
       "",
       "",
@@ -146,7 +147,6 @@ namespace AltaCore {
       "~",
       "^",
       "|",
-      "$",
 
       "",
     };
@@ -163,6 +163,7 @@ namespace AltaCore {
       "Character",
       "Code",
       "Preprocessor substitution",
+      "Special identifier",
 
       "Equality",
       "And",

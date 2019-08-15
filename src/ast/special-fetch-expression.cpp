@@ -7,10 +7,10 @@ const AltaCore::AST::NodeType AltaCore::AST::SpecialFetchExpression::nodeType() 
 ALTACORE_AST_DETAIL_D(SpecialFetchExpression) {
   ALTACORE_MAKE_DH(SpecialFetchExpression);
 
-  info->items = info->inputScope->findAll("$", {}, true, info->inputScope);
+  info->items = info->inputScope->findAll(query, {}, true, info->inputScope);
 
   if (info->items.size() < 1) {
-    ALTACORE_DETAILING_ERROR("special fetch used in invalid location (no fetch targets found)");
+    ALTACORE_DETAILING_ERROR("invalid special fetch or special fetch used in invalid location (no fetch targets found)");
   } else if (info->items.size() > 1) {
     ALTACORE_DETAILING_ERROR("impossible special fetch error encountered (multiple fetch targets found)");
   }

@@ -65,5 +65,6 @@
 #include "ast/bitfield-definition-node.hpp"
 #include "ast/lambda-expression.hpp"
 #include "ast/special-fetch-expression.hpp"
+#include "ast/class-operator-definition-statement.hpp"
 
 #endif // ALTACORE_AST_HPP

@@ -233,6 +233,13 @@ namespace AltaCore {
       bool isDefaultCopyConstructor = false;
       bool isCastConstructor = false;
     };
+    class ClassOperatorDefinitionStatement: public ClassStatementNode {
+      ALTACORE_DH_CTOR(ClassOperatorDefinitionStatement, ClassStatementNode);
+
+      std::shared_ptr<BlockNode> block = nullptr;
+      std::shared_ptr<Type> returnType = nullptr;
+      std::shared_ptr<Type> argumentType = nullptr;
+    };
     class ConditionalExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(ConditionalExpression, ExpressionNode);
 

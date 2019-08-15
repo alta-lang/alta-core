@@ -180,6 +180,20 @@ namespace AltaCore {
             return true;
           }
         } break;
+        case TokenType::SpecialIdentifier: {
+          if (first) {
+            return character == '$';
+          }
+
+          if (
+            character == '_' ||
+            (character >= 'a' && character <= 'z') ||
+            (character >= 'A' && character <= 'Z') ||
+            (character >= '0' && character <= '9')
+          ) {
+            return true;
+          }
+        } break;
         default: {
           *contigious = true;
           auto string = TokenType_simpleCharacters[(int)rule];

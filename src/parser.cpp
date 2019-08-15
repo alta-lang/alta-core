@@ -2171,7 +2171,8 @@ namespace AltaCore {
             ACP_RULE_LIST(
               RuleType::ClassMember,
               RuleType::ClassSpecialMethod,
-              RuleType::ClassMethod
+              RuleType::ClassMethod,
+              RuleType::OperatorDefinition
             );
           }
 
@@ -3412,11 +3413,172 @@ namespace AltaCore {
           }
           #undef LAMBDA_RESTORE
         } else if (rule == RuleType::SpecialFetch) {
-          if (!expect(TokenType::DollarSign)) ACP_NOT_OK;
+          auto id = expect(TokenType::SpecialIdentifier);
+          if (!id) ACP_NOT_OK;
 
           auto special = std::make_shared<AST::SpecialFetchExpression>();
+          special->query = id.raw;
 
           ACP_NODE(special);
+        } else if (rule == RuleType::OperatorDefinition) {
+          if (state.internalIndex == 0) {
+            state.internalIndex = 1;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 1) {
+            if (exps.back()) ACP_RULE(Attribute);
+
+            exps.pop_back();
+
+            auto visibilityMod = expectModifier(ModifierTargetType::ClassStatement);
+            if (!visibilityMod) ACP_NOT_OK;
+
+            ruleNode = std::make_shared<AST::ClassOperatorDefinitionStatement>(AST::parseVisibility(*visibilityMod));
+
+            // optional, but make sure we expect a closing parenthesis later
+            state.internalValue = !!expect(TokenType::OpeningParenthesis);
+
+            state.internalIndex = 2;
+            ACP_RULE(NullRule);
+          } else if (state.internalIndex == 2) {
+            using COT = AST::ClassOperatorType;
+            using COO = AST::ClassOperatorOrientation;
+            COT type = COT::NONE;
+            COO orient = COO::Unary;
+            auto op = std::dynamic_pointer_cast<AST::ClassOperatorDefinitionStatement>(ruleNode);
+            if (expect(TokenType::ExclamationMark)) {
+              type = COT::Not;
+            } else if (expect(TokenType::Asterisk)) {
+              type = COT::Dereference;
+            } else if (expect(TokenType::Ampersand)) {
+              type = COT::Reference;
+            } else if (expectKeyword("this")) {
+              if (expect(TokenType::OpeningSquareBracket)) {
+                state.internalIndex = 10;
+                op->orientation = COO::Unary;
+                ACP_RULE(Type);
+              } else {
+                op->orientation = COO::Left;
+                state.internalIndex = 6;
+                ACP_RULE(NullRule);
+              }
+            } else {
+              op->orientation = COO::Right;
+              state.internalIndex = 8;
+              ACP_RULE(Type);
+            }
+
+            op->type = type;
+            op->orientation = orient;
+
+            // if we got here, it means it's an unary operator and we need `this`
+            if (!expectKeyword("this")) ACP_NOT_OK;
+            state.internalIndex = 3;
+            ACP_RULE(NullRule);
+          } else if (state.internalIndex == 3) {
+            if (ALTACORE_ANY_CAST<bool>(state.internalValue)) {
+              if (!expect(TokenType::ClosingParenthesis)) ACP_NOT_OK;
+            }
+
+            if (!expect(TokenType::Colon)) ACP_NOT_OK;
+            state.internalIndex = 4;
+            ACP_RULE(Type);
+          } else if (state.internalIndex == 4) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto op = std::dynamic_pointer_cast<AST::ClassOperatorDefinitionStatement>(ruleNode);
+
+            op->returnType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+            state.internalIndex = 5;
+            ACP_RULE(Block);
+          } else if (state.internalIndex == 5) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto op = std::dynamic_pointer_cast<AST::ClassOperatorDefinitionStatement>(ruleNode);
+
+            op->block = std::dynamic_pointer_cast<AST::BlockNode>(*exps.back().item);
+
+            ACP_NODE(op);
+          } else if (state.internalIndex == 6 || state.internalIndex == 7) {
+            using COT = AST::ClassOperatorType;
+            COT type = COT::NONE;
+            saveState();
+            if (expect(TokenType::PlusSign)) {
+              type = COT::Addition;
+            } else if (expect(TokenType::MinusSign)) {
+              type = COT::Subtraction;
+            } else if (expect(TokenType::Asterisk)) {
+              type = COT::Multiplication;
+            } else if (expect(TokenType::ForwardSlash)) {
+              type = COT::Division;
+            } else if (expect(TokenType::Caret)) {
+              type = COT::Xor;
+            } else if (expect(TokenType::LeftShift)) {
+              type = COT::LeftShift;
+            } else if (expect(TokenType::ClosingAngleBracket)) {
+              if (expect(TokenType::ClosingAngleBracket)) {
+                type = COT::RightShift;
+              } else {
+                type = COT::GreaterThan;
+              }
+            } else if (expect(TokenType::Ampersand)) {
+              type = COT::BitAnd;
+            } else if (expect(TokenType::Pipe)) {
+              type = COT::BitOr;
+            } else if (expect(TokenType::Or)) {
+              type = COT::Or;
+            } else if (expect(TokenType::And)) {
+              type = COT::And;
+            } else if (expect(TokenType::Equality)) {
+              type = COT::Equality;
+            } else if (expect(TokenType::Inequality)) {
+              type = COT::Inequality;
+            } else if (expect(TokenType::OpeningAngleBracket)) {
+              type = COT::LessThan;
+            } else if (expect(TokenType::LessThanOrEqualTo)) {
+              type = COT::LessThanOrEqualTo;
+            } else if (expect(TokenType::GreaterThanOrEqualTo)) {
+              type = COT::GreaterThanOrEqualTo;
+            } else if (expect(TokenType::Tilde)) {
+              type = COT::BitNot;
+            }
+
+            if (type == COT::NONE) ACP_NOT_OK;
+
+            auto op = std::dynamic_pointer_cast<AST::ClassOperatorDefinitionStatement>(ruleNode);
+
+            op->type = type;
+
+            if (state.internalIndex == 6) {
+              state.internalIndex = 9;
+              ACP_RULE(Type);
+            } else {
+              if (!expectKeyword("this")) ACP_NOT_OK;
+              state.internalIndex = 3;
+              ACP_RULE(NullRule);
+            }
+          } else if (state.internalIndex == 8 || state.internalIndex == 9) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto op = std::dynamic_pointer_cast<AST::ClassOperatorDefinitionStatement>(ruleNode);
+
+            op->argumentType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+            if (state.internalIndex == 8) {
+              state.internalIndex = 7;
+              ACP_RULE(NullRule);
+            } else {
+              state.internalIndex = 3;
+              ACP_RULE(NullRule);
+            }
+          } else if (state.internalIndex == 10) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            if (!expect(TokenType::ClosingSquareBracket)) ACP_NOT_OK;
+
+            state.internalIndex = 3;
+            ACP_RULE(NullRule);
+          }
         }
 
         next();
