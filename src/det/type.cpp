@@ -52,6 +52,9 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto boolean = dynamic_cast<DH::BooleanLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (auto binOp = dynamic_cast<DH::BinaryOperation*>(expression)) {
+    if (binOp->operatorMethod) {
+      return binOp->operatorMethod->returnType;
+    }
     if ((uint8_t)binOp->type <= (uint8_t)Shared::OperatorType::BitwiseXor) {
       return getUnderlyingType(binOp->left.get())->destroyReferences();
     } else {
@@ -106,6 +109,9 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto instOf = dynamic_cast<DH::InstanceofExpression*>(expression)) {
     return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (auto unary = dynamic_cast<DH::UnaryOperation*>(expression)) {
+    if (unary->operatorMethod) {
+      return unary->operatorMethod->returnType;
+    }
     if (unary->type == Shared::UOperatorType::Not) {
       return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
     } else {
@@ -1157,7 +1163,7 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) const
     }
   }
   if (pointerLevel() == 0 && klass) {
-    if (auto from = klass->findFromCast(*this)) {
+    if (auto from = klass->findFromCast(other)) {
       return 2;
     }
   }

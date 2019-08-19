@@ -3451,6 +3451,8 @@ namespace AltaCore {
               type = COT::Dereference;
             } else if (expect(TokenType::Ampersand)) {
               type = COT::Reference;
+            } else if (expect(TokenType::Tilde)) {
+              type = COT::BitNot;
             } else if (expectKeyword("this")) {
               if (expect(TokenType::OpeningSquareBracket)) {
                 state.internalIndex = 10;
@@ -3539,8 +3541,6 @@ namespace AltaCore {
               type = COT::LessThanOrEqualTo;
             } else if (expect(TokenType::GreaterThanOrEqualTo)) {
               type = COT::GreaterThanOrEqualTo;
-            } else if (expect(TokenType::Tilde)) {
-              type = COT::BitNot;
             }
 
             if (type == COT::NONE) ACP_NOT_OK;

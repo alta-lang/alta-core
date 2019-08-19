@@ -41,6 +41,7 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Variable>> itemsToCopy;
         std::vector<std::shared_ptr<Function>> fromCasts;
         std::vector<std::shared_ptr<Function>> toCasts;
+        std::vector<std::shared_ptr<Function>> operators;
 
         std::vector<std::shared_ptr<Type>> genericArguments;
 

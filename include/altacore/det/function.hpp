@@ -37,6 +37,9 @@ namespace AltaCore {
         bool isAccessor = false;
         bool isDestructor = false;
         bool isLambda = false;
+        bool isOperator = false;
+        Shared::ClassOperatorType operatorType = Shared::ClassOperatorType::NONE;
+        Shared::ClassOperatorOrientation orientation = Shared::ClassOperatorOrientation::Unary;
 
         // only used for lambdas
         std::vector<std::shared_ptr<Variable>> referencedVariables;

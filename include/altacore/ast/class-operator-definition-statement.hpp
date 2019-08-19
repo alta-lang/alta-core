@@ -7,39 +7,10 @@
 
 namespace AltaCore {
   namespace AST {
-    enum class ClassOperatorType {
-      NONE,
-      Not,
-      Dereference,
-      Reference,
-      Addition,
-      Subtraction,
-      Multiplication,
-      Division,
-      Xor,
-      LeftShift,
-      RightShift,
-      BitAnd,
-      BitOr,
-      BitNot,
-      And,
-      Or,
-      Equality,
-      Inequality,
-      LessThan,
-      GreaterThan,
-      LessThanOrEqualTo,
-      GreaterThanOrEqualTo,
-      Index,
-    };
-    enum class ClassOperatorOrientation {
-      // indicates the operator takes a single argument
-      Unary,
-      // indicates the operator's `this` argument is on the left of the symbol
-      Left,
-      // indicates the operator's `this` argument is on the right of the symbol
-      Right,
-    };
+    using Shared::ClassOperatorType;
+    using Shared::ClassOperatorOrientation;
+    using Shared::ClassOperatorType_names;
+    using Shared::ClassOperatorOrientation_names;
 
     class ClassOperatorDefinitionStatement: public ClassStatementNode {
       public:

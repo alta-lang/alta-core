@@ -19,6 +19,67 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
   info->left = left->fullDetail(scope);
   info->right = right->fullDetail(scope);
   info->type = type;
+  info->leftType = DET::Type::getUnderlyingType(info->left.get());
+  info->rightType = DET::Type::getUnderlyingType(info->right.get());
+  info->commonType = Shared::convertOperatorTypeRTC(info->type);
+
+  if (info->leftType->klass) {
+    size_t highestCompat = 0;
+    size_t compatIdx = SIZE_MAX;
+    for (size_t i = 0; i < info->leftType->klass->operators.size(); ++i) {
+      auto& op = info->leftType->klass->operators[i];
+      if (op->operatorType != info->commonType) continue;
+      if (op->orientation != Shared::ClassOperatorOrientation::Left) continue;
+      auto compat = op->parameterVariables.front()->type->compatiblity(*info->rightType);
+      if (compat > highestCompat) {
+        highestCompat = compat;
+        compatIdx = i;
+      }
+    }
+    if (highestCompat != 0) {
+      info->operatorMethod = info->leftType->klass->operators[compatIdx];
+    }
+  }
+
+  if (info->operatorMethod == nullptr && info->rightType->klass) {
+    size_t highestCompat = 0;
+    size_t compatIdx = SIZE_MAX;
+    for (size_t i = 0; i < info->rightType->klass->operators.size(); ++i) {
+      auto& op = info->rightType->klass->operators[i];
+      if (op->operatorType != info->commonType) continue;
+      if (op->orientation != Shared::ClassOperatorOrientation::Right) continue;
+      auto compat = op->parameterVariables.front()->type->compatiblity(*info->leftType);
+      if (compat > highestCompat) {
+        highestCompat = compat;
+        compatIdx = i;
+      }
+    }
+    if (highestCompat != 0) {
+      info->operatorMethod = info->rightType->klass->operators[compatIdx];
+    }
+  }
+
+  if (info->operatorMethod == nullptr) {
+    // try to find a common type for both types
+    // for now, just use a very algorithmically-dumb method
+    // of finding the first castable type (first try left, then try right)
+    //
+    // in the future, this should be modified to have specific checks
+    // for widening operations (such as int + double = double) and the code
+    // should be moved to its own (probably static) method in AltaCore::DET::Type
+    auto rightToLeft = DET::Type::findCast(info->rightType, info->leftType);
+    if (rightToLeft.size() > 0) {
+      info->commonOperandType = info->leftType;
+    } else {
+      auto leftToRight = DET::Type::findCast(info->leftType, info->rightType);
+      if (leftToRight.size() > 0) {
+        info->commonOperandType = info->rightType;
+      } else {
+        ALTACORE_DETAILING_ERROR("binary operation performed on incompatible types");
+      }
+    }
+  }
+
   return info;
 };
 
