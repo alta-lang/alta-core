@@ -1065,6 +1065,23 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     AC_TO_LOOP_END;
 
     AC_TO_LOOP;
+      if (
+        from->referenceLevel() == 0 &&
+        to->referenceLevel() == 0 &&
+        from->pointerLevel() == 0 &&
+        to->pointerLevel() > 0 &&
+        from->isNative &&
+        (
+          from->nativeTypeName == NT::Integer ||
+          from->nativeTypeName == NT::Byte
+        )
+      ) {
+        AC_RETURN_INDEX;
+        return { CC(CCT::SimpleCoercion, to), CC(CCT::Destination) };
+      }
+    AC_TO_LOOP_END;
+
+    AC_TO_LOOP;
       if (from->referenceLevel() == 0 && from->pointerLevel() > 0 && to->indirectionLevel() == 0 && to->isNative && to->nativeTypeName == NT::Bool) {
         AC_RETURN_INDEX;
         return { CC(CCT::Destination, SCT::TestPointer) };
