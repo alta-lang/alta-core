@@ -97,6 +97,8 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
         }
       }
     }
+  } else {
+    info->inputScope->hoist(info->operatorMethod);
   }
 
   return info;

@@ -262,11 +262,11 @@ void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<DH::Accessor> info, std::
     }
   }
   if (info->narrowedTo) {
-    if (auto parentScope = info->narrowedTo->parentScope.lock()) {
-      if (auto parentModule = parentScope->parentModule.lock()) {
+    //if (auto parentScope = info->narrowedTo->parentScope.lock()) {
+      //if (auto parentModule = parentScope->parentModule.lock()) {
         info->inputScope->hoist(info->narrowedTo);
-      }
-    }
+      //}
+    //}
   }
 };
 void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<DH::Accessor> info, size_t i) {
@@ -276,11 +276,11 @@ void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<DH::Accessor> info, size_
   info->narrowedTo = info->items[i];
   info->narrowedToIndex = i;
   if (info->narrowedTo) {
-    if (auto parentScope = info->narrowedTo->parentScope.lock()) {
-      if (auto parentModule = parentScope->parentModule.lock()) {
+    //if (auto parentScope = info->narrowedTo->parentScope.lock()) {
+      //if (auto parentModule = parentScope->parentModule.lock()) {
         info->inputScope->hoist(info->narrowedTo);
-      }
-    }
+      //}
+    //}
   }
 };
 void AltaCore::AST::Accessor::widen(std::shared_ptr<DH::Accessor> info) {

@@ -28,6 +28,10 @@ ALTACORE_AST_DETAIL_D(UnaryOperation) {
     }
   }
 
+  if (info->operatorMethod) {
+    info->inputScope->hoist(info->operatorMethod);
+  }
+
   return info;
 };
 

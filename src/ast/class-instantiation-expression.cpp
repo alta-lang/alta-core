@@ -61,6 +61,7 @@ ALTACORE_AST_DETAIL_D(ClassInstantiationExpression) {
     info->constructor = info->klass->constructors[indexMap[index]];
     info->adjustedArguments = adjArgs;
     info->argumentMap = argMap;
+    info->inputScope->hoist(info->constructor);
   } else {
     ALTACORE_DETAILING_ERROR("unable to find suitable constructor");
   }
