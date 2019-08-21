@@ -524,7 +524,9 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
   std::function<CastPath(std::vector<std::shared_ptr<Type>>, std::shared_ptr<Type>, size_t*)> reverseLoop = nullptr;
   std::function<CastPath(std::shared_ptr<Type>, std::vector<std::shared_ptr<Type>>, size_t*)> loop = nullptr;
 
-  reverseLoop = [&loop, &reverseLoop, &manual](std::vector<std::shared_ptr<Type>> froms, std::shared_ptr<Type> to, size_t* index) -> CastPath {
+  bool dontReverseLoopBack = false;
+
+  reverseLoop = [&loop, &reverseLoop, &manual, &dontReverseLoopBack](std::vector<std::shared_ptr<Type>> froms, std::shared_ptr<Type> to, size_t* index) -> CastPath {
     #define AC_FROM_LOOP for (size_t i = 0; i < froms.size(); ++i) { auto& from = froms[i];
     #define AC_FROM_LOOP_END }
     #define AC_RETURN_INDEX if (index) { *index = i; }
@@ -750,7 +752,8 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     AC_FROM_LOOP_END;
 
     AC_FROM_LOOP;
-      if (from->referenceLevel() > 0) {
+      if (!dontReverseLoopBack && from->referenceLevel() > 0) {
+        dontReverseLoopBack = true;
         auto other = from->dereference();
         while (other->referenceLevel() >= 0) {
           auto cast = loop(other, { to }, index);
@@ -759,6 +762,7 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
               cast.insert(cast.begin(), CC(CCT::Dereference));
             }
             AC_RETURN_INDEX;
+            dontReverseLoopBack = false;
             return cast;
           }
           if (other->referenceLevel() == 0) break;
@@ -767,15 +771,19 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     AC_FROM_LOOP_END;
 
     AC_FROM_LOOP;
-      if (from->referenceLevel() < to->referenceLevel()) {
+      if (!dontReverseLoopBack && from->referenceLevel() < to->referenceLevel()) {
+        dontReverseLoopBack = true;
         auto cast = loop(from->reference(), { to }, index);
         if (cast.size() > 0) {
           cast.insert(cast.begin(), CC(CCT::Reference));
           AC_RETURN_INDEX;
+          dontReverseLoopBack = false;
           return cast;
         }
       };
     AC_FROM_LOOP_END;
+
+    dontReverseLoopBack = false;
 
     if (index) *index = SIZE_MAX;
     return {};
@@ -785,7 +793,9 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     #undef AC_RETURN_INDEX
   };
 
-  loop = [&loop, &reverseLoop, &manual](std::shared_ptr<Type> from, std::vector<std::shared_ptr<Type>> tos, size_t* index) -> CastPath {
+  bool dontLoopBack = false;
+
+  loop = [&loop, &reverseLoop, &manual, &dontLoopBack](std::shared_ptr<Type> from, std::vector<std::shared_ptr<Type>> tos, size_t* index) -> CastPath {
     if (manual && from->isUnion() && tos.size() == 1 && !tos.front()->isUnion() && from->indirectionLevel() == 0) {
       size_t idx = 0;
       auto cast = reverseLoop(from->unionOf, tos.front(), &idx);
@@ -1088,7 +1098,8 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
       }
     AC_TO_LOOP_END;
 
-    if (from->referenceLevel() > 0) {
+    if (!dontLoopBack && from->referenceLevel() > 0) {
+      dontLoopBack = true;
       auto other = from->dereference();
       while (other->referenceLevel() >= 0) {
         auto cast = loop(other, tos, index);
@@ -1109,13 +1120,17 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
       }
     AC_TO_LOOP_END;
 
-    if (from->referenceLevel() < maxToRefLevel) {
+    if (!dontLoopBack && from->referenceLevel() < maxToRefLevel) {
+      dontLoopBack = true;
       auto cast = loop(from->reference(), tos, index);
       if (cast.size() > 0) {
         cast.insert(cast.begin(), CC(CCT::Reference));
+        dontLoopBack = false;
         return cast;
       }
     };
+
+    dontLoopBack = false;
 
     AC_TO_LOOP;
       if (to->isAny) {
