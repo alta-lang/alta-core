@@ -1294,7 +1294,7 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other, b
 
   if (!strict) {
     if (other.pointerLevel() == 0 && other.klass && other.klass->findToCast(*this)) return true;
-    if (pointerLevel() == 0 && klass && klass->findFromCast(*this)) return true;
+    if (pointerLevel() == 0 && klass && klass->findFromCast(other)) return true;
   }
 
   if (isOptional && other.isAny && other.pointerLevel() == 1) return true;
@@ -1419,7 +1419,7 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) con
   if (isExactlyCompatibleWith(other)) return true;
 
   if (other.pointerLevel() == 0 && other.klass && other.klass->findToCast(*this)) return true;
-  if (pointerLevel() == 0 && klass && klass->findFromCast(*this)) return true;
+  if (pointerLevel() == 0 && klass && klass->findFromCast(other)) return true;
 
   // integers can be converted to pointers
   if (other.isNative && other.pointerLevel() < 1 && pointerLevel() > 0) return true;

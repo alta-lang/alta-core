@@ -1496,7 +1496,7 @@ namespace AltaCore {
               type = AT::BitwiseAnd;
             } else if (expect(TokenType::BitwiseOrEquals)) {
               type = AT::BitwiseOr;
-            } else if (expect(TokenType::BitwiseAndEquals)) {
+            } else if (expect(TokenType::BitwiseXorEquals)) {
               type = AT::BitwiseXor;
             } else {
               restoreState();

@@ -23,21 +23,7 @@ ALTACORE_AST_DETAIL_D(AssignmentExpression) {
   info->commonType = Shared::convertOperatorTypeRTC(info->type);
 
   if (info->targetType->klass && info->targetType->pointerLevel() < 1) {
-    size_t highestCompat = 0;
-    size_t compatIdx = SIZE_MAX;
-    for (size_t i = 0; i < info->targetType->klass->operators.size(); ++i) {
-      auto& op = info->targetType->klass->operators[i];
-      if (op->operatorType != info->commonType) continue;
-      if (op->orientation != Shared::ClassOperatorOrientation::Left) continue;
-      auto compat = op->parameterVariables.front()->type->compatiblity(*info->valueType);
-      if (compat > highestCompat) {
-        highestCompat = compat;
-        compatIdx = i;
-      }
-    }
-    if (highestCompat != 0) {
-      info->operatorMethod = info->targetType->klass->operators[compatIdx];
-    }
+    info->operatorMethod = info->targetType->klass->findOperator(info->commonType, Shared::ClassOperatorOrientation::Left, info->valueType);
   }
 
   if (info->operatorMethod) {

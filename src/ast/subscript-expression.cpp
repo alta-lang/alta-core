@@ -25,21 +25,7 @@ ALTACORE_AST_DETAIL_D(SubscriptExpression) {
   info->indexType = DET::Type::getUnderlyingType(info->index.get());
 
   if (info->targetType->klass && info->targetType->pointerLevel() < 1) {
-    size_t highestCompat = 0;
-    size_t compatIdx = SIZE_MAX;
-    for (size_t i = 0; i < info->targetType->klass->operators.size(); ++i) {
-      auto& op = info->targetType->klass->operators[i];
-      if (op->operatorType != Shared::ClassOperatorType::Index) continue;
-      if (op->orientation != Shared::ClassOperatorOrientation::Unary) continue;
-      auto compat = op->parameterVariables.front()->type->compatiblity(*info->indexType);
-      if (compat > highestCompat) {
-        highestCompat = compat;
-        compatIdx = i;
-      }
-    }
-    if (highestCompat != 0) {
-      info->operatorMethod = info->targetType->klass->operators[compatIdx];
-    }
+    info->operatorMethod = info->targetType->klass->findOperator(Shared::ClassOperatorType::Index, Shared::ClassOperatorOrientation::Unary, info->indexType);
   }
 
   if (info->operatorMethod) {

@@ -24,39 +24,11 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
   info->commonType = Shared::convertOperatorTypeRTC(info->type);
 
   if (info->leftType->klass && info->leftType->pointerLevel() < 1) {
-    size_t highestCompat = 0;
-    size_t compatIdx = SIZE_MAX;
-    for (size_t i = 0; i < info->leftType->klass->operators.size(); ++i) {
-      auto& op = info->leftType->klass->operators[i];
-      if (op->operatorType != info->commonType) continue;
-      if (op->orientation != Shared::ClassOperatorOrientation::Left) continue;
-      auto compat = op->parameterVariables.front()->type->compatiblity(*info->rightType);
-      if (compat > highestCompat) {
-        highestCompat = compat;
-        compatIdx = i;
-      }
-    }
-    if (highestCompat != 0) {
-      info->operatorMethod = info->leftType->klass->operators[compatIdx];
-    }
+    info->operatorMethod = info->leftType->klass->findOperator(info->commonType, Shared::ClassOperatorOrientation::Left, info->rightType);
   }
 
   if (info->operatorMethod == nullptr && info->rightType->klass && info->rightType->pointerLevel() < 1) {
-    size_t highestCompat = 0;
-    size_t compatIdx = SIZE_MAX;
-    for (size_t i = 0; i < info->rightType->klass->operators.size(); ++i) {
-      auto& op = info->rightType->klass->operators[i];
-      if (op->operatorType != info->commonType) continue;
-      if (op->orientation != Shared::ClassOperatorOrientation::Right) continue;
-      auto compat = op->parameterVariables.front()->type->compatiblity(*info->leftType);
-      if (compat > highestCompat) {
-        highestCompat = compat;
-        compatIdx = i;
-      }
-    }
-    if (highestCompat != 0) {
-      info->operatorMethod = info->rightType->klass->operators[compatIdx];
-    }
+    info->operatorMethod = info->rightType->klass->findOperator(info->commonType, Shared::ClassOperatorOrientation::Right, info->leftType);
   }
 
   if (info->operatorMethod == nullptr) {

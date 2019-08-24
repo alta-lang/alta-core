@@ -20,12 +20,7 @@ ALTACORE_AST_DETAIL_D(UnaryOperation) {
   info->commonType = Shared::convertOperatorTypeRTC(info->type);
 
   if (info->targetType->klass && info->targetType->pointerLevel() < 1) {
-    for (auto& op: info->targetType->klass->operators) {
-      if (op->operatorType != info->commonType) continue;
-      if (op->orientation != Shared::ClassOperatorOrientation::Unary) continue;
-      info->operatorMethod = op;
-      break;
-    }
+    info->operatorMethod = info->targetType->klass->findOperator(info->commonType, Shared::ClassOperatorOrientation::Unary);
   }
 
   if (info->operatorMethod) {
