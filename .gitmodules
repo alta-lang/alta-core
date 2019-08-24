@@ -9,7 +9,7 @@
 	url = https://github.com/TartanLlama/optional.git
 [submodule "deps/crossguid"]
 	path = deps/crossguid
-	url = https://github.com/StandardCyborg/crossguid
+	url = https://github.com/alta-lang/crossguid.git
 [submodule "deps/any"]
 	path = deps/any
 	url = https://github.com/thelink2012/any
