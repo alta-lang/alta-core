@@ -75,3 +75,32 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Class::findToCast(const 
   }
   return nullptr;
 };
+
+std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Class::findOperator(const Shared::ClassOperatorType type, const Shared::ClassOperatorOrientation orient, std::shared_ptr<Type> argType) const {
+  size_t highestCompat = 0;
+  size_t compatIdx = SIZE_MAX;
+  for (size_t i = 0; i < operators.size(); ++i) {
+    auto& op = operators[i];
+    if (op->operatorType != type) continue;
+    if (op->orientation != orient) continue;
+    if (argType) {
+      auto compat = op->parameterVariables.front()->type->compatiblity(*argType);
+      if (compat > highestCompat) {
+        highestCompat = compat;
+        compatIdx = i;
+      }
+    } else {
+      highestCompat = SIZE_MAX;
+      compatIdx = i;
+      break;
+    }
+  }
+  if (highestCompat != 0) {
+    return operators[compatIdx];
+  }
+  for (auto& parent: parents) {
+    auto func = parent->findOperator(type, orient, argType);
+    if (func) return func;
+  }
+  return nullptr;
+};

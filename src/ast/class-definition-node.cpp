@@ -56,6 +56,10 @@ namespace AltaCoreClassHelpers {
             } else {
               throw AltaCore::Errors::ValidationError("impossible detailing error: unrecognized special method type", self->position);
             }
+          } else if (stmt->nodeType() == NodeType::ClassOperatorDefinitionStatement) {
+            auto op = std::dynamic_pointer_cast<ClassOperatorDefinitionStatement>(stmt);
+            auto opDet = std::dynamic_pointer_cast<DH::ClassOperatorDefinitionStatement>(det);
+            info->klass->operators.push_back(opDet->method);
           }
         }
       } else {

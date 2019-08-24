@@ -111,6 +111,11 @@ namespace AltaCore {
       std::shared_ptr<ExpressionNode> target = nullptr;
       std::shared_ptr<ExpressionNode> value = nullptr;
       Shared::AssignmentType type = Shared::AssignmentType::Simple;
+      Shared::ClassOperatorType commonType = Shared::ClassOperatorType::NONE;
+
+      std::shared_ptr<DET::Type> targetType = nullptr;
+      std::shared_ptr<DET::Type> valueType = nullptr;
+      std::shared_ptr<DET::Function> operatorMethod = nullptr;
 
       bool strict = false;
 
@@ -136,14 +141,24 @@ namespace AltaCore {
       ALTACORE_DH_CTOR(BinaryOperation, ExpressionNode);
 
       Shared::OperatorType type = Shared::OperatorType::Addition;
+      Shared::ClassOperatorType commonType = Shared::ClassOperatorType::NONE;
       std::shared_ptr<ExpressionNode> left = nullptr;
       std::shared_ptr<ExpressionNode> right = nullptr;
+
+      std::shared_ptr<DET::Type> leftType = nullptr;
+      std::shared_ptr<DET::Type> rightType = nullptr;
+      std::shared_ptr<DET::Function> operatorMethod = nullptr;
+      std::shared_ptr<DET::Type> commonOperandType = nullptr;
     };
     class UnaryOperation: public ExpressionNode {
       ALTACORE_DH_CTOR(UnaryOperation, ExpressionNode);
 
       Shared::UOperatorType type = Shared::UOperatorType::Not;
+      Shared::ClassOperatorType commonType = Shared::ClassOperatorType::NONE;
       std::shared_ptr<ExpressionNode> target = nullptr;
+
+      std::shared_ptr<DET::Type> targetType = nullptr;
+      std::shared_ptr<DET::Function> operatorMethod = nullptr;
     };
     class BlockNode: public StatementNode {
       ALTACORE_DH_CTOR(BlockNode, StatementNode);
@@ -232,6 +247,15 @@ namespace AltaCore {
       bool isCopyConstructor = false;
       bool isDefaultCopyConstructor = false;
       bool isCastConstructor = false;
+    };
+    class ClassOperatorDefinitionStatement: public ClassStatementNode {
+      ALTACORE_DH_CTOR(ClassOperatorDefinitionStatement, ClassStatementNode);
+
+      std::shared_ptr<BlockNode> block = nullptr;
+      std::shared_ptr<Type> returnType = nullptr;
+      std::shared_ptr<Type> argumentType = nullptr;
+
+      std::shared_ptr<DET::Function> method = nullptr;
     };
     class ConditionalExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(ConditionalExpression, ExpressionNode);
@@ -421,6 +445,10 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> target = nullptr;
       std::shared_ptr<ExpressionNode> index = nullptr;
+
+      std::shared_ptr<DET::Type> targetType = nullptr;
+      std::shared_ptr<DET::Type> indexType = nullptr;
+      std::shared_ptr<DET::Function> operatorMethod = nullptr;
     };
     class SuperClassFetch: public ExpressionNode {
       ALTACORE_DH_CTOR(SuperClassFetch, ExpressionNode);

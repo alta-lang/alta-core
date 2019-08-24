@@ -21,6 +21,17 @@ ALTACORE_AST_DETAIL_D(SubscriptExpression) {
   info->target = target->fullDetail(scope);
   info->index = index->fullDetail(scope);
 
+  info->targetType = DET::Type::getUnderlyingType(info->target.get());
+  info->indexType = DET::Type::getUnderlyingType(info->index.get());
+
+  if (info->targetType->klass && info->targetType->pointerLevel() < 1) {
+    info->operatorMethod = info->targetType->klass->findOperator(Shared::ClassOperatorType::Index, Shared::ClassOperatorOrientation::Unary, info->indexType);
+  }
+
+  if (info->operatorMethod) {
+    info->inputScope->hoist(info->operatorMethod);
+  }
+
   return info;
 };
 
@@ -29,15 +40,14 @@ ALTACORE_AST_VALIDATE_D(SubscriptExpression) {
   target->validate(stack, info->target);
   index->validate(stack, info->index);
 
-  auto targetType = DET::Type::getUnderlyingType(info->target.get());
-  auto indexType = DET::Type::getUnderlyingType(info->index.get());
-  
-  if (targetType->pointerLevel() < 1) {
-    ALTACORE_VALIDATION_ERROR("can't index a non-pointer (yet)");
-  }
+  if (!info->operatorMethod) {
+    if (info->targetType->pointerLevel() < 1) {
+      ALTACORE_VALIDATION_ERROR("can't index a non-pointer (yet)");
+    }
 
-  if (!indexType->isCompatibleWith(*sizeType)) {
-    ALTACORE_VALIDATION_ERROR("can't use a non-integral value as an index (yet)");
+    if (!info->indexType->isCompatibleWith(*sizeType)) {
+      ALTACORE_VALIDATION_ERROR("can't use a non-integral value as an index for a native type");
+    }
   }
 
   ALTACORE_VS_E;

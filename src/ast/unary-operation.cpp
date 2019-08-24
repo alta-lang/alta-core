@@ -16,6 +16,17 @@ ALTACORE_AST_DETAIL_D(UnaryOperation) {
   ALTACORE_MAKE_DH(UnaryOperation);
   info->type = type;
   info->target = target->fullDetail(scope);
+  info->targetType = DET::Type::getUnderlyingType(info->target.get());
+  info->commonType = Shared::convertOperatorTypeRTC(info->type);
+
+  if (info->targetType->klass && info->targetType->pointerLevel() < 1) {
+    info->operatorMethod = info->targetType->klass->findOperator(info->commonType, Shared::ClassOperatorOrientation::Unary);
+  }
+
+  if (info->operatorMethod) {
+    info->inputScope->hoist(info->operatorMethod);
+  }
+
   return info;
 };
 

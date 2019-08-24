@@ -40,7 +40,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto varDef = dynamic_cast<DH::VariableDefinitionExpression*>(expression)) {
     return std::dynamic_pointer_cast<Type>(varDef->variable->type->clone())->reference();
   } else if (auto assign = dynamic_cast<DH::AssignmentExpression*>(expression)) {
-    return getUnderlyingType(assign->target.get())->reference();
+    return assign->operatorMethod ? assign->operatorMethod->returnType : getUnderlyingType(assign->target.get())->reference();
   } else if (auto fetch = dynamic_cast<DH::Fetch*>(expression)) {
     if (!fetch->narrowedTo) {
       if (fetch->readAccessor) {
@@ -52,6 +52,9 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto boolean = dynamic_cast<DH::BooleanLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (auto binOp = dynamic_cast<DH::BinaryOperation*>(expression)) {
+    if (binOp->operatorMethod) {
+      return binOp->operatorMethod->returnType;
+    }
     if ((uint8_t)binOp->type <= (uint8_t)Shared::OperatorType::BitwiseXor) {
       return getUnderlyingType(binOp->left.get())->destroyReferences();
     } else {
@@ -100,12 +103,15 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto chara = dynamic_cast<DH::CharacterLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Byte, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (auto subs = dynamic_cast<DH::SubscriptExpression*>(expression)) {
-    return getUnderlyingType(subs->target.get())->follow();
+    return subs->operatorMethod ? subs->operatorMethod->returnType : getUnderlyingType(subs->target.get())->follow();
   } else if (auto sc = dynamic_cast<DH::SuperClassFetch*>(expression)) {
     return std::make_shared<Type>(sc->superclass, std::vector<uint8_t> { (uint8_t)Modifier::Reference });
   } else if (auto instOf = dynamic_cast<DH::InstanceofExpression*>(expression)) {
     return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (auto unary = dynamic_cast<DH::UnaryOperation*>(expression)) {
+    if (unary->operatorMethod) {
+      return unary->operatorMethod->returnType;
+    }
     if (unary->type == Shared::UOperatorType::Not) {
       return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
     } else {
@@ -518,7 +524,9 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
   std::function<CastPath(std::vector<std::shared_ptr<Type>>, std::shared_ptr<Type>, size_t*)> reverseLoop = nullptr;
   std::function<CastPath(std::shared_ptr<Type>, std::vector<std::shared_ptr<Type>>, size_t*)> loop = nullptr;
 
-  reverseLoop = [&loop, &reverseLoop, &manual](std::vector<std::shared_ptr<Type>> froms, std::shared_ptr<Type> to, size_t* index) -> CastPath {
+  bool dontReverseLoopBack = false;
+
+  reverseLoop = [&loop, &reverseLoop, &manual, &dontReverseLoopBack](std::vector<std::shared_ptr<Type>> froms, std::shared_ptr<Type> to, size_t* index) -> CastPath {
     #define AC_FROM_LOOP for (size_t i = 0; i < froms.size(); ++i) { auto& from = froms[i];
     #define AC_FROM_LOOP_END }
     #define AC_RETURN_INDEX if (index) { *index = i; }
@@ -744,7 +752,8 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     AC_FROM_LOOP_END;
 
     AC_FROM_LOOP;
-      if (from->referenceLevel() > 0) {
+      if (!dontReverseLoopBack && from->referenceLevel() > 0) {
+        dontReverseLoopBack = true;
         auto other = from->dereference();
         while (other->referenceLevel() >= 0) {
           auto cast = loop(other, { to }, index);
@@ -753,6 +762,7 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
               cast.insert(cast.begin(), CC(CCT::Dereference));
             }
             AC_RETURN_INDEX;
+            dontReverseLoopBack = false;
             return cast;
           }
           if (other->referenceLevel() == 0) break;
@@ -761,15 +771,19 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     AC_FROM_LOOP_END;
 
     AC_FROM_LOOP;
-      if (from->referenceLevel() < to->referenceLevel()) {
+      if (!dontReverseLoopBack && from->referenceLevel() < to->referenceLevel()) {
+        dontReverseLoopBack = true;
         auto cast = loop(from->reference(), { to }, index);
         if (cast.size() > 0) {
           cast.insert(cast.begin(), CC(CCT::Reference));
           AC_RETURN_INDEX;
+          dontReverseLoopBack = false;
           return cast;
         }
       };
     AC_FROM_LOOP_END;
+
+    dontReverseLoopBack = false;
 
     if (index) *index = SIZE_MAX;
     return {};
@@ -779,7 +793,9 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     #undef AC_RETURN_INDEX
   };
 
-  loop = [&loop, &reverseLoop, &manual](std::shared_ptr<Type> from, std::vector<std::shared_ptr<Type>> tos, size_t* index) -> CastPath {
+  bool dontLoopBack = false;
+
+  loop = [&loop, &reverseLoop, &manual, &dontLoopBack](std::shared_ptr<Type> from, std::vector<std::shared_ptr<Type>> tos, size_t* index) -> CastPath {
     if (manual && from->isUnion() && tos.size() == 1 && !tos.front()->isUnion() && from->indirectionLevel() == 0) {
       size_t idx = 0;
       auto cast = reverseLoop(from->unionOf, tos.front(), &idx);
@@ -1059,13 +1075,31 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     AC_TO_LOOP_END;
 
     AC_TO_LOOP;
+      if (
+        from->referenceLevel() == 0 &&
+        to->referenceLevel() == 0 &&
+        from->pointerLevel() == 0 &&
+        to->pointerLevel() > 0 &&
+        from->isNative &&
+        (
+          from->nativeTypeName == NT::Integer ||
+          from->nativeTypeName == NT::Byte
+        )
+      ) {
+        AC_RETURN_INDEX;
+        return { CC(CCT::SimpleCoercion, to), CC(CCT::Destination) };
+      }
+    AC_TO_LOOP_END;
+
+    AC_TO_LOOP;
       if (from->referenceLevel() == 0 && from->pointerLevel() > 0 && to->indirectionLevel() == 0 && to->isNative && to->nativeTypeName == NT::Bool) {
         AC_RETURN_INDEX;
         return { CC(CCT::Destination, SCT::TestPointer) };
       }
     AC_TO_LOOP_END;
 
-    if (from->referenceLevel() > 0) {
+    if (!dontLoopBack && from->referenceLevel() > 0) {
+      dontLoopBack = true;
       auto other = from->dereference();
       while (other->referenceLevel() >= 0) {
         auto cast = loop(other, tos, index);
@@ -1086,13 +1120,17 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
       }
     AC_TO_LOOP_END;
 
-    if (from->referenceLevel() < maxToRefLevel) {
+    if (!dontLoopBack && from->referenceLevel() < maxToRefLevel) {
+      dontLoopBack = true;
       auto cast = loop(from->reference(), tos, index);
       if (cast.size() > 0) {
         cast.insert(cast.begin(), CC(CCT::Reference));
+        dontLoopBack = false;
         return cast;
       }
     };
+
+    dontLoopBack = false;
 
     AC_TO_LOOP;
       if (to->isAny) {
@@ -1157,7 +1195,7 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) const
     }
   }
   if (pointerLevel() == 0 && klass) {
-    if (auto from = klass->findFromCast(*this)) {
+    if (auto from = klass->findFromCast(other)) {
       return 2;
     }
   }
@@ -1256,7 +1294,7 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other, b
 
   if (!strict) {
     if (other.pointerLevel() == 0 && other.klass && other.klass->findToCast(*this)) return true;
-    if (pointerLevel() == 0 && klass && klass->findFromCast(*this)) return true;
+    if (pointerLevel() == 0 && klass && klass->findFromCast(other)) return true;
   }
 
   if (isOptional && other.isAny && other.pointerLevel() == 1) return true;
@@ -1381,7 +1419,7 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) con
   if (isExactlyCompatibleWith(other)) return true;
 
   if (other.pointerLevel() == 0 && other.klass && other.klass->findToCast(*this)) return true;
-  if (pointerLevel() == 0 && klass && klass->findFromCast(*this)) return true;
+  if (pointerLevel() == 0 && klass && klass->findFromCast(other)) return true;
 
   // integers can be converted to pointers
   if (other.isNative && other.pointerLevel() < 1 && pointerLevel() > 0) return true;

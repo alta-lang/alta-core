@@ -41,6 +41,7 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Variable>> itemsToCopy;
         std::vector<std::shared_ptr<Function>> fromCasts;
         std::vector<std::shared_ptr<Function>> toCasts;
+        std::vector<std::shared_ptr<Function>> operators;
 
         std::vector<std::shared_ptr<Type>> genericArguments;
 
@@ -56,6 +57,8 @@ namespace AltaCore {
 
         std::shared_ptr<Function> findFromCast(const Type& target);
         std::shared_ptr<Function> findToCast(const Type& target);
+
+        std::shared_ptr<Function> findOperator(const Shared::ClassOperatorType type, const Shared::ClassOperatorOrientation orient, std::shared_ptr<Type> argType = nullptr) const;
     };
   };
 };
