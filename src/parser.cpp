@@ -3457,6 +3457,7 @@ namespace AltaCore {
               if (expect(TokenType::OpeningSquareBracket)) {
                 state.internalIndex = 10;
                 op->orientation = COO::Unary;
+                op->type = COT::Index;
                 ACP_RULE(Type);
               } else {
                 op->orientation = COO::Left;
@@ -3505,6 +3506,13 @@ namespace AltaCore {
             using COT = AST::ClassOperatorType;
             COT type = COT::NONE;
             saveState();
+            bool leftThis = state.internalIndex == 6;
+
+            // AC_AS_OP_SYM = AltaCore::Assignment::Operator::Symbol
+            #define AC_AS_OP_SYM(tok, name) else if (leftThis && expect(TokenType::tok##Equals)) { type = COT::name##Assignment; }
+            // AC_AS_OP_DSYM = AltaCore::Assignment::Operator::DirectSymbol
+            #define AC_AS_OP_DSYM(name) AC_AS_OP_SYM(name, name)
+
             if (expect(TokenType::PlusSign)) {
               type = COT::Addition;
             } else if (expect(TokenType::MinusSign)) {
@@ -3543,6 +3551,20 @@ namespace AltaCore {
               type = COT::GreaterThanOrEqualTo;
             }
 
+            AC_AS_OP_SYM(Plus, Addition)
+            AC_AS_OP_SYM(Minus, Subtraction)
+            AC_AS_OP_SYM(Times, Multiplication)
+            AC_AS_OP_SYM(Divided, Division)
+            AC_AS_OP_DSYM(Modulo)
+            AC_AS_OP_DSYM(LeftShift)
+            AC_AS_OP_DSYM(RightShift)
+            AC_AS_OP_DSYM(BitwiseAnd)
+            AC_AS_OP_DSYM(BitwiseOr)
+            AC_AS_OP_DSYM(BitwiseXor)
+
+            #undef AC_AS_OP_SYM
+            #undef AC_AS_OP_DSYM
+
             if (type == COT::NONE) ACP_NOT_OK;
 
             auto op = std::dynamic_pointer_cast<AST::ClassOperatorDefinitionStatement>(ruleNode);
@@ -3573,6 +3595,10 @@ namespace AltaCore {
             }
           } else if (state.internalIndex == 10) {
             if (!exps.back()) ACP_NOT_OK;
+
+            auto op = std::dynamic_pointer_cast<AST::ClassOperatorDefinitionStatement>(ruleNode);
+
+            op->argumentType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
 
             if (!expect(TokenType::ClosingSquareBracket)) ACP_NOT_OK;
 

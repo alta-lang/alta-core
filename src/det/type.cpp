@@ -40,7 +40,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto varDef = dynamic_cast<DH::VariableDefinitionExpression*>(expression)) {
     return std::dynamic_pointer_cast<Type>(varDef->variable->type->clone())->reference();
   } else if (auto assign = dynamic_cast<DH::AssignmentExpression*>(expression)) {
-    return getUnderlyingType(assign->target.get())->reference();
+    return assign->operatorMethod ? assign->operatorMethod->returnType : getUnderlyingType(assign->target.get())->reference();
   } else if (auto fetch = dynamic_cast<DH::Fetch*>(expression)) {
     if (!fetch->narrowedTo) {
       if (fetch->readAccessor) {
@@ -103,7 +103,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto chara = dynamic_cast<DH::CharacterLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Byte, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
   } else if (auto subs = dynamic_cast<DH::SubscriptExpression*>(expression)) {
-    return getUnderlyingType(subs->target.get())->follow();
+    return subs->operatorMethod ? subs->operatorMethod->returnType : getUnderlyingType(subs->target.get())->follow();
   } else if (auto sc = dynamic_cast<DH::SuperClassFetch*>(expression)) {
     return std::make_shared<Type>(sc->superclass, std::vector<uint8_t> { (uint8_t)Modifier::Reference });
   } else if (auto instOf = dynamic_cast<DH::InstanceofExpression*>(expression)) {

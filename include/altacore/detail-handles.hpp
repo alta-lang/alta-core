@@ -111,6 +111,11 @@ namespace AltaCore {
       std::shared_ptr<ExpressionNode> target = nullptr;
       std::shared_ptr<ExpressionNode> value = nullptr;
       Shared::AssignmentType type = Shared::AssignmentType::Simple;
+      Shared::ClassOperatorType commonType = Shared::ClassOperatorType::NONE;
+
+      std::shared_ptr<DET::Type> targetType = nullptr;
+      std::shared_ptr<DET::Type> valueType = nullptr;
+      std::shared_ptr<DET::Function> operatorMethod = nullptr;
 
       bool strict = false;
 
@@ -440,6 +445,10 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> target = nullptr;
       std::shared_ptr<ExpressionNode> index = nullptr;
+
+      std::shared_ptr<DET::Type> targetType = nullptr;
+      std::shared_ptr<DET::Type> indexType = nullptr;
+      std::shared_ptr<DET::Function> operatorMethod = nullptr;
     };
     class SuperClassFetch: public ExpressionNode {
       ALTACORE_DH_CTOR(SuperClassFetch, ExpressionNode);

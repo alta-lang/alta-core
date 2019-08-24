@@ -79,6 +79,7 @@ namespace AltaCore {
       Subtraction,
       Multiplication,
       Division,
+      Modulo,
       Xor,
       LeftShift,
       RightShift,
@@ -94,6 +95,16 @@ namespace AltaCore {
       LessThanOrEqualTo,
       GreaterThanOrEqualTo,
       Index,
+      AdditionAssignment,
+      SubtractionAssignment,
+      MultiplicationAssignment,
+      DivisionAssignment,
+      ModuloAssignment,
+      LeftShiftAssignment,
+      RightShiftAssignment,
+      BitwiseAndAssignment,
+      BitwiseOrAssignment,
+      BitwiseXorAssignment,
     };
 
     static const char* const ClassOperatorType_names[] = {
@@ -105,6 +116,7 @@ namespace AltaCore {
       "Subtraction",
       "Multiplication",
       "Division",
+      "Modulo",
       "Xor",
       "LeftShift",
       "RightShift",
@@ -120,6 +132,16 @@ namespace AltaCore {
       "LessThanOrEqualTo",
       "GreaterThanOrEqualTo",
       "Index",
+      "AdditionAssignment",
+      "SubtractionAssignment",
+      "MultiplicationAssignment",
+      "DivisionAssignment",
+      "ModuloAssignment",
+      "LeftShiftAssignment",
+      "RightShiftAssignment",
+      "BitwiseAndAssignment",
+      "BitwiseOrAssignment",
+      "BitwiseXorAssignment",
     };
 
     enum class ClassOperatorOrientation {
@@ -149,6 +171,7 @@ namespace AltaCore {
       AC_OP_DCONV(Subtraction);
       AC_OP_DCONV(Multiplication);
       AC_OP_DCONV(Division);
+      AC_OP_DCONV(Modulo);
 
       AC_OP_DCONV(LeftShift);
       AC_OP_DCONV(RightShift);
@@ -185,6 +208,29 @@ namespace AltaCore {
 
       #undef AC_OP_CONV
       #undef AC_OP_DCONV
+      return ClassOperatorType::NONE;
+    };
+    // RTC = regular-to-class
+    static inline ClassOperatorType convertOperatorTypeRTC(AssignmentType op) {
+      ClassOperatorType result = ClassOperatorType::NONE;
+      #define AC_OP_CONV(source, dest) if (op == AssignmentType::source) {\
+                                         return ClassOperatorType::dest;\
+                                       }
+      #define AC_OP_ACONV(name) AC_OP_CONV(name, name##Assignment)
+
+      AC_OP_ACONV(Addition);
+      AC_OP_ACONV(Subtraction);
+      AC_OP_ACONV(Multiplication);
+      AC_OP_ACONV(Division);
+      AC_OP_ACONV(Modulo);
+      AC_OP_ACONV(LeftShift);
+      AC_OP_ACONV(RightShift);
+      AC_OP_ACONV(BitwiseAnd);
+      AC_OP_ACONV(BitwiseOr);
+      AC_OP_ACONV(BitwiseXor);
+
+      #undef AC_OP_CONV
+      #undef AC_OP_ACONV
       return ClassOperatorType::NONE;
     };
   };

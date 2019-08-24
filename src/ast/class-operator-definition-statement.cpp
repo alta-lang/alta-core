@@ -45,11 +45,12 @@ ALTACORE_AST_INFO_DETAIL_D(ClassOperatorDefinitionStatement) {
 
   if (!info->method->returnType) {
     std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
-    if (orientation != ClassOperatorOrientation::Unary) {
+    bool hasArg = type == ClassOperatorType::Index || orientation != ClassOperatorOrientation::Unary;
+    if (hasArg) {
       params.push_back(std::make_tuple(orientation == ClassOperatorOrientation::Left ? "$right" : "$left", info->argumentType->type, false, "N/A"));
     }
     info->method->recreate(params, info->returnType->type);
-    if (orientation != ClassOperatorOrientation::Unary) {
+    if (hasArg) {
       auto inputAlias = std::make_shared<DET::Alias>("$", info->method->parameterVariables.front(), info->method->scope);
       info->method->scope->items.push_back(inputAlias);
     }

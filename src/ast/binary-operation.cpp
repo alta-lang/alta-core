@@ -23,7 +23,7 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
   info->rightType = DET::Type::getUnderlyingType(info->right.get());
   info->commonType = Shared::convertOperatorTypeRTC(info->type);
 
-  if (info->leftType->klass) {
+  if (info->leftType->klass && info->leftType->pointerLevel() < 1) {
     size_t highestCompat = 0;
     size_t compatIdx = SIZE_MAX;
     for (size_t i = 0; i < info->leftType->klass->operators.size(); ++i) {
@@ -41,7 +41,7 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
     }
   }
 
-  if (info->operatorMethod == nullptr && info->rightType->klass) {
+  if (info->operatorMethod == nullptr && info->rightType->klass && info->rightType->pointerLevel() < 1) {
     size_t highestCompat = 0;
     size_t compatIdx = SIZE_MAX;
     for (size_t i = 0; i < info->rightType->klass->operators.size(); ++i) {

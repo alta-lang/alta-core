@@ -19,7 +19,7 @@ ALTACORE_AST_DETAIL_D(UnaryOperation) {
   info->targetType = DET::Type::getUnderlyingType(info->target.get());
   info->commonType = Shared::convertOperatorTypeRTC(info->type);
 
-  if (info->targetType->klass) {
+  if (info->targetType->klass && info->targetType->pointerLevel() < 1) {
     for (auto& op: info->targetType->klass->operators) {
       if (op->operatorType != info->commonType) continue;
       if (op->orientation != Shared::ClassOperatorOrientation::Unary) continue;
