@@ -2,14 +2,6 @@ cmake_minimum_required(VERSION 3.10)
 
 project(altacore)
 
-# don't treat warnings as errors
-# why is this even default behavior in the first place?
-# cmake, stop. just stop.
-string(REPLACE " -Werror" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-string(REPLACE " /WX" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-string(REPLACE " -Werror" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-string(REPLACE " /WX" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "Disable yaml-cpp tests")
 set(OPTIONAL_ENABLE_DOCS OFF CACHE BOOL "Disable Optional docs")
 set(OPTIONAL_ENABLE_TESTS OFF CACHE BOOL "Disable Optional tests")
