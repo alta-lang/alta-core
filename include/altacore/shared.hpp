@@ -105,6 +105,7 @@ namespace AltaCore {
       BitwiseAndAssignment,
       BitwiseOrAssignment,
       BitwiseXorAssignment,
+      SimpleAssignment,
     };
 
     static const char* const ClassOperatorType_names[] = {
@@ -142,6 +143,7 @@ namespace AltaCore {
       "BitwiseAndAssignment",
       "BitwiseOrAssignment",
       "BitwiseXorAssignment",
+      "SimpleAssignment",
     };
 
     enum class ClassOperatorOrientation {
@@ -218,6 +220,7 @@ namespace AltaCore {
                                        }
       #define AC_OP_ACONV(name) AC_OP_CONV(name, name##Assignment)
 
+      AC_OP_ACONV(Simple);
       AC_OP_ACONV(Addition);
       AC_OP_ACONV(Subtraction);
       AC_OP_ACONV(Multiplication);

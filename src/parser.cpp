@@ -3549,6 +3549,8 @@ namespace AltaCore {
               type = COT::LessThanOrEqualTo;
             } else if (expect(TokenType::GreaterThanOrEqualTo)) {
               type = COT::GreaterThanOrEqualTo;
+            } else if (leftThis && expect(TokenType::EqualSign)) {
+              type = COT::SimpleAssignment;
             }
 
             AC_AS_OP_SYM(Plus, Addition)
