@@ -29,19 +29,21 @@ void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<DH::Fetch> info, size_t i) {
     info->inputScope->unhoist(info->narrowedTo);
   }
   info->narrowedTo = info->items[i];
-  if (auto lambda = info->inputScope->findParentLambda()) {
-    if (!lambda->scope->contains(info->narrowedTo)) {
-      bool found = false;
-      for (auto& var: lambda->referencedVariables) {
-        if (var->id == info->narrowedTo->id) {
-          found = true;
-          break;
+  if (info->narrowedTo->nodeType() == DET::NodeType::Variable) {
+    if (auto lambda = info->inputScope->findParentLambda()) {
+      if (!lambda->scope->contains(info->narrowedTo)) {
+        bool found = false;
+        for (auto& var: lambda->referencedVariables) {
+          if (var->id == info->narrowedTo->id) {
+            found = true;
+            break;
+          }
         }
+        if (!found) {
+          lambda->referencedVariables.push_back(std::dynamic_pointer_cast<DET::Variable>(info->narrowedTo));
+        }
+        info->referencesOutsideLambda = true;
       }
-      if (!found) {
-        lambda->referencedVariables.push_back(std::dynamic_pointer_cast<DET::Variable>(info->narrowedTo));
-      }
-      info->referencesOutsideLambda = true;
     }
   }
   if (info->narrowedTo) {

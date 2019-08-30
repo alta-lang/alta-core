@@ -865,6 +865,8 @@ namespace AltaCore {
           break;
         } else if (rule == RuleType::Statement) {
           if (state.iteration == 0) {
+            while (expect(TokenType::Semicolon)); // optional
+
             if (ruleStack.size() == 2) {
               ACP_RULE_LIST(
                 RuleType::FunctionDefinition,
