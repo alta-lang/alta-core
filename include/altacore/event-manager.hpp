@@ -48,7 +48,7 @@ namespace AltaCore {
     public:
       void listen(const std::function<void(Args...)> callback) {
         if (once && _dispatched) {
-          return applyTuple(callback, dispatchedArguments.value());
+          return applyTuple(callback, *dispatchedArguments);
         }
         callbacks.push_front(callback);
       };
