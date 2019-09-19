@@ -104,3 +104,34 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Class::findOperator(cons
   }
   return nullptr;
 };
+
+std::vector<std::shared_ptr<AltaCore::DET::Function>> AltaCore::DET::Class::findAllVirtualFunctions() {
+  std::vector<std::shared_ptr<AltaCore::DET::Function>> virtFuncs;
+
+  for (auto& item: scope->items) {
+    if (item->nodeType() != NodeType::Function) continue;
+    auto func = std::dynamic_pointer_cast<Function>(item);
+    if (func->isVirtual()) virtFuncs.push_back(func);
+  }
+
+  for (auto& parent: parents) {
+    auto otherFuncs = parent->findAllVirtualFunctions();
+
+    for (auto& otherFunc: otherFuncs) {
+      auto otherType = Type::getUnderlyingType(otherFunc);
+      bool skip = false;
+      for (auto& virtFunc: virtFuncs) {
+        if (*Type::getUnderlyingType(virtFunc) == *otherType) {
+          skip = true;
+          break;
+        }
+      }
+      if (skip) {
+        continue;
+      }
+      virtFuncs.push_back(otherFunc);
+    }
+  }
+
+  return virtFuncs;
+};

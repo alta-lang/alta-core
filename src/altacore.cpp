@@ -63,6 +63,21 @@ void AltaCore::registerGlobalAttributes() {
   AC_ATTRIBUTE(ClassSpecialMethodDefinitionStatement, "from");
     info->isCastConstructor = true;
   AC_END_ATTRIBUTE;
+
+  AC_ATTRIBUTE(FunctionDefinitionNode, "virtual");
+    info->function->_virtual = true;
+  AC_END_ATTRIBUTE;
+
+  AC_ATTRIBUTE(FunctionDefinitionNode, "override");
+    bool isVirt = info->function->_virtual;
+    info->function->_virtual = false;
+
+    if (!info->function->isVirtual()) {
+      throw std::runtime_error("`override` method doesn't override any parent methods (maybe an incorrect signature?)");
+    }
+
+    info->function->_virtual = isVirt;
+  AC_END_ATTRIBUTE;
 };
 
 #undef AC_END_ATTRIBUTE

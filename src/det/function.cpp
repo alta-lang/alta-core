@@ -94,3 +94,58 @@ void AltaCore::DET::Function::recreate(std::vector<std::tuple<std::string, std::
     publicHoistedItems.push_back(returnType);
   }
 };
+
+bool AltaCore::DET::Function::isVirtual()  {
+  auto pScope = parentScope.lock();
+  if (!pScope || (pScope && !pScope->parentClass.lock())) {
+    return false;
+  }
+  if (_virtual) {
+    return true;
+  }
+  auto pClass = pScope->parentClass.lock();
+  auto thisType = Type::getUnderlyingType(shared_from_this());
+
+  std::function<bool(std::shared_ptr<Class>)> loop = [&](std::shared_ptr<Class> klass) {
+    for (auto& item: klass->scope->items) {
+      if (item->nodeType() != NodeType::Function) continue;
+      
+      auto func = std::dynamic_pointer_cast<DET::Function>(item);
+
+      if (!func) continue;
+
+      if (!func->isVirtual()) continue;
+
+      if (func->isAccessor != isAccessor) continue;
+      if (func->isOperator != isOperator) continue;
+
+      /**
+       * TODO: allow C++-style covariant overrides, e.g:
+       * class Parent {
+       *   public @virtual function hello(): ref Parent {
+       *     return this
+       *   }
+       * }
+       * 
+       * class Child {
+       *   public @virtual function hello(): ref Child {
+       *     return this
+       *   }
+       * }
+       */
+      if (*Type::getUnderlyingType(func) == *thisType) return true;
+    }
+
+    for (auto& parent: klass->parents) {
+      if (loop(parent)) return true;
+    }
+
+    return false;
+  };
+
+  for (auto& parent: pClass->parents) {
+    if (loop(parent)) return true;
+  }
+
+  return false;
+};
