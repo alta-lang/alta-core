@@ -1,5 +1,7 @@
 #include "../include/altacore/attributes.hpp"
 #include "../include/altacore/simple-map.hpp"
+#include "../include/altacore/ast/attribute-node.hpp"
+#include "../include/altacore/util.hpp"
 
 namespace AltaCore {
   namespace Attributes {
@@ -33,13 +35,15 @@ AltaCore::Attributes::Attribute::Attribute(
   std::string _name,
   std::vector<AST::NodeType> _appliesTo,
   std::function<void(std::shared_ptr<AltaCore::AST::Node>, std::shared_ptr<DH::Node>, std::vector<AltaCore::Attributes::AttributeArgument>)> _callback,
-  bool _isDomain
+  bool _isDomain,
+  bool _postProcess
 ):
   name(_name),
   appliesTo(_appliesTo),
   isDomain(_isDomain),
   isGeneral(_appliesTo.size() == 0),
-  callback(_callback)
+  callback(_callback),
+  postProcess(_postProcess)
   {};
 
 bool AltaCore::Attributes::Attribute::checkIfAppliesTo(AltaCore::AST::NodeType type) {
@@ -50,7 +54,7 @@ bool AltaCore::Attributes::Attribute::checkIfAppliesTo(AltaCore::AST::NodeType t
   return false;
 };
 
-bool AltaCore::Attributes::registerAttribute(std::vector<std::string> fullDomainPath, std::vector<AltaCore::AST::NodeType> appliesTo, std::function<void(std::shared_ptr<AltaCore::AST::Node>, std::shared_ptr<AltaCore::DH::Node>, std::vector<AltaCore::Attributes::AttributeArgument>)> callback, std::string file) {
+bool AltaCore::Attributes::registerAttribute(std::vector<std::string> fullDomainPath, std::vector<AltaCore::AST::NodeType> appliesTo, std::function<void(std::shared_ptr<AltaCore::AST::Node>, std::shared_ptr<AltaCore::DH::Node>, std::vector<AltaCore::Attributes::AttributeArgument>)> callback, std::string file, bool postProcess) {
   if (fullDomainPath.size() == 0) return false;
 
   std::vector<Attribute>* target = nullptr;
@@ -77,7 +81,7 @@ bool AltaCore::Attributes::registerAttribute(std::vector<std::string> fullDomain
     if (found && isNonDomain) {
       return false;
     } else if (!found) {
-      target = &(target->emplace_back(fullDomainPath[i], std::vector<AST::NodeType> {}, nullptr, true).children);
+      target = &(target->emplace_back(fullDomainPath[i], std::vector<AST::NodeType> {}, nullptr, true, false).children);
     }
   }
 
@@ -95,7 +99,7 @@ bool AltaCore::Attributes::registerAttribute(std::vector<std::string> fullDomain
       return false;
     }
   }
-  target->emplace_back(last, appliesTo, callback, false);
+  target->emplace_back(last, appliesTo, callback, false, postProcess);
 
   bool isFirst = true;
   for (auto& item: fullDomainPath) {
@@ -164,4 +168,23 @@ void AltaCore::Attributes::clearFileAttributes(std::string file) {
 void AltaCore::Attributes::clearAllAttributes() {
   registeredGlobalAttributes.clear();
   registeredFileAttributes.clear();
+};
+
+auto AltaCore::Attributes::detailAttributes(std::vector<std::shared_ptr<AST::AttributeNode>>& attributes, std::shared_ptr<DET::Scope> scope, std::shared_ptr<AST::Node> ast, std::shared_ptr<DH::Node> info) -> std::vector<std::shared_ptr<DH::AttributeNode>> {
+  std::vector<std::shared_ptr<DH::AttributeNode>> infos;
+  for (auto& attribute: attributes) {
+    auto attrInfo = std::make_shared<DH::AttributeNode>(scope);
+    attrInfo->target = ast;
+    attrInfo->targetInfo = info;
+    attrInfo->module = Util::getModule(scope.get());
+    attribute->findAttribute(attrInfo);
+    infos.push_back(attrInfo);
+    if (attrInfo->attribute->postProcess) continue;
+    infos.back() = attribute->fullDetail(scope, ast, info);
+  }
+  for (size_t i = 0; i < attributes.size(); ++i) {
+    if (!infos[i]->attribute->postProcess) continue;
+    infos[i] = attributes[i]->fullDetail(scope, ast, info);
+  }
+  return infos;
 };

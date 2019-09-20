@@ -8,6 +8,7 @@
   AC_ATTRIBUTE_CAST(x);
 #define AC_GENERAL_ATTRIBUTE(...) Attributes::registerAttribute({ __VA_ARGS__ }, {}, AC_ATTRIBUTE_FUNC {
 #define AC_END_ATTRIBUTE })
+#define AC_END_ATTRIBUTE_OPTIONS(...) }, "", __VA_ARGS__)
 
 void AltaCore::registerGlobalAttributes() {
   AC_ATTRIBUTE(FunctionDefinitionNode, "read");
@@ -77,7 +78,7 @@ void AltaCore::registerGlobalAttributes() {
     }
 
     info->function->_virtual = isVirt;
-  AC_END_ATTRIBUTE;
+  AC_END_ATTRIBUTE_OPTIONS(true);
 };
 
 #undef AC_END_ATTRIBUTE

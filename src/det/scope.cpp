@@ -74,7 +74,7 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
       while (trueItem->nodeType() == NodeType::Alias) {
         trueItem = std::dynamic_pointer_cast<Alias>(item)->target;
       }
-      if (trueItem->nodeType() != NodeType::Function) {
+      if (trueItem->nodeType() != NodeType::Function || std::dynamic_pointer_cast<Function>(trueItem)->isAccessor) {
         if (allFunctions && first) {
           // we've already found a non-function scope item with that name
           throw std::runtime_error("found non-function scope item with same name as another scope item; this is a conflict");

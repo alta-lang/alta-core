@@ -114,6 +114,8 @@ bool AltaCore::DET::Function::isVirtual()  {
 
       if (!func) continue;
 
+      if (func->name != name) continue;
+
       if (!func->isVirtual()) continue;
 
       if (func->isAccessor != isAccessor) continue;
@@ -133,7 +135,11 @@ bool AltaCore::DET::Function::isVirtual()  {
        *   }
        * }
        */
-      if (*Type::getUnderlyingType(func) == *thisType) return true;
+      if (isAccessor) {
+        if (*func->returnType == *thisType->returnType) return true;
+      } else {
+        if (*Type::getUnderlyingType(func) == *thisType) return true;
+      }
     }
 
     for (auto& parent: klass->parents) {

@@ -121,9 +121,7 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
     }
 
     if (info->attributes.size() != attributes.size()) {
-      for (auto& attr: attributes) {
-        info->attributes.push_back(attr->fullDetail(info->inputScope, shared_from_this(), info));
-      }
+      info->attributes = Attributes::detailAttributes(attributes, info->inputScope, shared_from_this(), info);
     }
 
     info->function->beganThrowing.listen([=]() {

@@ -116,7 +116,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
     auto& pc = classStack.top();
     auto& idx = idxs.top();
     idx++;
-    if (info->items.size() < 1 || (info->items.size() > 0 && info->items.front()->nodeType() == DET::NodeType::Function)) {
+    if (info->items.size() < 1 || (info->items.size() > 0 && info->items.front()->nodeType() == DET::NodeType::Function && !std::dynamic_pointer_cast<DET::Function>(info->items.front())->isAccessor)) {
       bool loopBack = false;
       for (size_t i = idx; i < pc->parents.size(); i++) {
         auto& parent = pc->parents[i];
