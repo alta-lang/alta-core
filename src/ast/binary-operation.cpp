@@ -36,9 +36,8 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
     // for now, just use a very algorithmically-dumb method
     // of finding the first castable type (first try left, then try right)
     //
-    // in the future, this should be modified to have specific checks
-    // for widening operations (such as int + double = double) and the code
-    // should be moved to its own (probably static) method in AltaCore::DET::Type
+    // in the future, the code should be moved to its own (probably static)
+    // method in AltaCore::DET::Type
 
     // TODO: create some sort of framework for finding types that match a certain criteria,
     //       regardless of which side it's on. e.g:
@@ -56,6 +55,73 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
       } else {
         info->commonOperandType = info->rightType;
       }
+    } else if (
+      info->leftType->pointerLevel() == 0 &&
+      info->rightType->pointerLevel() == 0 &&
+      info->leftType->isNative &&
+      info->rightType->isNative
+    ) {
+      using NT = DET::NativeType;
+      using TMF = DET::TypeModifierFlag;
+      int leftSize = 0;
+      int rightSize = 0;
+      NT leftType = info->leftType->nativeTypeName;
+      NT rightType = info->rightType->nativeTypeName;
+      for (auto& mod: info->leftType->modifiers) {
+        if (mod & (uint8_t)TMF::Long) {
+          ++leftSize;
+        }
+        if (mod & (uint8_t)TMF::Short) {
+          --leftSize;
+        }
+      }
+      for (auto& mod: info->rightType->modifiers) {
+        if (mod & (uint8_t)TMF::Long) {
+          ++rightSize;
+        }
+        if (mod & (uint8_t)TMF::Short) {
+          --rightSize;
+        }
+      }
+      if (leftType == NT::Double && rightType == NT::Double) {
+        info->commonOperandType = leftSize > rightSize ? info->leftType : info->rightType;
+      } else if (leftType == NT::Double) {
+        info->commonOperandType = info->leftType;
+      } else if (rightType == NT::Double) {
+        info->commonOperandType = info->rightType;
+      } else if (leftType == NT::Float && rightType == NT::Float) {
+        info->commonOperandType = leftSize > rightSize ? info->leftType : info->rightType;
+      } else if (leftType == NT::Float) {
+        info->commonOperandType = info->leftType;
+      } else if (rightType == NT::Float) {
+        info->commonOperandType = info->rightType;
+      } else if (leftType == NT::UserDefined && rightType == NT::UserDefined) {
+        info->commonOperandType = leftSize > rightSize ? info->leftType : info->rightType;
+      } else if (leftType == NT::UserDefined) {
+        info->commonOperandType = info->leftType;
+      } else if (rightType == NT::UserDefined) {
+        info->commonOperandType = info->rightType;
+      } else if (leftType == NT::Integer && rightType == NT::Integer) {
+        info->commonOperandType = leftSize > rightSize ? info->leftType : info->rightType;
+      } else if (leftType == NT::Integer) {
+        info->commonOperandType = info->leftType;
+      } else if (rightType == NT::Integer) {
+        info->commonOperandType = info->rightType;
+      } else if (leftType == NT::Byte && rightType == NT::Byte) {
+        info->commonOperandType = leftSize > rightSize ? info->leftType : info->rightType;
+      } else if (leftType == NT::Byte) {
+        info->commonOperandType = info->leftType;
+      } else if (rightType == NT::Byte) {
+        info->commonOperandType = info->rightType;
+      } else if (leftType == NT::Bool && rightType == NT::Bool) {
+        info->commonOperandType = leftSize > rightSize ? info->leftType : info->rightType;
+      } else if (leftType == NT::Bool) {
+        info->commonOperandType = info->leftType;
+      } else if (rightType == NT::Bool) {
+        info->commonOperandType = info->rightType;
+      } else {
+        ALTACORE_DETAILING_ERROR("cannot perform operation on void expressions");
+      }
     } else {
       auto rightToLeft = DET::Type::findCast(info->rightType, info->leftType);
       if (rightToLeft.size() > 0) {
@@ -69,6 +135,7 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
         }
       }
     }
+    info->commonOperandType = info->commonOperandType->destroyReferences();
   } else {
     info->inputScope->hoist(info->operatorMethod);
   }
@@ -82,5 +149,10 @@ ALTACORE_AST_VALIDATE_D(BinaryOperation) {
   if (!right) ALTACORE_VALIDATION_ERROR("Binary operation must contain a right-hand node");
   left->validate(stack, info->left);
   right->validate(stack, info->right);
+
+  if (!info->operatorMethod && info->commonOperandType->pointerLevel() == 0 && !info->commonOperandType->isNative && !(info->commonOperandType->isFunction && info->commonOperandType->isRawFunction)) {
+    ALTACORE_VALIDATION_ERROR("Operation impossible with given operands (no operator method, operands are not pointers, not native, and not raw functions)");
+  }
+
   ALTACORE_VS_E;
 };

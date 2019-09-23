@@ -56,7 +56,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
       return binOp->operatorMethod->returnType;
     }
     if ((uint8_t)binOp->type <= (uint8_t)Shared::OperatorType::BitwiseXor) {
-      return getUnderlyingType(binOp->left.get())->destroyReferences();
+      return binOp->commonOperandType->destroyReferences();
     } else {
       return std::make_shared<Type>(NativeType::Bool, std::vector<uint8_t> { (uint8_t)Modifier::Constant });
     }
@@ -941,32 +941,93 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     AC_TO_LOOP_END;
 
     std::function<CastPath(std::shared_ptr<Type>, std::shared_ptr<Type>)> doFromOrToLoop = nullptr;
-    doFromOrToLoop = [&](std::shared_ptr<Type> from, std::shared_ptr<Type> to) -> CastPath {
-      if (from->indirectionLevel() == 0 && from->klass) {
-        for (auto& method: from->klass->toCasts) {
+
+    #define AC_CAST_FROM_LOOP if (from->indirectionLevel() == 0 && from->klass) {\
+        for (auto& method: from->klass->toCasts) {\
           auto& special = method->returnType;
-          if (*special == *to || *special == *to->deconstify() || *special == *to->deconstify(true)) {
-            return { CC(CCT::To, method), CC(CCT::Destination) };
-          }
-          auto cast = doFromOrToLoop(special, to);
-          if (cast.size() > 0) {
-            cast.insert(cast.begin(), CC(CCT::To, method));
-            return cast;
-          }
-        }
-      }
-      if (to->indirectionLevel() == 0 && to->klass) {
-        for (auto& method: to->klass->fromCasts) {
+    #define AC_CAST_FROM_LOOP_END }}
+    #define AC_CAST_TO_LOOP if (to->indirectionLevel() == 0 && to->klass) {\
+        for (auto& method: to->klass->fromCasts) {\
           auto& special = method->parameterVariables.front()->type;
-          if (*from == *special || *from == *special->deconstify() || *from == *special->deconstify(true)) {
-            return { CC(CCT::From, method), CC(CCT::Destination) };
-          }
-          auto cast = doFromOrToLoop(from, special);
-          if (cast.size() > 0) {
-            cast.insert(cast.end() - 1, CC(CCT::From, method));
-          }
+    #define AC_CAST_TO_LOOP_END }}
+
+    doFromOrToLoop = [&](std::shared_ptr<Type> from, std::shared_ptr<Type> to) -> CastPath {
+      // basic iteration
+      AC_CAST_FROM_LOOP;
+        if (*special == *to || *special == *to->deconstify() || *special == *to->deconstify(true)) {
+          return { CC(CCT::To, method), CC(CCT::Destination) };
         }
-      }
+      AC_CAST_FROM_LOOP_END;
+      AC_CAST_TO_LOOP;
+        if (*from == *special || *from == *special->deconstify() || *from == *special->deconstify(true)) {
+          return { CC(CCT::From, method), CC(CCT::Destination) };
+        }
+      AC_CAST_TO_LOOP_END;
+
+      // native iteration - floating-point
+      AC_CAST_FROM_LOOP;
+        if (
+          special->indirectionLevel() == 0 &&
+          to->indirectionLevel() == 0 &&
+          special->isNative &&
+          to->isNative &&
+          (
+            special->nativeTypeName == NT::Float ||
+            special->nativeTypeName == NT::Double
+          ) &&
+          (
+            to->nativeTypeName == NT::Float ||
+            to->nativeTypeName == NT::Double
+          )
+        ) {
+          return { CC(CCT::To, method), CC(CCT::SimpleCoercion, to), CC(CCT::Destination) };
+        }
+      AC_CAST_FROM_LOOP_END;
+      AC_CAST_TO_LOOP;
+        if (
+          from->indirectionLevel() == 0 &&
+          special->indirectionLevel() == 0 &&
+          from->isNative &&
+          special->isNative &&
+          (
+            from->nativeTypeName == NT::Float ||
+            from->nativeTypeName == NT::Double
+          ) &&
+          (
+            special->nativeTypeName == NT::Float ||
+            special->nativeTypeName == NT::Double
+          )
+        ) {
+          return { CC(CCT::SimpleCoercion, special), CC(CCT::From, method), CC(CCT::Destination) };
+        }
+      AC_CAST_TO_LOOP_END;
+
+      AC_CAST_FROM_LOOP;
+        if (special->indirectionLevel() == 0 && to->indirectionLevel() == 0 && special->isNative && to->isNative && !special->isAny && !to->isAny) {
+          return { CC(CCT::To, method), CC(CCT::SimpleCoercion, to), CC(CCT::Destination) };
+        }
+      AC_CAST_FROM_LOOP_END;
+      AC_CAST_TO_LOOP;
+        if (from->indirectionLevel() == 0 && special->indirectionLevel() == 0 && from->isNative && special->isNative && !from->isAny && !special->isAny) {
+          return { CC(CCT::SimpleCoercion, special), CC(CCT::From, method), CC(CCT::Destination) };
+        }
+      AC_CAST_TO_LOOP_END;
+
+      // recursive iteration
+      AC_CAST_FROM_LOOP;
+        auto cast = doFromOrToLoop(special, to);
+        if (cast.size() > 0) {
+          cast.insert(cast.begin(), CC(CCT::To, method));
+          return cast;
+        }
+      AC_CAST_FROM_LOOP_END;
+      AC_CAST_TO_LOOP;
+        auto cast = doFromOrToLoop(from, special);
+        if (cast.size() > 0) {
+          cast.insert(cast.end() - 1, CC(CCT::From, method));
+        }
+      AC_CAST_TO_LOOP_END;
+
       return {};
     };
     AC_TO_LOOP;
@@ -1042,6 +1103,28 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     AC_TO_LOOP_END;
 
     AC_TO_LOOP;
+      if (
+        from->indirectionLevel() == 0 &&
+        to->indirectionLevel() == 0 &&
+        from->isNative &&
+        to->isNative &&
+        (
+          (
+            from->nativeTypeName == NT::Float ||
+            from->nativeTypeName == NT::Double
+          ) ||
+          (
+            to->nativeTypeName == NT::Float ||
+            to->nativeTypeName == NT::Double
+          )
+        )
+      ) {
+        AC_RETURN_INDEX;
+        return { CC(CCT::SimpleCoercion, to), CC(CCT::Destination) };
+      }
+    AC_TO_LOOP_END;
+
+    AC_TO_LOOP;
       if (from->indirectionLevel() == 0 && to->indirectionLevel() == 0 && from->isNative && to->isNative && !from->isAny && !to->isAny) {
         AC_RETURN_INDEX;
         return { CC(CCT::SimpleCoercion, to), CC(CCT::Destination) };
@@ -1066,7 +1149,8 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
         to->isNative &&
         (
           to->nativeTypeName == NT::Integer ||
-          to->nativeTypeName == NT::Byte
+          to->nativeTypeName == NT::Byte ||
+          to->nativeTypeName == NT::UserDefined
         )
       ) {
         AC_RETURN_INDEX;
@@ -1083,7 +1167,8 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
         from->isNative &&
         (
           from->nativeTypeName == NT::Integer ||
-          from->nativeTypeName == NT::Byte
+          from->nativeTypeName == NT::Byte ||
+          from->nativeTypeName == NT::UserDefined
         )
       ) {
         AC_RETURN_INDEX;
