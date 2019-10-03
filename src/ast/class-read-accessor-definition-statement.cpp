@@ -30,7 +30,7 @@ ALTACORE_AST_INFO_DETAIL_D(ClassReadAccessorDefinitionStatement) {
     info->type = type->fullDetail(info->inputScope);
   }
   if (!info->bodyScope) {
-    info->bodyScope = std::make_shared<DET::Scope>(info->inputScope);
+    info->bodyScope = DET::Scope::makeWithParentScope(info->inputScope);
   }
   if (!info->function) {
     info->function = DET::Function::create(info->inputScope, name, {}, info->type->type);

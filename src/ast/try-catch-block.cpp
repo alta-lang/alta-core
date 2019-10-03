@@ -6,14 +6,14 @@ const AltaCore::AST::NodeType AltaCore::AST::TryCatchBlock::nodeType() {
 
 ALTACORE_AST_DETAIL_D(TryCatchBlock) {
   ALTACORE_MAKE_DH(TryCatchBlock);
-  info->tryScope = std::make_shared<DET::Scope>(info->inputScope);
+  info->tryScope = DET::Scope::makeWithParentScope(info->inputScope);
   info->tryScope->isTry = true;
   info->tryBlock = tryBlock->fullDetail(info->tryScope);
   std::unordered_set<std::shared_ptr<DET::Type>, DET::TypePointerHash, DET::TypePointerComparator> caught;
   for (size_t i = 0; i < catchBlocks.size(); i++) {
     auto& id = catchIDs[i];
     auto& [type, block] = catchBlocks[i];
-    auto scope = std::make_shared<DET::Scope>(info->inputScope);
+    auto scope = DET::Scope::makeWithParentScope(info->inputScope);
     info->catchScopes.push_back(scope);
     auto typeDet = type->fullDetail(scope);
     auto err = typeDet->type->copy()->deconstify();
@@ -25,7 +25,7 @@ ALTACORE_AST_DETAIL_D(TryCatchBlock) {
     info->catchBlocks.push_back(std::make_pair(typeDet, stmtDet));
   }
   if (catchAllBlock) {
-    info->catchAllScope = std::make_shared<DET::Scope>(info->inputScope);
+    info->catchAllScope = DET::Scope::makeWithParentScope(info->inputScope);
     info->catchAllBlock = catchAllBlock->fullDetail(info->catchAllScope);
   } else {
     for (auto& type: info->tryScope->typesThrown) {

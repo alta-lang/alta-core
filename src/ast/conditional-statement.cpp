@@ -19,7 +19,7 @@ AltaCore::AST::ConditionalStatement::ConditionalStatement(
 ALTACORE_AST_DETAIL_D(ConditionalStatement) {
   ALTACORE_MAKE_DH(ConditionalStatement);
   info->primaryTest = primaryTest->fullDetail(scope);
-  info->primaryScope = std::make_shared<DET::Scope>(scope);
+  info->primaryScope = DET::Scope::makeWithParentScope(scope);
   info->primaryResult = primaryResult->fullDetail(info->primaryScope);
 
   for (auto& [altTest, altResult]: alternatives) {
@@ -30,7 +30,7 @@ ALTACORE_AST_DETAIL_D(ConditionalStatement) {
   }
 
   if (finalResult) {
-    info->finalScope = std::make_shared<DET::Scope>(scope);
+    info->finalScope = DET::Scope::makeWithParentScope(scope);
     info->finalResult = finalResult->fullDetail(info->finalScope);
   }
   return info;

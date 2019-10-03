@@ -46,7 +46,9 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
     //           })
     //       and have it return a bool-convertible pair-like object with [a, b] being in the order
     //       that the types matched
-    if (
+    if ((size_t)info->type >= (size_t)OperatorType::LogicalAnd) {
+      info->commonOperandType = std::make_shared<DET::Type>(DET::NativeType::Bool);
+    } else if (
       (info->leftType->pointerLevel() > 0 && info->rightType->pointerLevel() == 0 && info->rightType->isNative) ||
       (info->rightType->pointerLevel() > 0 && info->leftType->pointerLevel() == 0 && info->leftType->isNative)
     ) {

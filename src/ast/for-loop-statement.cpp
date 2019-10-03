@@ -6,7 +6,7 @@ const AltaCore::AST::NodeType AltaCore::AST::ForLoopStatement::nodeType() {
 
 ALTACORE_AST_DETAIL_D(ForLoopStatement) {
   ALTACORE_MAKE_DH(ForLoopStatement);
-  info->scope = std::make_shared<DET::Scope>(scope);
+  info->scope = DET::Scope::makeWithParentScope(scope);
   info->scope->isLoopScope = true;
 
   info->initializer = initializer->fullDetail(info->scope);

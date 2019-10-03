@@ -26,6 +26,7 @@ namespace AltaCore {
         std::weak_ptr<Class> parentClass;
 
         std::vector<std::shared_ptr<ScopeItem>> items;
+        std::vector<std::shared_ptr<Scope>> childScopes;
         size_t relativeID = 0;
         size_t nextChildID = 0;
         size_t nextItemID = 0;
@@ -41,6 +42,8 @@ namespace AltaCore {
         Scope(std::shared_ptr<Function> parentFunction);
         Scope(std::shared_ptr<Namespace> parentNamespace);
         Scope(std::shared_ptr<Class> parentClass);
+
+        static std::shared_ptr<Scope> makeWithParentScope(std::shared_ptr<Scope> parent);
 
         std::vector<std::shared_ptr<ScopeItem>> findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes = {}, bool searchParents = true, std::shared_ptr<Scope> originScope = nullptr);
         void hoist(std::shared_ptr<ScopeItem> item);

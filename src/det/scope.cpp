@@ -26,6 +26,12 @@ std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Scope::deepClone() {
   return self;
 };
 
+auto AltaCore::DET::Scope::makeWithParentScope(std::shared_ptr<Scope> parent) -> std::shared_ptr<Scope> {
+  auto scope = std::make_shared<Scope>(parent);
+  parent->childScopes.push_back(scope);
+  return scope;
+};
+
 AltaCore::DET::Scope::Scope() {};
 AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Scope> _parent):
   parent(_parent),
