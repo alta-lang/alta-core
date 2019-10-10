@@ -952,6 +952,11 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     #define AC_CAST_TO_LOOP_END }}
 
     doFromOrToLoop = [&](std::shared_ptr<Type> from, std::shared_ptr<Type> to) -> CastPath {
+      // simple equality
+      if (*from == *to) {
+        return { CC(CCT::Destination) };
+      }
+
       // basic iteration
       AC_CAST_FROM_LOOP;
         if (*special == *to || *special == *to->deconstify() || *special == *to->deconstify(true)) {
@@ -1011,6 +1016,37 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
         if (from->indirectionLevel() == 0 && special->indirectionLevel() == 0 && from->isNative && special->isNative && !from->isAny && !special->isAny) {
           return { CC(CCT::SimpleCoercion, special), CC(CCT::From, method), CC(CCT::Destination) };
         }
+      AC_CAST_TO_LOOP_END;
+
+      AC_CAST_FROM_LOOP;
+        size_t maxToRefLevel = 0;
+        if (to->referenceLevel() > maxToRefLevel) {
+          maxToRefLevel = to->referenceLevel();
+        }
+
+        if (special->referenceLevel() < maxToRefLevel) {
+          auto cast = doFromOrToLoop(special->reference(), to);
+          if (cast.size() > 0) {
+            cast.insert(cast.begin(), CC(CCT::Reference));
+            cast.insert(cast.begin(), CC(CCT::To, method));
+            return cast;
+          }
+        };
+      AC_CAST_FROM_LOOP_END;
+      AC_CAST_TO_LOOP;
+        size_t maxToRefLevel = 0;
+        if (special->referenceLevel() > maxToRefLevel) {
+          maxToRefLevel = special->referenceLevel();
+        }
+
+        if (from->referenceLevel() < maxToRefLevel) {
+          auto cast = doFromOrToLoop(from->reference(), special);
+          if (cast.size() > 0) {
+            cast.insert(cast.begin(), CC(CCT::From, method));
+            cast.insert(cast.begin(), CC(CCT::Reference));
+            return cast;
+          }
+        };
       AC_CAST_TO_LOOP_END;
 
       // recursive iteration
