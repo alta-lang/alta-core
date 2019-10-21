@@ -34,22 +34,25 @@ ALTACORE_AST_DETAIL_D(ExportStatement) {
       }
     }
   } else {
-    info->localTarget = localTarget->fullDetail(info->inputScope);
+    for (auto& [localTarget, localTargetAlias]: localTargets) {
+      info->localTargets.push_back(localTarget->fullDetail(info->inputScope));
+      auto& localTargetInfo = info->localTargets.back();
 
-    auto parentMod = Util::getModule(info->inputScope.get()).lock();
+      auto parentMod = Util::getModule(info->inputScope.get()).lock();
 
-    for (auto& item: info->localTarget->items) {
-      if (auto var = std::dynamic_pointer_cast<DET::Variable>(item)) {
-        Util::exportClassIfNecessary(var->parentScope.lock(), var->type, true);
-        var->isExport = true;
-      } else if (auto func = std::dynamic_pointer_cast<DET::Function>(item)) {
-        func->isExport = true;
-      } else if (auto klass = std::dynamic_pointer_cast<DET::Class>(item)) {
-        klass->isExport = true;
+      for (auto& item: localTargetInfo->items) {
+        if (auto var = std::dynamic_pointer_cast<DET::Variable>(item)) {
+          Util::exportClassIfNecessary(var->parentScope.lock(), var->type, true);
+          var->isExport = true;
+        } else if (auto func = std::dynamic_pointer_cast<DET::Function>(item)) {
+          func->isExport = true;
+        } else if (auto klass = std::dynamic_pointer_cast<DET::Class>(item)) {
+          klass->isExport = true;
+        }
+
+        auto aliasItem = std::make_shared<DET::Alias>(localTargetAlias.empty() ? localTarget->query : localTargetAlias, item, parentMod->exports);
+        parentMod->exports->items.push_back(aliasItem);
       }
-
-      auto aliasItem = std::make_shared<DET::Alias>(localTargetAlias.empty() ? localTarget->query : localTargetAlias, item, parentMod->exports);
-      parentMod->exports->items.push_back(aliasItem);
     }
   }
 
@@ -61,10 +64,14 @@ ALTACORE_AST_VALIDATE_D(ExportStatement) {
 
   if (externalTarget) {
     externalTarget->validate(stack, info->externalTarget);
-  } else if (localTarget) {
-    localTarget->validate(stack, info->localTarget);
+  } else if (localTargets.size() > 0) {
+    for (size_t i = 0; i < localTargets.size(); ++i) {
+      auto& [localTarget, localTargetAlias] = localTargets[i];
+      auto& localTargetInfo = info->localTargets[i];
+      localTarget->validate(stack, localTargetInfo);
+    }
   } else {
-    ALTACORE_VALIDATION_ERROR("export statement must have (a) local or external target[s]");
+    ALTACORE_VALIDATION_ERROR("export statement must have at least one local or external target");
   }
 
   ALTACORE_VS_E;

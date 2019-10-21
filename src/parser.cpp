@@ -165,6 +165,13 @@ namespace AltaCore {
       if (operatorTokens.size() != operatorTypes.size()) {
         throw std::runtime_error("malformed binary operation expectation: the number of operator tokens must match the number of operator types.");
       }
+      auto addPositionInformation = [&](std::shared_ptr<AST::Node> node) -> void {
+        auto& tok = tokens[state.stateAtStart.currentPosition];
+        node->position.line = tok.line;
+        node->position.column = tok.column;
+        node->position.filePosition = tok.position;
+        node->position.file = filePath;
+      };
       if (state.internalIndex == 0) {
         state.internalIndex = 1;
         next(true, { nextHigherPrecedentRule }, nullptr);
@@ -176,6 +183,7 @@ namespace AltaCore {
         }
 
         auto binOp = std::make_shared<AST::BinaryOperation>();
+        addPositionInformation(binOp);
         binOp->left = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
         size_t idx = SIZE_MAX;
@@ -232,6 +240,7 @@ namespace AltaCore {
 
         if (idx != SIZE_MAX) {
           auto otherBinOp = std::make_shared<AST::BinaryOperation>();
+          addPositionInformation(otherBinOp);
           otherBinOp->left = binOp;
           otherBinOp->type = operatorTypes[idx];
 
@@ -585,6 +594,21 @@ namespace AltaCore {
       relexer(filePath)
       {};
 
+    struct NodeFactory {
+      std::function<void(std::shared_ptr<AST::Node>)> _addPositionInformation;
+
+      NodeFactory(std::function<void(std::shared_ptr<AST::Node>)> addPositionInformation):
+        _addPositionInformation(addPositionInformation)
+        {};
+
+      template<typename T, typename... Args>
+      std::shared_ptr<T> create(Args&&... args) {
+        auto node = std::make_shared<T>(std::forward<Args>(args)...);
+        _addPositionInformation(node);
+        return node;
+      };
+    };
+
     void Parser::parse() {
       auto absoluteFilePath = filePath.absolutify();
       Timing::parseTimes[absoluteFilePath].start();
@@ -599,6 +623,17 @@ namespace AltaCore {
         std::make_tuple(currentState, std::deque<bool>(), std::deque<bool>(), true)
       );
 
+      auto addPositionInformation = [&](std::shared_ptr<AST::Node> node) -> void {
+        auto& state = std::get<2>(ruleStack.top());
+        auto& tok = tokens[state.stateAtStart.currentPosition];
+        node->position.line = tok.line;
+        node->position.column = tok.column;
+        node->position.filePosition = tok.position;
+        node->position.file = filePath;
+      };
+
+      auto nodeFactory = NodeFactory(addPositionInformation);
+
       auto next = [&](bool ok = false, std::vector<RuleType> rules = {}, NodeType result = nullptr) {
         auto& state = std::get<2>(ruleStack.top());
         state.iteration++;
@@ -608,18 +643,11 @@ namespace AltaCore {
         }
 
         if (result) {
-          auto& tok = tokens[state.stateAtStart.currentPosition];
-          result->position.line = tok.line;
-          result->position.column = tok.column;
-          result->position.filePosition = tok.position;
-          result->position.file = filePath;
+          addPositionInformation(result);
 
           if (auto statement = std::dynamic_pointer_cast<AST::ExportStatement>(result)) {
             if (statement->externalTarget) {
-              statement->externalTarget->position.line = tok.line;
-              statement->externalTarget->position.column = tok.column;
-              statement->externalTarget->position.filePosition = tok.position;
-              statement->externalTarget->position.file = filePath;
+              addPositionInformation(statement->externalTarget);
             }
           }
         }
@@ -859,7 +887,7 @@ namespace AltaCore {
             throw Errors::ParsingError("input not completely parsed; assuming failure", Errors::Position(tok.line, tok.column, filePath));
           }
 
-          root = std::make_shared<AST::RootNode>(statements);
+          root = nodeFactory.create<AST::RootNode>(statements);
 
           next(true);
           break;
@@ -938,7 +966,7 @@ namespace AltaCore {
           if (exp.type == RuleType::Expression) {
             auto expr = std::dynamic_pointer_cast<AST::ExpressionNode>(*exp.item);
             if (expr == nullptr) throw std::runtime_error("wtf");
-            ret = std::make_shared<AST::ExpressionStatement>(expr);
+            ret = nodeFactory.create<AST::ExpressionStatement>(expr);
           }
 
           ACP_NODE(ret);
@@ -960,7 +988,7 @@ namespace AltaCore {
 
             exps.pop_back();
 
-            auto funcDef = std::make_shared<AST::FunctionDefinitionNode>();
+            auto funcDef = nodeFactory.create<AST::FunctionDefinitionNode>();
             funcDef->modifiers = expectModifiers(ModifierTargetType::Function);
 
             ruleNode = std::move(funcDef);
@@ -986,7 +1014,7 @@ namespace AltaCore {
             
             if (expect(TokenType::OpeningAngleBracket)) {
               while (auto generic = expect(TokenType::Identifier)) {
-                funcDef->generics.push_back(std::make_shared<AST::Generic>(generic.raw));
+                funcDef->generics.push_back(nodeFactory.create<AST::Generic>(generic.raw));
                 if (!expect(TokenType::Comma)) break;
               }
               if (funcDef->generics.size() < 1) ACP_NOT_OK;
@@ -1042,7 +1070,7 @@ namespace AltaCore {
 
             exps.pop_back(); // remove the last (implicitly invalid) expectation
 
-            auto param = std::make_shared<AST::Parameter>();
+            auto param = nodeFactory.create<AST::Parameter>();
 
             for (auto& exp: exps) {
               param->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
@@ -1074,7 +1102,7 @@ namespace AltaCore {
             auto param = std::dynamic_pointer_cast<AST::Parameter>(ruleNode);
 
             if (isAny) {
-              param->type = std::make_shared<AST::Type>();
+              param->type = nodeFactory.create<AST::Type>();
               param->type->isAny = true;
             } else {
               param->type = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
@@ -1128,7 +1156,7 @@ namespace AltaCore {
               ACP_EXP(exps.back().item);
             }
 
-            auto acc = std::make_shared<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item), query.raw);
+            auto acc = nodeFactory.create<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item), query.raw);
 
             savedState = currentState;
             while (expect(TokenType::Dot)) {
@@ -1137,7 +1165,7 @@ namespace AltaCore {
                 currentState = savedState;
                 break;
               }
-              acc = std::make_shared<AST::Accessor>(acc, query.raw);
+              acc = nodeFactory.create<AST::Accessor>(acc, query.raw);
               savedState = currentState;
             }
 
@@ -1153,7 +1181,7 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::Type) {
           if (state.internalIndex == 0) {
-            auto type = std::make_shared<AST::Type>();
+            auto type = nodeFactory.create<AST::Type>();
 
             auto modifiers = expectModifiers(ModifierTargetType::Type);
             type->modifiers.push_back(0);
@@ -1239,7 +1267,7 @@ namespace AltaCore {
             } else {
               auto otherType = std::get<0>(type->parameters[0]);
               if (expect(TokenType::QuestionMark)) {
-                auto newType = std::make_shared<AST::Type>();
+                auto newType = nodeFactory.create<AST::Type>();
                 newType->modifiers = type->modifiers;
                 newType->isOptional = true;
                 newType->optionalTarget = otherType;
@@ -1268,7 +1296,7 @@ namespace AltaCore {
             auto leftType = std::dynamic_pointer_cast<AST::Type>(ruleNode);
             auto rightType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
 
-            auto resultType = rightType->unionOf.size() > 0 ? rightType : std::make_shared<AST::Type>(std::vector<std::shared_ptr<AST::Type>> { rightType });
+            auto resultType = rightType->unionOf.size() > 0 ? rightType : nodeFactory.create<AST::Type>(std::vector<std::shared_ptr<AST::Type>> { rightType });
             resultType->unionOf.insert(resultType->unionOf.begin(), leftType);
             ACP_NODE(resultType);
           } else {
@@ -1303,7 +1331,7 @@ namespace AltaCore {
             }
 
             if (expect(TokenType::QuestionMark)) {
-              auto wrapped = std::make_shared<AST::Type>();
+              auto wrapped = nodeFactory.create<AST::Type>();
               wrapped->lookup = type->lookup;
               wrapped->isNative = type->isNative;
               wrapped->name = type->name;
@@ -1324,7 +1352,7 @@ namespace AltaCore {
         } else if (rule == RuleType::IntegralLiteral) {
           auto integer = expect(TokenType::Integer);
           if (!integer) ACP_NOT_OK;
-          ACP_NODE(std::make_shared<AST::IntegerLiteralNode>(integer.raw));
+          ACP_NODE(nodeFactory.create<AST::IntegerLiteralNode>(integer.raw));
         } else if (rule == RuleType::ReturnDirective) {
           if (state.internalIndex == 0) {
             if (!expectKeyword("return")) ACP_NOT_OK;
@@ -1335,14 +1363,14 @@ namespace AltaCore {
             if (exps.back()) {
               expr = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
             }
-            ACP_NODE(std::make_shared<AST::ReturnDirectiveNode>(expr));
+            ACP_NODE(nodeFactory.create<AST::ReturnDirectiveNode>(expr));
           }
         } else if (rule == RuleType::Block) {
           if (state.internalIndex == 0) {
             if (!expect(TokenType::OpeningBrace)) ACP_NOT_OK;
 
             state.internalIndex = 1;
-            ruleNode = std::make_shared<AST::BlockNode>();
+            ruleNode = nodeFactory.create<AST::BlockNode>();
 
             ACP_RULE(Statement);
           } else {
@@ -1360,7 +1388,7 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::VariableDefinition) {
           if (state.internalIndex == 0) {
-            auto varDef = std::make_shared<AST::VariableDefinitionExpression>();
+            auto varDef = nodeFactory.create<AST::VariableDefinitionExpression>();
 
             const auto saved = currentState;
             varDef->modifiers = expectModifiers(ModifierTargetType::Variable);
@@ -1412,7 +1440,7 @@ namespace AltaCore {
             auto id = expect(TokenType::Identifier);
             if (!id) ACP_NOT_OK;
 
-            auto fetch = std::make_shared<AST::Fetch>(id.raw);
+            auto fetch = nodeFactory.create<AST::Fetch>(id.raw);
 
             saveState();
             if (expect(TokenType::OpeningAngleBracket)) {
@@ -1453,7 +1481,7 @@ namespace AltaCore {
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
 
-            auto assignment = std::make_shared<AST::AssignmentExpression>();
+            auto assignment = nodeFactory.create<AST::AssignmentExpression>();
             assignment->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
             ruleNode = std::move(assignment);
@@ -1612,9 +1640,9 @@ namespace AltaCore {
           modName = Util::unescape(modName);
           std::shared_ptr<AST::ImportStatement> node = nullptr;
           if (isAlias) {
-            node = std::make_shared<AST::ImportStatement>(modName, alias);
+            node = nodeFactory.create<AST::ImportStatement>(modName, alias);
           } else {
-            node = std::make_shared<AST::ImportStatement>(modName, imports);
+            node = nodeFactory.create<AST::ImportStatement>(modName, imports);
           }
           Timing::parseTimes[absoluteFilePath].stop();
           node->parse(filePath);
@@ -1622,9 +1650,9 @@ namespace AltaCore {
           ACP_NODE(node);
         } else if (rule == RuleType::BooleanLiteral) {
           if (expectKeyword("true")) {
-            ACP_NODE((std::make_shared<AST::BooleanLiteralNode>(true)));
+            ACP_NODE((nodeFactory.create<AST::BooleanLiteralNode>(true)));
           } else if (expectKeyword("false")) {
-            ACP_NODE((std::make_shared<AST::BooleanLiteralNode>(false)));
+            ACP_NODE((nodeFactory.create<AST::BooleanLiteralNode>(false)));
           }
         } else if (rule == RuleType::FunctionCallOrSubscriptOrAccessorOrPostIncDec) {
           if (state.internalIndex == 0) {
@@ -1665,7 +1693,7 @@ namespace AltaCore {
             }
 
             if (isCall) {
-              auto funcCall = std::make_shared<AST::FunctionCallExpression>();
+              auto funcCall = nodeFactory.create<AST::FunctionCallExpression>();
               funcCall->target = target;
               funcCall->maybe = isMaybe;
 
@@ -1685,7 +1713,7 @@ namespace AltaCore {
 
               ACP_RULE(Expression);
             } else if (isSubscript) {
-              auto subs = std::make_shared<AST::SubscriptExpression>();
+              auto subs = nodeFactory.create<AST::SubscriptExpression>();
               subs->target = target;
 
               ruleNode = std::move(subs);
@@ -1700,7 +1728,7 @@ namespace AltaCore {
 
               ACP_RULE(NullRule);
             } else {
-              auto op = std::make_shared<AST::UnaryOperation>();
+              auto op = nodeFactory.create<AST::UnaryOperation>();
               op->target = target;
 
               if (isPostIncrement) {
@@ -1787,7 +1815,7 @@ namespace AltaCore {
             Token id;
             saveState();
             while (expect(TokenType::Dot) && (id = expect(TokenType::Identifier))) {
-              ruleNode = std::make_shared<AST::Accessor>(target, id.raw);
+              ruleNode = nodeFactory.create<AST::Accessor>(target, id.raw);
               target = std::dynamic_pointer_cast<AST::ExpressionNode>(ruleNode);
               saveState();
             }
@@ -1807,17 +1835,17 @@ namespace AltaCore {
         } else if (rule == RuleType::String) {
           auto raw = expect(TokenType::String);
           if (!raw) ACP_NOT_OK;
-          ACP_NODE((std::make_shared<AST::StringLiteralNode>(Util::unescape(raw.raw.substr(1, raw.raw.length() - 2)))));
+          ACP_NODE((nodeFactory.create<AST::StringLiteralNode>(Util::unescape(raw.raw.substr(1, raw.raw.length() - 2)))));
         } else if (rule == RuleType::Character) {
           auto raw = expect(TokenType::Character);
           if (!raw) ACP_NOT_OK;
           auto cont = raw.raw.substr(1, raw.raw.length() - 2);
-          ACP_NODE((std::make_shared<AST::CharacterLiteralNode>((cont.length() == 2) ? cont[1] : cont[0], cont.length() == 2)));
+          ACP_NODE((nodeFactory.create<AST::CharacterLiteralNode>((cont.length() == 2) ? cont[1] : cont[0], cont.length() == 2)));
         } else if (rule == RuleType::FunctionDeclaration) {
           if (state.internalIndex == 0) {
             if (!expectKeyword("declare")) ACP_NOT_OK;
 
-            auto funcDecl = std::make_shared<AST::FunctionDeclarationNode>();
+            auto funcDecl = nodeFactory.create<AST::FunctionDeclarationNode>();
             funcDecl->modifiers = expectModifiers(ModifierTargetType::Function);
 
             if (!expectKeyword("function")) ACP_NOT_OK;
@@ -1865,7 +1893,7 @@ namespace AltaCore {
           if (state.internalIndex == 0) {
             if (!expect(TokenType::AtSign)) ACP_NOT_OK;
 
-            auto attr = std::make_shared<AST::AttributeNode>();
+            auto attr = nodeFactory.create<AST::AttributeNode>();
 
             auto idExp = expect(TokenType::Identifier);
             while (idExp) {
@@ -1921,7 +1949,7 @@ namespace AltaCore {
             ACP_RULE(Attribute);
           } else {
             if (!exps.back()) ACP_NOT_OK;
-            ACP_NODE((std::make_shared<AST::AttributeStatement>(std::dynamic_pointer_cast<AST::AttributeNode>(*exps.back().item))));
+            ACP_NODE((nodeFactory.create<AST::AttributeStatement>(std::dynamic_pointer_cast<AST::AttributeNode>(*exps.back().item))));
           }
         } else if (rule == RuleType::AnyLiteral) {
           if (state.internalIndex == 0) {
@@ -1947,7 +1975,7 @@ namespace AltaCore {
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
 
-            auto cond = std::make_shared<AST::ConditionalStatement>();
+            auto cond = nodeFactory.create<AST::ConditionalStatement>();
             cond->primaryTest = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
             ruleNode = std::move(cond);
@@ -2034,7 +2062,7 @@ namespace AltaCore {
 
             if (!expect(TokenType::QuestionMark)) ACP_EXP(exps.back().item);
 
-            auto cond = std::make_shared<AST::ConditionalExpression>();
+            auto cond = nodeFactory.create<AST::ConditionalExpression>();
             cond->test = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
             state.internalIndex = 2;
@@ -2102,7 +2130,7 @@ namespace AltaCore {
             auto id = expect(TokenType::Identifier);
             if (!id) ACP_NOT_OK;
 
-            auto def = std::make_shared<AST::ClassDefinitionNode>(id.raw);
+            auto def = nodeFactory.create<AST::ClassDefinitionNode>(id.raw);
             def->modifiers = mods;
 
             if (expect(TokenType::OpeningAngleBracket)) {
@@ -2188,7 +2216,7 @@ namespace AltaCore {
             auto visibilityMod = expectModifier(ModifierTargetType::ClassStatement);
             if (!visibilityMod) ACP_NOT_OK;
 
-            ruleNode = std::make_shared<AST::ClassMemberDefinitionStatement>(AST::parseVisibility(*visibilityMod));
+            ruleNode = nodeFactory.create<AST::ClassMemberDefinitionStatement>(AST::parseVisibility(*visibilityMod));
             state.internalIndex = 1;
             ACP_RULE(VariableDefinition);
           } else {
@@ -2221,7 +2249,7 @@ namespace AltaCore {
             }
 
             state.internalValue = attrs;
-            ruleNode = std::make_shared<AST::ClassMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod));
+            ruleNode = nodeFactory.create<AST::ClassMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod));
             state.internalIndex = 2;
             inClass = true;
             ACP_RULE(FunctionDefinition);
@@ -2252,7 +2280,7 @@ namespace AltaCore {
             auto visibilityMod = expectModifier(ModifierTargetType::ClassStatement);
             if (!visibilityMod) ACP_NOT_OK;
 
-            auto method = std::make_shared<AST::ClassSpecialMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod), AST::SpecialClassMethod::Constructor);
+            auto method = nodeFactory.create<AST::ClassSpecialMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod), AST::SpecialClassMethod::Constructor);
 
             ruleNode = std::move(method);
             state.internalIndex = 2;
@@ -2338,7 +2366,7 @@ namespace AltaCore {
             if (!expectKeyword("new")) {
               state.internalIndex = 4;
               if (inClass) {
-                ruleNode = std::make_shared<AST::ClassInstantiationExpression>();
+                ruleNode = nodeFactory.create<AST::ClassInstantiationExpression>();
                 state.internalIndex = 5;
                 ACP_RULE(SuperClassFetch);
               }
@@ -2354,7 +2382,7 @@ namespace AltaCore {
               );
             }
 
-            auto inst = std::make_shared<AST::ClassInstantiationExpression>();
+            auto inst = nodeFactory.create<AST::ClassInstantiationExpression>();
 
             if (expectKeyword("persistent") || expect(TokenType::Asterisk)) {
               inst->persistent = true;
@@ -2452,7 +2480,7 @@ namespace AltaCore {
             ACP_RULE(NotOrPointerOrDereferenceOrPreIncDecOrPlusMinusOrBitNot);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
-            auto cast = std::make_shared<AST::CastExpression>();
+            auto cast = nodeFactory.create<AST::CastExpression>();
             cast->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
             ruleNode = std::move(cast);
             saveState();
@@ -2493,11 +2521,11 @@ namespace AltaCore {
               (isBitwiseNot =   !!expect(TokenType::Tilde))
             ) {
               if (isPointer) {
-                exprs.push(std::make_shared<AST::PointerExpression>());
+                exprs.push(nodeFactory.create<AST::PointerExpression>());
               } else if (isDereference) {
-                exprs.push(std::make_shared<AST::DereferenceExpression>());
+                exprs.push(nodeFactory.create<AST::DereferenceExpression>());
               } else {
-                auto expr = std::make_shared<AST::UnaryOperation>();
+                auto expr = nodeFactory.create<AST::UnaryOperation>();
                 if (isNot) {
                   expr->type = AST::UOperatorType::Not;
                 } else if (isPreIncrement) {
@@ -2552,7 +2580,7 @@ namespace AltaCore {
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
 
-            auto loop = std::make_shared<AST::WhileLoopStatement>();
+            auto loop = nodeFactory.create<AST::WhileLoopStatement>();
             loop->test = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
             
             ruleNode = std::move(loop);
@@ -2575,7 +2603,7 @@ namespace AltaCore {
 
             exps.pop_back();
 
-            auto typeAlias = ruleNode ? std::dynamic_pointer_cast<AST::TypeAliasStatement>(ruleNode) : std::make_shared<AST::TypeAliasStatement>();
+            auto typeAlias = ruleNode ? std::dynamic_pointer_cast<AST::TypeAliasStatement>(ruleNode) : nodeFactory.create<AST::TypeAliasStatement>();
             auto mods = expectModifiers(ModifierTargetType::TypeAlias);
             typeAlias->modifiers.insert(typeAlias->modifiers.end(), mods.begin(), mods.end());
 
@@ -2607,7 +2635,7 @@ namespace AltaCore {
             typeAlias->name = name.raw;
 
             if (expectKeyword("any")) {
-              typeAlias->type = std::make_shared<AST::Type>();
+              typeAlias->type = nodeFactory.create<AST::Type>();
               typeAlias->type->isAny = true;
               ACP_NODE(typeAlias);
             }
@@ -2623,10 +2651,10 @@ namespace AltaCore {
         } else if (rule == RuleType::SuperClassFetch) {
           if (state.internalIndex == 0) {
             if (!expectKeyword("super")) ACP_NOT_OK;
-            auto sup = std::make_shared<AST::SuperClassFetch>();
+            auto sup = nodeFactory.create<AST::SuperClassFetch>();
             if (expect(TokenType::OpeningAngleBracket)) {
               if (auto lit = expect(TokenType::Integer)) {
-                sup->fetch = std::make_shared<AST::IntegerLiteralNode>(lit.raw);
+                sup->fetch = nodeFactory.create<AST::IntegerLiteralNode>(lit.raw);
                 if (!expect(TokenType::ClosingAngleBracket)) ACP_NOT_OK;
               } else {
                 state.internalIndex = 1;
@@ -2652,7 +2680,7 @@ namespace AltaCore {
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
             if (!expectKeyword("instanceof")) ACP_EXP(exps.back().item);
-            auto instOf = std::make_shared<AST::InstanceofExpression>();
+            auto instOf = nodeFactory.create<AST::InstanceofExpression>();
             instOf->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
             ruleNode = std::move(instOf);
             state.internalIndex = 2;
@@ -2667,7 +2695,7 @@ namespace AltaCore {
           if (state.internalIndex == 0) {
             auto name = expect(TokenType::Identifier);
             if (!name) ACP_NOT_OK;
-            auto node = std::make_shared<AST::Generic>(name.raw);
+            auto node = nodeFactory.create<AST::Generic>(name.raw);
             ACP_NODE(node);
           }
         } else if (rule == RuleType::NullRule) {
@@ -2682,7 +2710,7 @@ namespace AltaCore {
           } else if (state.internalIndex == 1) {
             if (!expect(TokenType::Semicolon)) ACP_NOT_OK;
 
-            ruleNode = std::make_shared<AST::ForLoopStatement>();
+            ruleNode = nodeFactory.create<AST::ForLoopStatement>();
             auto loop = std::dynamic_pointer_cast<AST::ForLoopStatement>(ruleNode);
             if (exps.back()) {
               loop->initializer = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
@@ -2722,7 +2750,7 @@ namespace AltaCore {
           if (state.internalIndex == 0) {
             if (!expectKeyword("for")) ACP_NOT_OK;
 
-            auto loop = std::make_shared<AST::RangedForLoopStatement>();
+            auto loop = nodeFactory.create<AST::RangedForLoopStatement>();
             ruleNode = loop;
 
             auto name = expect(TokenType::Identifier);
@@ -2810,7 +2838,7 @@ namespace AltaCore {
             ACP_RULE(Type);
           } else {
             if (!exps.back()) ACP_NOT_OK;
-            auto op = std::make_shared<AST::SizeofOperation>();
+            auto op = nodeFactory.create<AST::SizeofOperation>();
             op->target = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
             ACP_NODE(op);
           }
@@ -2867,7 +2895,7 @@ namespace AltaCore {
         } else if (rule == RuleType::DecimalLiteral) {
           auto decimal = expect(TokenType::Decimal);
           if (!decimal) ACP_NOT_OK;
-          ACP_NODE(std::make_shared<AST::FloatingPointLiteralNode>(decimal.raw));
+          ACP_NODE(nodeFactory.create<AST::FloatingPointLiteralNode>(decimal.raw));
         } else if (rule == RuleType::Structure) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
@@ -2877,7 +2905,7 @@ namespace AltaCore {
 
             exps.pop_back();
 
-            auto structure = ruleNode ? std::dynamic_pointer_cast<AST::StructureDefinitionStatement>(ruleNode) : std::make_shared<AST::StructureDefinitionStatement>();
+            auto structure = ruleNode ? std::dynamic_pointer_cast<AST::StructureDefinitionStatement>(ruleNode) : nodeFactory.create<AST::StructureDefinitionStatement>();
             auto mods = expectModifiers(ModifierTargetType::Structure);
             structure->modifiers.insert(structure->modifiers.end(), mods.begin(), mods.end());
 
@@ -2946,11 +2974,11 @@ namespace AltaCore {
           if (state.internalIndex == 0) {
             if (!expectKeyword("export")) ACP_NOT_OK;
 
-            auto statement = std::make_shared<AST::ExportStatement>();
+            auto statement = nodeFactory.create<AST::ExportStatement>();
             ruleNode = statement;
 
             if (expect(TokenType::Asterisk)) {
-              statement->externalTarget = std::make_shared<AST::ImportStatement>();
+              statement->externalTarget = nodeFactory.create<AST::ImportStatement>();
               statement->externalTarget->isAliased = statement->externalTarget->isManual = true;
               bool foundAs = false;
               if (expectKeyword("as")) {
@@ -2975,8 +3003,7 @@ namespace AltaCore {
             state.internalValue = false;
 
             if (expect(TokenType::OpeningBrace)) {
-              statement->externalTarget = std::make_shared<AST::ImportStatement>();
-              state.internalIndex = 2;
+              state.internalIndex = 3;
               state.internalValue = true;
               ACP_RULE(NullRule);
             }
@@ -2992,7 +3019,7 @@ namespace AltaCore {
 
             if (expect(TokenType::Comma)) {
               restoreState();
-              statement->externalTarget = std::make_shared<AST::ImportStatement>();
+              statement->externalTarget = nodeFactory.create<AST::ImportStatement>();
               state.internalIndex = 2;
               ACP_RULE(NullRule);
             }
@@ -3004,13 +3031,12 @@ namespace AltaCore {
 
             if (expectKeyword("from") && expect(TokenType::String)) {
               restoreState();
-              statement->externalTarget = std::make_shared<AST::ImportStatement>();
+              statement->externalTarget = nodeFactory.create<AST::ImportStatement>();
               state.internalIndex = 2;
               ACP_RULE(NullRule);
             }
 
-            statement->localTarget = std::dynamic_pointer_cast<AST::RetrievalNode>(*exps.back().item);
-            statement->localTargetAlias = alias ? alias.raw : "";
+            statement->localTargets.push_back(std::make_pair(std::dynamic_pointer_cast<AST::RetrievalNode>(*exps.back().item), alias ? alias.raw : ""));
 
             ACP_NODE(statement);
           } else if (state.internalIndex == 2) {
@@ -3043,6 +3069,40 @@ namespace AltaCore {
             statement->externalTarget->request = request.raw.substr(1, request.raw.length() - 2);
 
             ACP_NODE(statement);
+          } else if (state.internalIndex == 3 || state.internalIndex == 4) {
+            auto statement = std::dynamic_pointer_cast<AST::ExportStatement>(ruleNode);
+
+            if (state.internalIndex == 3) {
+              state.internalIndex = 4;
+              ACP_RULE(StrictAccessor);
+            } else if (exps.back()) {
+              statement->localTargets.push_back(std::make_pair(std::dynamic_pointer_cast<AST::RetrievalNode>(*exps.back().item), ""));
+              if (expectKeyword("as")) {
+                auto alias = expect(TokenType::Identifier);
+                if (!alias) {
+                  ACP_NOT_OK;
+                } else {
+                  statement->localTargets.back().second = alias.raw;
+                }
+              }
+              if (expect(TokenType::Comma)) {
+                state.internalIndex = 3;
+                ACP_RULE(NullRule);
+              }
+            }
+
+            if (!expect(TokenType::ClosingBrace)) ACP_NOT_OK;
+
+            if (expectKeyword("from")) {
+              statement->localTargets.clear();
+              restoreState();
+              statement->externalTarget = nodeFactory.create<AST::ImportStatement>();
+              state.internalIndex = 2;
+              state.internalValue = true;
+              ACP_RULE(NullRule);
+            }
+
+            ACP_NODE(statement);
           }
         } else if (rule == RuleType::VariableDeclaration) {
           if (state.internalIndex == 0) {
@@ -3055,7 +3115,7 @@ namespace AltaCore {
 
             exps.pop_back();
 
-            auto var = ruleNode ? std::dynamic_pointer_cast<AST::VariableDeclarationStatement>(ruleNode) : std::make_shared<AST::VariableDeclarationStatement>();
+            auto var = ruleNode ? std::dynamic_pointer_cast<AST::VariableDeclarationStatement>(ruleNode) : nodeFactory.create<AST::VariableDeclarationStatement>();
             auto mods = expectModifiers(ModifierTargetType::Variable);
             var->modifiers.insert(var->modifiers.end(), mods.begin(), mods.end());
 
@@ -3106,7 +3166,7 @@ namespace AltaCore {
 
             if (!expect(TokenType::EqualSign)) ACP_NOT_OK;
 
-            auto alias = std::make_shared<AST::AliasStatement>();
+            auto alias = nodeFactory.create<AST::AliasStatement>();
             alias->name = name.raw;
 
             ruleNode = std::move(alias);
@@ -3124,7 +3184,7 @@ namespace AltaCore {
           if (state.internalIndex == 0) {
             if (!expectKeyword("delete")) ACP_NOT_OK;
 
-            auto del = std::make_shared<AST::DeleteStatement>();
+            auto del = nodeFactory.create<AST::DeleteStatement>();
 
             if (expectKeyword("persistent") || expect(TokenType::Asterisk)) {
               del->persistent = true;
@@ -3143,7 +3203,7 @@ namespace AltaCore {
             ACP_NODE(del);
           }
         } else if (rule == RuleType::ControlDirective) {
-          auto ctrl = std::make_shared<AST::ControlDirective>();
+          auto ctrl = nodeFactory.create<AST::ControlDirective>();
           if (expectKeyword("continue")) {
             ctrl->isBreak = false;
           } else if (expectKeyword("break")) {
@@ -3159,7 +3219,7 @@ namespace AltaCore {
             ACP_RULE(Statement);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
-            auto blk = std::make_shared<AST::TryCatchBlock>();
+            auto blk = nodeFactory.create<AST::TryCatchBlock>();
             ruleNode = blk;
             blk->tryBlock = std::dynamic_pointer_cast<AST::StatementNode>(*exps.back().item);
             if (!expectKeyword("catch")) ACP_NOT_OK;
@@ -3204,13 +3264,13 @@ namespace AltaCore {
             ACP_RULE(Expression);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
-            auto stmt = std::make_shared<AST::ThrowStatement>();
+            auto stmt = nodeFactory.create<AST::ThrowStatement>();
             stmt->expression = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
             ACP_NODE(stmt);
           }
         } else if (rule == RuleType::Nullptr) {
           if (!expectKeyword("nullptr") && !expectKeyword("null")) ACP_NOT_OK;
-          auto node = std::make_shared<AST::NullptrExpression>();
+          auto node = nodeFactory.create<AST::NullptrExpression>();
           ACP_NODE(node);
         } else if (rule == RuleType::CodeLiteral) {
           if (state.iteration == 0) {
@@ -3222,7 +3282,7 @@ namespace AltaCore {
             auto lit = expect(TokenType::Code);
             if (!lit) ACP_NOT_OK;
 
-            auto node = std::make_shared<AST::CodeLiteralNode>(lit.raw.substr(3, lit.raw.size() - 6));
+            auto node = nodeFactory.create<AST::CodeLiteralNode>(lit.raw.substr(3, lit.raw.size() - 6));
 
             for (auto& exp: exps) {
               node->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
@@ -3240,7 +3300,7 @@ namespace AltaCore {
 
             exps.pop_back();
 
-            auto bits = std::make_shared<AST::BitfieldDefinitionNode>();
+            auto bits = nodeFactory.create<AST::BitfieldDefinitionNode>();
             bits->modifiers = expectModifiers(ModifierTargetType::Bitfield);
 
             ruleNode = std::move(bits);
@@ -3334,7 +3394,7 @@ namespace AltaCore {
           if (state.internalIndex == 0) {
             saveState();
 
-            ruleNode = std::make_shared<AST::LambdaExpression>();
+            ruleNode = nodeFactory.create<AST::LambdaExpression>();
 
             state.internalIndex = 8;
             ACP_RULE(Attribute);
@@ -3361,7 +3421,7 @@ namespace AltaCore {
 
             if (!expect(TokenType::Colon)) LAMBDA_RESTORE;
 
-            auto param = std::make_shared<AST::Parameter>();
+            auto param = nodeFactory.create<AST::Parameter>();
             param->name = name.raw;
             lambda->parameters.push_back(param);
 
@@ -3418,7 +3478,7 @@ namespace AltaCore {
           auto id = expect(TokenType::SpecialIdentifier);
           if (!id) ACP_NOT_OK;
 
-          auto special = std::make_shared<AST::SpecialFetchExpression>();
+          auto special = nodeFactory.create<AST::SpecialFetchExpression>();
           special->query = id.raw;
 
           ACP_NODE(special);
@@ -3434,7 +3494,7 @@ namespace AltaCore {
             auto visibilityMod = expectModifier(ModifierTargetType::ClassStatement);
             if (!visibilityMod) ACP_NOT_OK;
 
-            ruleNode = std::make_shared<AST::ClassOperatorDefinitionStatement>(AST::parseVisibility(*visibilityMod));
+            ruleNode = nodeFactory.create<AST::ClassOperatorDefinitionStatement>(AST::parseVisibility(*visibilityMod));
 
             // optional, but make sure we expect a closing parenthesis later
             state.internalValue = !!expect(TokenType::OpeningParenthesis);

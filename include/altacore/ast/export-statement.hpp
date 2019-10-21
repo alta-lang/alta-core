@@ -11,8 +11,7 @@ namespace AltaCore {
       public:
         virtual const NodeType nodeType();
 
-        std::shared_ptr<RetrievalNode> localTarget = nullptr;
-        std::string localTargetAlias;
+        std::vector<std::pair<std::shared_ptr<RetrievalNode>, std::string>> localTargets;
         std::shared_ptr<ImportStatement> externalTarget = nullptr;
 
         ExportStatement() {};
