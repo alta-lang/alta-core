@@ -1801,3 +1801,138 @@ auto AltaCore::DET::Type::findMostCompatibleCast(std::shared_ptr<Type> from, std
 
   return mostCompatible;
 };
+
+std::string AltaCore::DET::Type::toString() const {
+  std::string result = name;
+
+  if (!name.empty()) {
+    result += " { ";
+  }
+
+  for (auto& mod: modifiers) {
+    using TMF = DET::TypeModifierFlag;
+    if (mod & (size_t)TMF::Constant) {
+      result += "const ";
+    }
+    if (mod & (size_t)TMF::Signed) {
+      result += "signed ";
+    }
+    if (mod & (size_t)TMF::Unsigned) {
+      result += "unsigned ";
+    }
+    if (mod & (size_t)TMF::Short) {
+      result += "short ";
+    }
+    if (mod & (size_t)TMF::Long) {
+      result += "long ";
+    }
+    if (mod & (size_t)TMF::Pointer) {
+      result += "ptr ";
+    }
+    if (mod & (size_t)TMF::Reference) {
+      result += "ref ";
+    }
+  }
+  if (isFunction) {
+    result += "(";
+    bool isFirst = true;
+    for (auto& [name, type, isVariable, id]: parameters) {
+      if (isFirst) {
+        isFirst = false;
+      } else {
+        result += ", ";
+      }
+      if (!name.empty()) {
+        result += name + ": ";
+      }
+      result += type->toString();
+      if (isVariable) {
+        result += "...";
+      }
+    }
+    result += ')';
+    if (isRawFunction) {
+      result += " -> ";
+    } else {
+      result += " => ";
+    }
+    result += returnType->toString();
+  } else if (isUnion()) {
+    if (modifiers.size() > 0) {
+      result += '(';
+    }
+    bool isFirst = true;
+    for (auto& uni: unionOf) {
+      if (isFirst) {
+        isFirst = false;
+      } else {
+        result += " | ";
+      }
+      if (uni->isFunction) {
+        result += '(';
+      }
+      result += uni->toString();
+      if (uni->isFunction) {
+        result += ')';
+      }
+    }
+    if (modifiers.size() > 0) {
+      result += ')';
+    }
+  } else if (isOptional) {
+    if (modifiers.size() > 0) {
+      result += '(';
+    }
+    if (optionalTarget->isUnion() || isFunction) {
+      result += '(';
+    }
+    result += optionalTarget->toString();
+    if (optionalTarget->isUnion() || isFunction) {
+      result += ')';
+    }
+    result += '?';
+    if (modifiers.size() > 0) {
+      result += ')';
+    }
+  } else if (isAny) {
+    result += "any";
+  } else if (bitfield) {
+    result += bitfield->toString();
+  } else if (isNative) {
+    using NT = DET::NativeType;
+    switch (nativeTypeName) {
+      case NT::Bool: {
+        result += "bool";
+      } break;
+      case NT::Byte: {
+        result += "byte";
+      } break;
+      case NT::Double: {
+        result += "double";
+      } break;
+      case NT::Float: {
+        result += "float";
+      } break;
+      case NT::Integer: {
+        result += "int";
+      } break;
+      case NT::Void: {
+        result += "void";
+      } break;
+      default: {
+        result += userDefinedName;
+      } break;
+    }
+  } else if (klass) {
+    result += klass->toString();
+  } else {
+    result += "%unknown%";
+  }
+
+  if (!name.empty()) {
+    result += " }";
+    result = (parentScope.lock() ? parentScope.lock()->toString() : "") + '.' + result;
+  }
+
+  return result;
+};

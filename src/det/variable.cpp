@@ -1,4 +1,5 @@
 #include "../../include/altacore/det/variable.hpp"
+#include "../../include/altacore/det/scope.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Variable::nodeType() {
   return NodeType::Variable;
@@ -22,3 +23,7 @@ AltaCore::DET::Variable::Variable(
   ScopeItem(_name, _parentScope),
   type(_type)
   {};
+
+std::string AltaCore::DET::Variable::toString() const {
+  return (parentScope.lock() ? parentScope.lock()->toString() : "") + '.' + name + ": " + type->toString();
+};

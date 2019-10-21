@@ -349,3 +349,27 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Scope::findParentLambda(
   }
   return nullptr;
 };
+
+std::string AltaCore::DET::Scope::toString() const {
+  std::string result;
+
+  result = "<scope#" + std::to_string(relativeID) + '>';
+
+  if (auto pScope = parent.lock()) {
+    result = pScope->toString() + result;
+  }
+
+  if (auto pMod = parentModule.lock()) {
+    result = '[' + pMod->toString() + "]." + result;
+  } else if (auto pFunc = parentFunction.lock()) {
+    auto str = pFunc->toString();
+    auto pos = str.find_last_of('.');
+    result = str.substr(0, pos) + ".[" + str.substr(pos + 1) + "]." + result;
+  } else if (auto pClass = parentClass.lock()) {
+    result = pClass->toString() + '.' + result;
+  } else if (auto pNamespace = parentNamespace.lock()) {
+    result = pNamespace->toString() + '.' + result;
+  }
+
+  return result;
+};

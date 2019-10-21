@@ -18,3 +18,7 @@ std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Node::clone() {
 std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Node::deepClone() {
   return clone();
 };
+
+std::string AltaCore::DET::Node::toString() const {
+  return "%unknown-" + id + '%';
+};

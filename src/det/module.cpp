@@ -43,3 +43,14 @@ std::shared_ptr<AltaCore::DET::Module> AltaCore::DET::Module::create(std::string
 };
 
 AltaCore::DET::Module::Module() {};
+
+std::string AltaCore::DET::Module::toString() const {
+  auto versionString = std::to_string(packageInfo.version.major) + '.' + std::to_string(packageInfo.version.minor) + '.' + std::to_string(packageInfo.version.patch);
+  if (packageInfo.version.prerelease != NULL) {
+    versionString += '-' + std::string(packageInfo.version.prerelease);
+  }
+  if (packageInfo.version.metadata != NULL) {
+    versionString += '+' + std::string(packageInfo.version.metadata);
+  }
+  return name + '@' + versionString;
+};

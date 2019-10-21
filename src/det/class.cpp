@@ -135,3 +135,25 @@ std::vector<std::shared_ptr<AltaCore::DET::Function>> AltaCore::DET::Class::find
 
   return virtFuncs;
 };
+
+std::string AltaCore::DET::Class::toString() const {
+  std::string result = name;
+
+  if (genericArguments.size() > 0) {
+    result += '<';
+    bool isFirst = true;
+    for (auto& genArg: genericArguments) {
+      if (isFirst) {
+        isFirst = false;
+      } else {
+        result += ", ";
+      }
+      result += genArg->toString();
+    }
+    result += '>';
+  }
+
+  result = (parentScope.lock() ? parentScope.lock()->toString() : "") + '.' + result;
+
+  return result;
+};

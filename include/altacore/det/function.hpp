@@ -78,6 +78,8 @@ namespace AltaCore {
         void setVirtual(bool virt) {
           _virtual = virt;
         };
+
+        virtual std::string toString() const;
     };
   };
 };

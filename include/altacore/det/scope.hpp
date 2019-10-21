@@ -60,6 +60,8 @@ namespace AltaCore {
 
         bool contains(std::shared_ptr<ScopeItem> item);
         std::shared_ptr<DET::Function> findParentLambda();
+
+        virtual std::string toString() const;
     };
   };
 };

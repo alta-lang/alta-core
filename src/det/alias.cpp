@@ -1,4 +1,5 @@
 #include "../../include/altacore/det/alias.hpp"
+#include "../../include/altacore/det/scope.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Alias::nodeType() {
   return NodeType::Alias;
@@ -22,3 +23,11 @@ AltaCore::DET::Alias::Alias(
   ScopeItem(_name, _parentScope),
   target(_target)
   {};
+
+std::string AltaCore::DET::Alias::toString() const {
+  std::string result = name + " (alias for { " + target->toString() + " })";
+
+  result = (parentScope.lock() ? parentScope.lock()->toString() : "") + result;
+
+  return result;
+};

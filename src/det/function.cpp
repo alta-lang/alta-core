@@ -155,3 +155,41 @@ bool AltaCore::DET::Function::isVirtual()  {
 
   return false;
 };
+
+std::string AltaCore::DET::Function::toString() const {
+  std::string result = name;
+  if (genericArguments.size() == genericParameterCount) {
+    if (genericArguments.size() > 0) {
+      result += '<';
+      bool isFirst = true;
+      for (auto& genArg: genericArguments) {
+        if (isFirst) {
+          isFirst = false;
+        } else {
+          result += ", ";
+        }
+        result += genArg->toString();
+      }
+      result += '>';
+    }
+    result += '(';
+    bool isFirst = true;
+    for (auto& [name, type, isVariable, id]: parameters) {
+      if (isFirst) {
+        isFirst = false;
+      } else {
+        result += ", ";
+      }
+      result += name + ": " + type->toString();
+      if (isVariable) {
+        result += "...";
+      }
+    }
+    result += "): ";
+    result += returnType->toString();
+  }
+
+  result = (parentScope.lock() ? parentScope.lock()->toString() : "") + '.' + result;
+
+  return result;
+};

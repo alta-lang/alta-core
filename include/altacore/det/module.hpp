@@ -40,6 +40,8 @@ namespace AltaCore {
         size_t rootItemCount = 0;
 
         Module();
+
+        virtual std::string toString() const;
     };
   };
 };

@@ -24,6 +24,8 @@ namespace AltaCore {
         virtual const NodeType nodeType();
         std::shared_ptr<Node> clone();
         std::shared_ptr<Node> deepClone();
+
+        virtual std::string toString() const;
     };
   };
 };

@@ -221,6 +221,8 @@ namespace AltaCore {
         const size_t requiredArgumentCount() const;
 
         bool includes(const std::shared_ptr<Type> otherType) const;
+
+        virtual std::string toString() const;
     };
   };
 };

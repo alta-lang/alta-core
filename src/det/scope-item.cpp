@@ -41,3 +41,7 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::ScopeItem:
 
   return {};
 };
+
+std::string AltaCore::DET::ScopeItem::toString() const {
+  return (parentScope.lock() ? parentScope.lock()->toString() : "") + '.' + name;
+};
