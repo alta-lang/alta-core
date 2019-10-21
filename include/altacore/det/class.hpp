@@ -37,8 +37,7 @@ namespace AltaCore {
         std::shared_ptr<Function> destructor = nullptr;
         std::vector<std::shared_ptr<Class>> parents;
         std::shared_ptr<Function> copyConstructor = nullptr;
-        std::vector<std::shared_ptr<Variable>> itemsToDestroy;
-        std::vector<std::shared_ptr<Variable>> itemsToCopy;
+        std::vector<std::shared_ptr<Variable>> members;
         std::vector<std::shared_ptr<Function>> fromCasts;
         std::vector<std::shared_ptr<Function>> toCasts;
         std::vector<std::shared_ptr<Function>> operators;

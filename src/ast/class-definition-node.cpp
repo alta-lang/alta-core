@@ -20,6 +20,8 @@ namespace AltaCoreClassHelpers {
       info->klass->parents.push_back(std::dynamic_pointer_cast<DET::Class>(det->items.back()));
     }
 
+    bool canCreateDefaultCtor = true;
+
     auto loop = [&](std::vector<std::shared_ptr<ClassStatementNode>>& tgt, bool noBodies = false) -> void {
       if (noBodies) {
         for (auto stmt: tgt) {
@@ -67,6 +69,21 @@ namespace AltaCoreClassHelpers {
           auto& stmt = tgt[i];
           auto& det = info->statements[i];
           stmt->detail(det, false);
+          if (auto member = std::dynamic_pointer_cast<ClassMemberDefinitionStatement>(stmt)) {
+            auto memberDet = std::dynamic_pointer_cast<DH::ClassMemberDefinitionStatement>(det);
+            if (
+              !member->varDef->initializationExpression &&
+              (
+                memberDet->varDef->type->type->isUnion() ||
+                (
+                  memberDet->varDef->type->type->klass &&
+                  !memberDet->varDef->type->type->klass->defaultConstructor
+                )
+              )
+            ) {
+              canCreateDefaultCtor = false;
+            }
+          }
         }
       }
     };
@@ -75,6 +92,9 @@ namespace AltaCoreClassHelpers {
     loop(self->statements);
 
     if (info->klass->constructors.size() == 0) {
+      if (!canCreateDefaultCtor) {
+        throw AltaCore::Errors::ValidationError("At least one member does not have a default value; a default constructor cannot be automatically created for this class", self->position);
+      }
       info->createDefaultConstructor = true;
       info->defaultConstructor = std::make_shared<ClassSpecialMethodDefinitionStatement>(Visibility::Public, SpecialClassMethod::Constructor);
       info->defaultConstructor->body = std::make_shared<BlockNode>();
@@ -105,25 +125,23 @@ namespace AltaCoreClassHelpers {
 
       auto var = std::dynamic_pointer_cast<DET::Variable>(item);
 
+      info->klass->members.push_back(var);
+
       AltaCore::Util::exportClassIfNecessary(info->klass->scope, var->type);
 
       if (var->type->isNative) continue;
       if (var->type->indirectionLevel() > 0) continue;
 
-      if (var->type->isUnion()) {
+      if (var->type->isUnion() || var->type->isOptional) {
         requiresDtor = true;
         requiresCopyCtor = true;
-        info->klass->itemsToDestroy.push_back(var);
-        info->klass->itemsToCopy.push_back(var);
       } else {
         if (var->type->klass->destructor) {
           requiresDtor = true;
-          info->klass->itemsToDestroy.push_back(var);
         }
 
         if (var->type->klass->copyConstructor) {
           requiresCopyCtor = true;
-          info->klass->itemsToCopy.push_back(var);
         }
       }
     }
