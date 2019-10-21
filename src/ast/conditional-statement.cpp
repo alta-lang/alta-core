@@ -18,13 +18,14 @@ AltaCore::AST::ConditionalStatement::ConditionalStatement(
 
 ALTACORE_AST_DETAIL_D(ConditionalStatement) {
   ALTACORE_MAKE_DH(ConditionalStatement);
-  info->primaryTest = primaryTest->fullDetail(scope);
   info->primaryScope = DET::Scope::makeWithParentScope(scope);
+  info->primaryTest = primaryTest->fullDetail(info->primaryScope);
   info->primaryResult = primaryResult->fullDetail(info->primaryScope);
 
   for (auto& [altTest, altResult]: alternatives) {
-    auto testDet = altTest->fullDetail(scope);
-    auto& altScope = info->alternativeScopes.emplace_back(scope);
+    auto altScope = DET::Scope::makeWithParentScope(scope);
+    info->alternativeScopes.push_back(altScope);
+    auto testDet = altTest->fullDetail(altScope);
     auto resDet = altResult->fullDetail(altScope);
     info->alternatives.emplace_back(testDet, resDet);
   }
