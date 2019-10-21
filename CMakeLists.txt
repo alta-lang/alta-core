@@ -106,6 +106,16 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/det/class.cpp"
 )
 
+# credit to Austin Lasher (https://medium.com/@alasher/colored-c-compiler-output-with-ninja-clang-gcc-10bfe7f2b949)
+option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
+if(${FORCE_COLORED_OUTPUT})
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    target_compile_options(altacore PRIVATE -fdiagnostics-color=always)
+  elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+    target_compile_options(altacore PRIVATE -fcolor-diagnostics)
+  endif()
+endif()
+
 target_include_directories(altacore PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
 target_compile_definitions(altacore PUBLIC ALTACORE_LOCAL_SEMVER)
