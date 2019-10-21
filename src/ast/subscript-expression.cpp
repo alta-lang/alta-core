@@ -30,6 +30,13 @@ ALTACORE_AST_DETAIL_D(SubscriptExpression) {
 
   if (info->operatorMethod) {
     info->inputScope->hoist(info->operatorMethod);
+  } else {
+    if (info->targetType->pointerLevel() < 1) {
+      ALTACORE_DETAILING_ERROR("Target is not a pointer (and has no subscript operator method for the given index type)");
+    }
+    if (!info->indexType->isNative && info->indexType->pointerLevel() < 1) {
+      ALTACORE_DETAILING_ERROR("Index is not a native type or pointer (and the target has no subscript operator method for the given index type)");
+    }
   }
 
   return info;
