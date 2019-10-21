@@ -32,6 +32,11 @@ std::tuple<size_t, ALTACORE_MAP<size_t, size_t>, std::vector<ALTACORE_VARIANT<st
     size_t funcArgIndex = 0;
     bool ok = arguments.size() >= targetType->requiredArgumentCount();
     ALTACORE_MAP<size_t, size_t> argMap;
+    for (size_t i = 0; i < targetType->parameters.size(); i++) {
+      if (std::get<2>(targetType->parameters[i])) {
+        argumentsInOrder[i] = std::make_pair(std::get<0>(targetType->parameters[i]), std::vector<std::pair<std::shared_ptr<ExpressionNode>, std::shared_ptr<DH::ExpressionNode>>>());
+      }
+    }
     for (size_t i = 0; i < arguments.size(); i++) {
       if (!ok) break;
       auto& [argName, argExpr, argDet] = arguments[i];
