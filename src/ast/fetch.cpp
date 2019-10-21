@@ -32,17 +32,21 @@ void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<DH::Fetch> info, size_t i) {
   if (info->narrowedTo->nodeType() == DET::NodeType::Variable) {
     if (auto lambda = info->inputScope->findParentLambda()) {
       if (!lambda->scope->contains(info->narrowedTo)) {
-        bool found = false;
-        for (auto& var: lambda->referencedVariables) {
-          if (var->id == info->narrowedTo->id) {
-            found = true;
-            break;
+        auto lambdaModule = Util::getModule(lambda->parentScope.lock().get()).lock();
+        auto itemModule = Util::getModule(info->narrowedTo->parentScope.lock().get()).lock();
+        if (lambdaModule.get() == itemModule.get()) {
+          bool found = false;
+          for (auto& var: lambda->referencedVariables) {
+            if (var->id == info->narrowedTo->id) {
+              found = true;
+              break;
+            }
           }
+          if (!found) {
+            lambda->referencedVariables.push_back(std::dynamic_pointer_cast<DET::Variable>(info->narrowedTo));
+          }
+          info->referencesOutsideLambda = true;
         }
-        if (!found) {
-          lambda->referencedVariables.push_back(std::dynamic_pointer_cast<DET::Variable>(info->narrowedTo));
-        }
-        info->referencesOutsideLambda = true;
       }
     }
   }
@@ -182,5 +186,14 @@ ALTACORE_AST_VALIDATE_D(Fetch) {
   ALTACORE_VS_S(Fetch);
   if (query.empty()) ALTACORE_VALIDATION_ERROR("empty query for fetch");
   if (info->items.size() < 1) ALTACORE_VALIDATION_ERROR("no items found for fetch");
+  if (info->narrowedTo && info->narrowedTo->parentScope.lock() && info->narrowedTo->parentScope.lock()->parentClass.lock()) {
+    if (auto var = std::dynamic_pointer_cast<DET::Variable>(info->narrowedTo)) {
+      if (var->name != "this") {
+        ALTACORE_VALIDATION_ERROR("Class members must be accessed through `this`");
+      }
+    } else if (auto func = std::dynamic_pointer_cast<DET::Function>(info->narrowedTo)) {
+      ALTACORE_VALIDATION_ERROR("Class methods must be accessed through `this`");
+    }
+  }
   ALTACORE_VS_E;
 };
