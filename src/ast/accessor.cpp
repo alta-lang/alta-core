@@ -43,6 +43,9 @@ ALTACORE_AST_DETAIL_D(Accessor) {
       if ((targetAccDH->readAccessor->returnType->isNative) || targetAccDH->readAccessor->returnType->isUnion()) {
         ALTACORE_DETAILING_ERROR("native types can't be accessed");
       }
+      if (targetAccDH->readAccessor->returnType->isOptional) {
+        ALTACORE_DETAILING_ERROR("Optionals must be unwrapped before accessing them");
+      }
       targetScope = targetAccDH->readAccessor->returnType->klass->scope;
     }
   } else {
@@ -58,6 +61,9 @@ ALTACORE_AST_DETAIL_D(Accessor) {
         info->targetType = DET::Type::getUnderlyingType(items[0]);
       } catch (...) {
         info->targetType = nullptr;
+      }
+      if (info->targetType && info->targetType->isOptional) {
+        ALTACORE_DETAILING_ERROR("Optionals must be unwrapped before accessing them");
       }
       targetScope = DET::Scope::getMemberScope(items[0]);
     } else if (items.size() > 0) {
@@ -75,6 +81,9 @@ ALTACORE_AST_DETAIL_D(Accessor) {
           } else {
             if (types[0]->isNative || types[0]->isUnion()) {
               ALTACORE_DETAILING_ERROR("native types can't be accessed");
+            }
+            if (types[0]->isOptional) {
+              ALTACORE_DETAILING_ERROR("Optionals must be unwrapped before accessing them");
             }
             targetScope = types[0]->klass->scope;
           }
