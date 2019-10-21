@@ -39,7 +39,7 @@ ALTACORE_AST_VALIDATE_D(VariableDefinitionExpression) {
     !info->type->type->isNative &&
     (
       info->type->type->isUnion() ||
-      !info->type->type->klass &&
+      info->type->type->klass &&
       // and the class has no default constructor
       !info->type->type->klass->defaultConstructor
     )
