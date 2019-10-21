@@ -32,6 +32,8 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
   }
 
   if (info->operatorMethod == nullptr) {
+    bool usedCast = false;
+
     // try to find a common type for both types
     // for now, just use a very algorithmically-dumb method
     // of finding the first castable type (first try left, then try right)
@@ -125,12 +127,27 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
         ALTACORE_DETAILING_ERROR("cannot perform operation on void expressions");
       }
     } else {
+      usedCast = true;
       auto rightToLeft = DET::Type::findCast(info->rightType, info->leftType);
-      if (rightToLeft.size() > 0) {
+      if (
+        rightToLeft.size() > 0 &&
+        !(
+          info->leftType->pointerLevel() > 0 &&
+          (size_t)info->type >= (size_t)Shared::OperatorType::Addition &&
+          (size_t)info->type <= (size_t)Shared::OperatorType::BitwiseXor
+        )
+      ) {
         info->commonOperandType = info->leftType;
       } else {
         auto leftToRight = DET::Type::findCast(info->leftType, info->rightType);
-        if (leftToRight.size() > 0) {
+        if (
+          leftToRight.size() > 0  &&
+          !(
+            info->rightType->pointerLevel() > 0 &&
+            (size_t)info->type >= (size_t)Shared::OperatorType::Addition &&
+            (size_t)info->type <= (size_t)Shared::OperatorType::BitwiseXor
+          )
+        ) {
           info->commonOperandType = info->rightType;
         } else {
           ALTACORE_DETAILING_ERROR("binary operation performed on incompatible types");
@@ -138,6 +155,23 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
       }
     }
     info->commonOperandType = info->commonOperandType->destroyReferences();
+
+    if (
+      (
+        (
+          info->leftType->pointerLevel() > 0 &&
+          info->rightType->pointerLevel() > 0
+        ) ||
+        (
+          info->commonOperandType->pointerLevel() > 0 &&
+          usedCast
+        )
+      ) &&
+      (size_t)info->type >= (size_t)Shared::OperatorType::Addition &&
+      (size_t)info->type <= (size_t)Shared::OperatorType::BitwiseXor
+    ) {
+      ALTACORE_DETAILING_ERROR("Invalid operation performed on pointers");
+    }
   } else {
     info->inputScope->hoist(info->operatorMethod);
   }
