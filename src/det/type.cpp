@@ -1049,6 +1049,31 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
         };
       AC_CAST_TO_LOOP_END;
 
+      AC_CAST_FROM_LOOP;
+        if (!special->isUnion() && to->isUnion() && to->indirectionLevel() == 0) {
+          for (auto& otherTo: to->unionOf) {
+            auto cast = doFromOrToLoop(special, otherTo);
+            if (cast.size() > 0) {
+              cast.insert(cast.begin(), CC(CCT::To, method));
+              cast.insert(cast.end() - 1, CC(CCT::Widen, to, otherTo));
+              return cast;
+            }
+          }
+        }
+      AC_CAST_FROM_LOOP_END;
+      AC_CAST_TO_LOOP;
+        if (!from->isUnion() && special->isUnion() && special->indirectionLevel() == 0) {
+          for (auto& otherTo: special->unionOf) {
+            auto cast = doFromOrToLoop(from, otherTo);
+            if (cast.size() > 0) {
+              cast.insert(cast.end() - 1, CC(CCT::Widen, special, otherTo));
+              cast.insert(cast.end() - 1, CC(CCT::From, method));
+              return cast;
+            }
+          }
+        }
+      AC_CAST_TO_LOOP_END;
+
       // recursive iteration
       AC_CAST_FROM_LOOP;
         auto cast = doFromOrToLoop(special, to);
