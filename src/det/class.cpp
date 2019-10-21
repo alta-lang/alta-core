@@ -56,23 +56,166 @@ std::shared_ptr<AltaCore::DET::Class> AltaCore::DET::Class::instantiateGeneric(s
   }
 };
 
-std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Class::findFromCast(const Type& target) {
-  for (auto& from: fromCasts) {
-    if (*std::get<1>(from->parameters[0]) == target) return from;
+namespace {
+  using namespace AltaCore::DET;
+
+  #define AC_CAST_FROM_LOOP if (from->indirectionLevel() == 0 && from->klass && onlyDo != 1) {\
+      for (auto& method: from->klass->toCasts) {\
+        auto& special = method->returnType;
+  #define AC_CAST_FROM_LOOP_END }}
+  #define AC_CAST_TO_LOOP if (to->indirectionLevel() == 0 && to->klass && onlyDo != 2) {\
+      for (auto& method: to->klass->fromCasts) {\
+        auto& special = method->parameterVariables.front()->type;
+  #define AC_CAST_TO_LOOP_END }}
+
+  bool doFromOrToLoop(std::shared_ptr<Type> from, std::shared_ptr<Type> to, size_t onlyDo = 0) {
+    using NT = NativeType;
+
+    // simple equality
+    if (*from == *to || *from == *to->deconstify() || *from == *to->deconstify(true)) {
+      return true;
+    }
+
+    // basic iteration
+    AC_CAST_FROM_LOOP;
+      if (*special == *to || *special == *to->deconstify() || *special == *to->deconstify(true)) {
+        return true;
+      }
+    AC_CAST_FROM_LOOP_END;
+    AC_CAST_TO_LOOP;
+      if (*from == *special || *from == *special->deconstify() || *from == *special->deconstify(true)) {
+        return true;
+      }
+    AC_CAST_TO_LOOP_END;
+
+    // native iteration - floating-point
+    AC_CAST_FROM_LOOP;
+      if (
+        special->indirectionLevel() == 0 &&
+        to->indirectionLevel() == 0 &&
+        special->isNative &&
+        to->isNative &&
+        (
+          special->nativeTypeName == NT::Float ||
+          special->nativeTypeName == NT::Double
+        ) &&
+        (
+          to->nativeTypeName == NT::Float ||
+          to->nativeTypeName == NT::Double
+        )
+      ) {
+        return true;
+      }
+    AC_CAST_FROM_LOOP_END;
+    AC_CAST_TO_LOOP;
+      if (
+        from->indirectionLevel() == 0 &&
+        special->indirectionLevel() == 0 &&
+        from->isNative &&
+        special->isNative &&
+        (
+          from->nativeTypeName == NT::Float ||
+          from->nativeTypeName == NT::Double
+        ) &&
+        (
+          special->nativeTypeName == NT::Float ||
+          special->nativeTypeName == NT::Double
+        )
+      ) {
+        return true;
+      }
+    AC_CAST_TO_LOOP_END;
+
+    AC_CAST_FROM_LOOP;
+      if (special->indirectionLevel() == 0 && to->indirectionLevel() == 0 && special->isNative && to->isNative && !special->isAny && !to->isAny) {
+        return true;
+      }
+    AC_CAST_FROM_LOOP_END;
+    AC_CAST_TO_LOOP;
+      if (from->indirectionLevel() == 0 && special->indirectionLevel() == 0 && from->isNative && special->isNative && !from->isAny && !special->isAny) {
+        return true;
+      }
+    AC_CAST_TO_LOOP_END;
+
+    AC_CAST_FROM_LOOP;
+      size_t maxToRefLevel = 0;
+      if (to->referenceLevel() > maxToRefLevel) {
+        maxToRefLevel = to->referenceLevel();
+      }
+
+      if (special->referenceLevel() < maxToRefLevel) {
+        if (doFromOrToLoop(special->reference(), to)) return true;
+      };
+    AC_CAST_FROM_LOOP_END;
+    AC_CAST_TO_LOOP;
+      size_t maxToRefLevel = 0;
+      if (special->referenceLevel() > maxToRefLevel) {
+        maxToRefLevel = special->referenceLevel();
+      }
+
+      if (from->referenceLevel() < maxToRefLevel) {
+        if (doFromOrToLoop(from->reference(), special)) return true;
+      };
+    AC_CAST_TO_LOOP_END;
+
+    AC_CAST_FROM_LOOP;
+      if (!special->isUnion() && to->isUnion() && to->indirectionLevel() == 0) {
+        for (auto& otherTo: to->unionOf) {
+          if (doFromOrToLoop(special, otherTo)) return true;
+        }
+      }
+    AC_CAST_FROM_LOOP_END;
+    AC_CAST_TO_LOOP;
+      if (!from->isUnion() && special->isUnion() && special->indirectionLevel() == 0) {
+        for (auto& otherTo: special->unionOf) {
+          if (doFromOrToLoop(from, otherTo)) return true;
+        }
+      }
+    AC_CAST_TO_LOOP_END;
+
+    // recursive iteration
+    AC_CAST_FROM_LOOP;
+      if (doFromOrToLoop(special, to)) return true;
+    AC_CAST_FROM_LOOP_END;
+    AC_CAST_TO_LOOP;
+      if (doFromOrToLoop(from, special)) return true;
+    AC_CAST_TO_LOOP_END;
+
+    return false;
+  };
+};
+
+std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Class::findFromCast(const Type& from) {
+  for (auto& fromFunc: fromCasts) {
+    auto special = std::get<1>(fromFunc->parameters[0]);
+    if (from == *special || from == *special->deconstify() || from == *special->deconstify(true) || *from.deconstify() == *special || *from.deconstify() == *special->deconstify()) {
+      return fromFunc;
+    }
   }
-  for (auto& from: fromCasts) {
-    if (*std::get<1>(from->parameters[0]) % target) return from;
+  for (auto& fromFunc: fromCasts) {
+    auto special = std::get<1>(fromFunc->parameters[0]);
+    if (doFromOrToLoop(std::make_shared<Type>(from), special)) return fromFunc;
   }
   return nullptr;
 };
 
-std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Class::findToCast(const Type& target) {
-  for (auto& to: toCasts) {
-    if (target == *to->returnType) return to;
+std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Class::findToCast(const Type& to) {
+  for (auto& toFunc: toCasts) {
+    auto special = toFunc->returnType;
+    if (*special == to || *special == *to.deconstify() || *special == *to.deconstify(true) || *special->deconstify() == to || *special->deconstify() == *to.deconstify()) {
+      return toFunc;
+    }
   }
-  for (auto& to: toCasts) {
-    if (target % *to->returnType) return to;
+  for (auto& toFunc: toCasts) {
+    auto special = toFunc->returnType;
+    if (doFromOrToLoop(special, std::make_shared<Type>(to))) return toFunc;
   }
+  if (to.unionOf.size() > 0) {
+    for (auto& uni: to.unionOf) {
+      if (auto func = findToCast(*uni)) return func;
+    }
+  }
+
   return nullptr;
 };
 
