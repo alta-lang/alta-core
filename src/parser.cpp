@@ -625,7 +625,9 @@ namespace AltaCore {
 
       auto addPositionInformation = [&](std::shared_ptr<AST::Node> node) -> void {
         auto& state = std::get<2>(ruleStack.top());
-        auto& tok = tokens[state.stateAtStart.currentPosition];
+        auto& tok = (state.stateAtStart.currentPosition >= tokens.size())
+                      ? tokens.back()
+                      : tokens[state.stateAtStart.currentPosition];
         node->position.line = tok.line;
         node->position.column = tok.column;
         node->position.filePosition = tok.position;
