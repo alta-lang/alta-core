@@ -92,6 +92,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/lambda-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/special-fetch-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/class-operator-definition-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/enumeration-definition-statement.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

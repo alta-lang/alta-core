@@ -78,6 +78,7 @@ namespace AltaCore {
       TypeAlias,
       Structure,
       Bitfield,
+      Enumeration,
     };
 
     /**
@@ -118,6 +119,9 @@ namespace AltaCore {
       },
       {
         "literal",
+        "export",
+      },
+      {
         "export",
       },
       {
@@ -199,6 +203,7 @@ namespace AltaCore {
       Lambda,
       SpecialFetch,
       OperatorDefinition,
+      Enumeration,
     };
 
     enum class PrepoRuleType {

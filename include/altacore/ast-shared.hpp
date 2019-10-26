@@ -76,6 +76,7 @@ namespace AltaCore {
       LambdaExpression,
       SpecialFetchExpression,
       ClassOperatorDefinitionStatement,
+      EnumerationDefinitionNode,
     };
 
     static const char* const NodeType_names[] = {
@@ -143,6 +144,7 @@ namespace AltaCore {
       "LambdaExpression",
       "SpecialFetchExpression",
       "ClassOperatorDefinitionStatement",
+      "EnumerationDefinitionNode",
     };
   };
 };

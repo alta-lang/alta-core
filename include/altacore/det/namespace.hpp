@@ -17,6 +17,7 @@ namespace AltaCore {
 
         std::shared_ptr<Scope> scope;
         std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
+        std::shared_ptr<Type> underlyingEnumerationType = nullptr;
 
         Namespace(std::string name, std::shared_ptr<Scope> parentScope = nullptr);
     };

@@ -864,16 +864,11 @@ namespace AltaCore {
          */
 
         if (rule == RuleType::Root) {
-          std::vector<RuleType> stmtType = {
-            RuleType::ModuleOnlyStatement,
-            RuleType::Statement,
-          };
-
           // logic for the initial call
-          if (state.iteration == 0) ACP_RULES(std::move(stmtType));
+          if (state.iteration == 0) ACP_RULE(ModuleOnlyStatement);
 
           // basically a while loop that continues as long statements are available
-          if (exps.back()) ACP_RULES(std::move(stmtType));
+          if (exps.back()) ACP_RULE(ModuleOnlyStatement);
 
           exps.pop_back(); // remove the last (implicitly invalid) expectation
 
@@ -897,66 +892,33 @@ namespace AltaCore {
           if (state.iteration == 0) {
             while (expect(TokenType::Semicolon)); // optional
 
-            if (ruleStack.size() == 2) {
-              ACP_RULE_LIST(
-                RuleType::FunctionDefinition,
-                RuleType::FunctionDeclaration,
-                RuleType::ReturnDirective,
-                RuleType::ConditionalStatement,
-                RuleType::Block,
-                RuleType::ClassDefinition,
-                RuleType::Structure,
-                RuleType::WhileLoop,
-                RuleType::ForLoop,
-                RuleType::RangedFor,
-                RuleType::TypeAlias,
-                RuleType::VariableDeclaration,
-                RuleType::Alias,
-                RuleType::Delete,
-                RuleType::ControlDirective,
-                RuleType::TryCatch,
-                RuleType::Throw,
-                RuleType::CodeLiteral,
-                RuleType::Bitfield,
-                RuleType::Export,
-                RuleType::Expression,
+            ACP_RULE_LIST(
+              RuleType::FunctionDeclaration,
+              RuleType::ReturnDirective,
+              RuleType::ConditionalStatement,
+              RuleType::Block,
+              RuleType::ClassDefinition,
+              RuleType::Structure,
+              RuleType::WhileLoop,
+              RuleType::ForLoop,
+              RuleType::RangedFor,
+              RuleType::TypeAlias,
+              RuleType::VariableDeclaration,
+              RuleType::Alias,
+              RuleType::Delete,
+              RuleType::ControlDirective,
+              RuleType::TryCatch,
+              RuleType::Throw,
+              RuleType::CodeLiteral,
+              RuleType::Bitfield,
+              RuleType::Expression,
 
-                // general attributes must come last because
-                // they're supposed to be able to interpreted as part of
-                // other statements that accept attributes if any such
-                // statement is present
-                RuleType::GeneralAttribute
-              );
-            } else {
-              ACP_RULE_LIST(
-                RuleType::FunctionDefinition,
-                RuleType::FunctionDeclaration,
-                RuleType::ReturnDirective,
-                RuleType::ConditionalStatement,
-                RuleType::Block,
-                RuleType::ClassDefinition,
-                RuleType::Structure,
-                RuleType::WhileLoop,
-                RuleType::ForLoop,
-                RuleType::RangedFor,
-                RuleType::TypeAlias,
-                RuleType::VariableDeclaration,
-                RuleType::Alias,
-                RuleType::Delete,
-                RuleType::ControlDirective,
-                RuleType::TryCatch,
-                RuleType::Throw,
-                RuleType::CodeLiteral,
-                RuleType::Bitfield,
-                RuleType::Expression,
-
-                // general attributes must come last because
-                // they're supposed to be able to interpreted as part of
-                // other statements that accept attributes if any such
-                // statement is present
-                RuleType::GeneralAttribute
-              );
-            }
+              // general attributes must come last because
+              // they're supposed to be able to interpreted as part of
+              // other statements that accept attributes if any such
+              // statement is present
+              RuleType::GeneralAttribute,
+            );
           }
 
           if (!exps.back()) ACP_NOT_OK;
@@ -1571,7 +1533,27 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::ModuleOnlyStatement) {
           if (state.iteration == 0) {
-            ACP_RULE(Import);
+            while (expect(TokenType::Semicolon)); // optional
+            ACP_RULE_LIST(
+              RuleType::Import,
+              RuleType::FunctionDefinition,
+              RuleType::FunctionDeclaration,
+              RuleType::ClassDefinition,
+              RuleType::Structure,
+              RuleType::TypeAlias,
+              RuleType::VariableDeclaration,
+              RuleType::Alias,
+              RuleType::CodeLiteral,
+              RuleType::Bitfield,
+              RuleType::Enumeration,
+              RuleType::Export,
+
+              // general attributes must come last because
+              // they're supposed to be able to interpreted as part of
+              // other statements that accept attributes if any such
+              // statement is present
+              RuleType::GeneralAttribute,
+            );
           } else {
             while (expect(TokenType::Semicolon)); // optional
             if (!exps.back()) ACP_NOT_OK;
@@ -3669,6 +3651,64 @@ namespace AltaCore {
             if (!expect(TokenType::ClosingSquareBracket)) ACP_NOT_OK;
 
             state.internalIndex = 3;
+            ACP_RULE(NullRule);
+          }
+        } else if (rule == RuleType::Enumeration) {
+          if (state.internalIndex == 0) {
+            auto enumer = nodeFactory.create<AST::EnumerationDefinitionNode>();
+            enumer->modifiers = expectModifiers(ModifierTargetType::Enumeration);
+
+            if (!expectKeyword("enum")) ACP_NOT_OK;
+
+            auto id = expect(TokenType::Identifier);
+            if (!id) ACP_NOT_OK;
+            enumer->name = id.raw;
+
+            if (!expect(TokenType::Colon)) ACP_NOT_OK;
+            state.internalIndex = 4;
+            ruleNode = std::move(enumer);
+            ACP_RULE(Type);
+          } else if (state.internalIndex == 1 || state.internalIndex == 2) {
+            auto enumer = std::dynamic_pointer_cast<AST::EnumerationDefinitionNode>(ruleNode);
+            if (state.internalIndex == 2) {
+              auto key = ALTACORE_ANY_CAST<std::string>(state.internalValue);
+              enumer->members.back().second = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+              state.internalIndex = expect(TokenType::Comma) ? 1 : 3;
+            }
+            while (state.internalIndex == 1) {
+              auto name = expect(TokenType::Identifier);
+              if (!name) {
+                state.internalIndex = 3;
+                break;
+              }
+              enumer->members.push_back(std::make_pair(name.raw, nullptr));
+              if (expect(TokenType::Comma)) {
+                continue;
+              } else if (expect(TokenType::EqualSign)) {
+                state.internalValue = name.raw;
+                state.internalIndex = 2;
+                break;
+              } else {
+                state.internalIndex = 3;
+                break;
+              }
+            }
+            if (state.internalIndex == 2) {
+              ACP_RULE(Expression);
+            } else if (state.internalIndex == 3) {
+              if (!expect(TokenType::ClosingBrace)) ACP_NOT_OK;
+              ACP_NODE(ruleNode);
+            }
+          } else if (state.internalIndex == 4) {
+            auto enumer = std::dynamic_pointer_cast<AST::EnumerationDefinitionNode>(ruleNode);
+
+            if (!exps.back()) ACP_NOT_OK;
+
+            enumer->underlyingType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+
+            if (!expect(TokenType::OpeningBrace)) ACP_NOT_OK;
+
+            state.internalIndex = 1;
             ACP_RULE(NullRule);
           }
         }

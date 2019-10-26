@@ -569,6 +569,17 @@ namespace AltaCore {
     class SpecialFetchExpression: public RetrievalNode {
       ALTACORE_DH_CTOR(SpecialFetchExpression, RetrievalNode);
     };
+    class EnumerationDefinitionNode: public StatementNode {
+      ALTACORE_DH_CTOR(EnumerationDefinitionNode, StatementNode);
+
+      std::shared_ptr<DET::Namespace> ns;
+      std::shared_ptr<Type> underlyingType;
+      std::shared_ptr<DET::Type> memberType;
+      ALTACORE_MAP<std::string, std::shared_ptr<DET::Variable>> memberVariables;
+      ALTACORE_MAP<std::string, std::shared_ptr<ExpressionNode>> memberDetails;
+      ALTACORE_MAP<std::string, std::shared_ptr<DET::Function>> memberOperators;
+      bool isExport;
+    };
 
     #undef ALTACORE_DH_CTOR
   };
