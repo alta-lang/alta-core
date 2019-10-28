@@ -373,3 +373,37 @@ std::string AltaCore::DET::Scope::toString() const {
 
   return result;
 };
+
+std::shared_ptr<AltaCore::DET::Class> AltaCore::DET::Scope::findParentCaptureClass() {
+  if (auto klass = parentClass.lock()) {
+    if (klass->isCaptureClass()) {
+      return klass;
+    }
+  } else if (auto scope = parent.lock()) {
+    return scope->findParentCaptureClass();
+  } else if (auto func = parentFunction.lock()) {
+    if (auto scope = func->parentScope.lock()) {
+      return scope->findParentCaptureClass();
+    }
+  }
+  return nullptr;
+};
+
+auto AltaCore::DET::Scope::findClosestParentScope() -> std::shared_ptr<Scope> {
+  if (auto sParent = parent.lock()) {
+    return sParent;
+  } else if (auto sFunction = parentFunction.lock()) {
+    if (auto sParent = sFunction->parentScope.lock()) {
+      return sParent;
+    }
+  } else if (auto sNamespace = parentNamespace.lock()) {
+    if (auto sParent = sNamespace->parentScope.lock()) {
+      return sParent;
+    }
+  } else if (auto sClass = parentClass.lock()) {
+    if (auto sParent = sClass->parentScope.lock()) {
+      return sParent;
+    }
+  }
+  return nullptr;
+};

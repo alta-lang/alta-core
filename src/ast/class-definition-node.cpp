@@ -11,6 +11,10 @@ namespace AltaCoreClassHelpers {
     namespace DH = AltaCore::DetailHandles;
     namespace DET = AltaCore::DET;
 
+    if (info->attributes.size() != self->attributes.size()) {
+      info->attributes = AltaCore::Attributes::detailAttributes(self->attributes, info->inputScope, self->shared_from_this(), info);
+    }
+
     for (auto& parent: self->parents) {
       auto det = parent->fullDetail(info->klass->scope);
       info->parents.push_back(det);
@@ -176,6 +180,36 @@ namespace AltaCoreClassHelpers {
       info->defaultCopyConstructorDetail->isCopyConstructor = true;
       info->defaultCopyConstructorDetail->isDefaultCopyConstructor = true;
       info->klass->copyConstructor = info->defaultCopyConstructorDetail->method;
+    }
+
+    info->toReference = info->klass->referencedVariables;
+
+    for (size_t i = 0; i < info->toReference.size(); i++) {
+      bool remove = false;
+      for (auto& copyVar: info->toCopy) {
+        if (copyVar->id == info->toReference[i]->id) {
+          remove = true;
+          break;
+        }
+      }
+      if (remove) {
+        info->toReference.erase(info->toReference.begin() + i);
+        --i;
+      }
+    }
+
+    for (size_t i = 0; i < info->toCopy.size(); ++i) {
+      bool found = false;
+      for (auto& item: info->klass->fullPrivateHoistedItems()) {
+        if (item->id == info->toCopy[i]->id) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        info->toCopy.erase(info->toCopy.begin() + i);
+        --i;
+      }
     }
   };
 };

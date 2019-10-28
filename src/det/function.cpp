@@ -193,3 +193,14 @@ std::string AltaCore::DET::Function::toString() const {
 
   return result;
 };
+
+auto AltaCore::DET::Function::fullPrivateHoistedItems() const -> std::vector<std::shared_ptr<ScopeItem>> {
+  auto result = privateHoistedItems;
+
+  for (auto& item: scope->items) {
+    auto priv = item->fullPrivateHoistedItems();
+    result.insert(result.end(), priv.begin(), priv.end());
+  }
+
+  return result;
+};

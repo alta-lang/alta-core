@@ -79,6 +79,19 @@ void AltaCore::registerGlobalAttributes() {
 
     info->function->_virtual = isVirt;
   AC_END_ATTRIBUTE_OPTIONS(true);
+
+  AC_ATTRIBUTE(ClassDefinitionNode, "copy");
+    for (auto& arg: args) {
+      if (!arg.isScopeItem) {
+        throw std::runtime_error("invalid argument for capture class @copy attribute");
+      }
+      if (auto var = std::dynamic_pointer_cast<DET::Variable>(arg.item)) {
+        info->toCopy.push_back(var);
+      } else {
+        throw std::runtime_error("non-variable argument provided to capture class @copy attribute");
+      }
+    }
+  AC_END_ATTRIBUTE;
 };
 
 #undef AC_END_ATTRIBUTE

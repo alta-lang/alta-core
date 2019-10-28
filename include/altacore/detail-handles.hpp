@@ -195,6 +195,9 @@ namespace AltaCore {
       std::shared_ptr<AST::ClassSpecialMethodDefinitionStatement> defaultCopyConstructor = nullptr;
       std::shared_ptr<ClassSpecialMethodDefinitionStatement> defaultCopyConstructorDetail = nullptr;
       std::vector<std::shared_ptr<Generic>> genericDetails;
+      std::vector<std::shared_ptr<DET::Variable>> toCopy;
+      std::vector<std::shared_ptr<DET::Variable>> toReference;
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
     };
     class GenericClassInstantiationDefinitionNode: public ClassDefinitionNode {
       ALTACORE_DH_CTOR(GenericClassInstantiationDefinitionNode, ClassDefinitionNode);
@@ -298,6 +301,7 @@ namespace AltaCore {
       size_t writeAccessorIndex = 0;
 
       bool referencesOutsideLambda = false;
+      bool referencesOutsideCaptureClass = false;
     };
     class FunctionCallExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(FunctionCallExpression, ExpressionNode);

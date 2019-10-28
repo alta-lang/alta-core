@@ -66,6 +66,8 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
 
       info->method = DET::Function::create(info->inputScope, "constructor", params, voidType);
       info->method->visibility = visibilityModifier;
+
+      info->isCopyConstructor = info->method->parameterVariables.size() == 1 && *info->method->parameterVariables.front()->type->deconstify(true) == *std::make_shared<DET::Type>(info->klass)->reference();
     } else if (type == SpecialClassMethod::Destructor) {
       info->method = DET::Function::create(info->inputScope, "destructor", {}, voidType);
       info->method->isDestructor = true;

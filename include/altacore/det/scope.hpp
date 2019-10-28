@@ -60,6 +60,8 @@ namespace AltaCore {
 
         bool contains(std::shared_ptr<ScopeItem> item);
         std::shared_ptr<DET::Function> findParentLambda();
+        std::shared_ptr<DET::Class> findParentCaptureClass();
+        std::shared_ptr<Scope> findClosestParentScope();
 
         virtual std::string toString() const;
     };

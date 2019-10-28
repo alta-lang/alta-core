@@ -80,6 +80,7 @@ namespace AltaCore {
         };
 
         virtual std::string toString() const;
+        virtual std::vector<std::shared_ptr<ScopeItem>> fullPrivateHoistedItems() const;
     };
   };
 };

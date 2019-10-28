@@ -20,6 +20,7 @@ namespace AltaCore {
         std::shared_ptr<Type> underlyingEnumerationType = nullptr;
 
         Namespace(std::string name, std::shared_ptr<Scope> parentScope = nullptr);
+        virtual std::vector<std::shared_ptr<ScopeItem>> fullPrivateHoistedItems() const;
     };
   };
 };

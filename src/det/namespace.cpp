@@ -27,3 +27,14 @@ AltaCore::DET::Namespace::Namespace(
 ):
   ScopeItem(_name, _parentScope)
   {};
+
+auto AltaCore::DET::Namespace::fullPrivateHoistedItems() const -> std::vector<std::shared_ptr<ScopeItem>> {
+  auto result = privateHoistedItems;
+
+  for (auto& item: scope->items) {
+    auto priv = item->fullPrivateHoistedItems();
+    result.insert(result.end(), priv.begin(), priv.end());
+  }
+
+  return result;
+};

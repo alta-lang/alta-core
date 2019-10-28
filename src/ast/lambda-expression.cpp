@@ -56,7 +56,7 @@ ALTACORE_AST_DETAIL_D(LambdaExpression) {
 
   for (size_t i = 0; i < info->toCopy.size(); ++i) {
     bool found = false;
-    for (auto& item: info->function->privateHoistedItems) {
+    for (auto& item: info->function->fullPrivateHoistedItems()) {
       if (item->id == info->toCopy[i]->id) {
         found = true;
         break;

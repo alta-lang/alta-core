@@ -10,9 +10,18 @@
 #include <string>
 #include "generic.hpp"
 
+// DO NOT TOUCH, internal use only
+namespace AltaCoreClassHelpers {
+  template<class T>
+  void detailClass(std::shared_ptr<T> info, AltaCore::AST::ClassDefinitionNode* self);
+};
+
 namespace AltaCore {
   namespace AST {
     class ClassDefinitionNode: public StatementNode, public std::enable_shared_from_this<ClassDefinitionNode> {
+      template<class T>
+      friend void AltaCoreClassHelpers::detailClass(std::shared_ptr<T> info, AltaCore::AST::ClassDefinitionNode* self);
+
       public:
         virtual const NodeType nodeType();
 
@@ -21,6 +30,7 @@ namespace AltaCore {
         std::string name;
         std::vector<std::shared_ptr<ClassStatementNode>> statements;
         std::vector<std::shared_ptr<RetrievalNode>> parents;
+        std::vector<std::shared_ptr<AttributeNode>> attributes;
 
         ClassDefinitionNode(std::string name);
 

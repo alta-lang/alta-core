@@ -49,6 +49,9 @@ namespace AltaCore {
         std::weak_ptr<AST::ClassDefinitionNode> ast;
         std::weak_ptr<DetailHandles::ClassDefinitionNode> info;
 
+        // only used for capture classes
+        std::vector<std::shared_ptr<Variable>> referencedVariables;
+
         Class(std::string name, std::shared_ptr<Scope> parentScope, std::vector<std::shared_ptr<Class>> parents = {});
 
         bool hasParent(std::shared_ptr<Class> parent) const;
@@ -62,6 +65,9 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Function>> findAllVirtualFunctions();
 
         virtual std::string toString() const;
+
+        bool isCaptureClass() const;
+        virtual std::vector<std::shared_ptr<ScopeItem>> fullPrivateHoistedItems() const;
     };
   };
 };

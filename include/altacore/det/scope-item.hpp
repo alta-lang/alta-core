@@ -35,6 +35,9 @@ namespace AltaCore {
         static std::vector<std::shared_ptr<ScopeItem>> getUnderlyingItems(std::shared_ptr<DH::Node> node);
 
         virtual std::string toString() const;
+        virtual std::vector<std::shared_ptr<ScopeItem>> fullPrivateHoistedItems() const {
+          return privateHoistedItems;
+        };
     };
   };
 };

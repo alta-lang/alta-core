@@ -30,24 +30,47 @@ void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<DH::Fetch> info, size_t i) {
   }
   info->narrowedTo = info->items[i];
   if (info->narrowedTo->nodeType() == DET::NodeType::Variable) {
-    if (auto lambda = info->inputScope->findParentLambda()) {
-      if (!lambda->scope->contains(info->narrowedTo)) {
-        auto lambdaModule = Util::getModule(lambda->parentScope.lock().get()).lock();
-        auto itemModule = Util::getModule(info->narrowedTo->parentScope.lock().get()).lock();
-        if (lambdaModule.get() == itemModule.get()) {
-          bool found = false;
-          for (auto& var: lambda->referencedVariables) {
-            if (var->id == info->narrowedTo->id) {
-              found = true;
-              break;
+    auto scope = info->inputScope;
+    while (scope && !scope->contains(info->narrowedTo)) {
+      if (auto func = scope->parentFunction.lock()) {
+        if (func->isLambda) {
+          auto lambdaModule = Util::getModule(func->parentScope.lock().get()).lock();
+          auto itemModule = Util::getModule(info->narrowedTo->parentScope.lock().get()).lock();
+          if (lambdaModule.get() == itemModule.get()) {
+            bool found = false;
+            for (auto& var: func->referencedVariables) {
+              if (var->id == info->narrowedTo->id) {
+                found = true;
+                break;
+              }
             }
+            if (!found) {
+              func->referencedVariables.push_back(std::dynamic_pointer_cast<DET::Variable>(info->narrowedTo));
+            }
+            info->referencesOutsideLambda = true;
           }
-          if (!found) {
-            lambda->referencedVariables.push_back(std::dynamic_pointer_cast<DET::Variable>(info->narrowedTo));
-          }
-          info->referencesOutsideLambda = true;
         }
       }
+      if (auto klass = scope->parentClass.lock()) {
+        if (klass->isCaptureClass()) {
+          auto klassModule = Util::getModule(klass->parentScope.lock().get()).lock();
+          auto itemModule = Util::getModule(info->narrowedTo->parentScope.lock().get()).lock();
+          if (klassModule.get() == itemModule.get()) {
+            bool found = false;
+            for (auto& var: klass->referencedVariables) {
+              if (var->id == info->narrowedTo->id) {
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              klass->referencedVariables.push_back(std::dynamic_pointer_cast<DET::Variable>(info->narrowedTo));
+            }
+            info->referencesOutsideCaptureClass = true;
+          }
+        }
+      }
+      scope = scope->findClosestParentScope();
     }
   }
   if (info->narrowedTo) {
@@ -58,13 +81,29 @@ void AltaCore::AST::Fetch::widen(std::shared_ptr<DH::Fetch> info) {
   if (info->narrowedTo) {
     info->inputScope->unhoist(info->narrowedTo);
   }
-  if (auto lambda = info->inputScope->findParentLambda()) {
-    for (size_t i = 0; i < lambda->referencedVariables.size(); i++) {
-      if (lambda->referencedVariables[i]->id == info->narrowedTo->id) {
-        lambda->referencedVariables.erase(lambda->referencedVariables.begin() + i);
-        info->referencesOutsideLambda = false;
+  auto scope = info->inputScope;
+  while (scope && !scope->contains(info->narrowedTo)) {
+    if (auto func = scope->parentFunction.lock()) {
+      if (func->isLambda) {
+        for (size_t i = 0; i < func->referencedVariables.size(); i++) {
+          if (func->referencedVariables[i]->id == info->narrowedTo->id) {
+            func->referencedVariables.erase(func->referencedVariables.begin() + i);
+            info->referencesOutsideLambda = false;
+          }
+        }
       }
     }
+    if (auto klass = scope->parentClass.lock()) {
+      if (klass->isCaptureClass()) {
+        for (size_t i = 0; i < klass->referencedVariables.size(); i++) {
+          if (klass->referencedVariables[i]->id == info->narrowedTo->id) {
+            klass->referencedVariables.erase(klass->referencedVariables.begin() + i);
+            info->referencesOutsideCaptureClass = false;
+          }
+        }
+      }
+    }
+    scope = scope->findClosestParentScope();
   }
   info->narrowedTo = nullptr;
 };

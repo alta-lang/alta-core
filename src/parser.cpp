@@ -2108,30 +2108,54 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::ClassDefinition) {
           if (state.internalIndex == 0) {
+            state.internalIndex = 4;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 4) {
+            if (exps.back()) ACP_RULE(Attribute);
+
+            // remove the last (always invalid) expectation
+            exps.pop_back();
+
             auto mods = expectModifiers(ModifierTargetType::Class);
+            auto def = nodeFactory.create<AST::ClassDefinitionNode>("");
+            def->modifiers = mods;
+            ruleNode = std::move(def);
+            state.internalIndex = 5;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 5) {
+            if (exps.back()) ACP_RULE(Attribute);
+
+            // remove the last (always invalid) expectation
+            exps.pop_back();
+
+            auto klass = std::dynamic_pointer_cast<AST::ClassDefinitionNode>(ruleNode);
+            auto mods = expectModifiers(ModifierTargetType::Class);
+            klass->modifiers.insert(klass->modifiers.end(), mods.begin(), mods.end());
+
+            for (auto& exp: exps) {
+              klass->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+            }
+
+            exps.clear();
+
             if (!expectKeyword("class")) ACP_NOT_OK;
 
             auto id = expect(TokenType::Identifier);
             if (!id) ACP_NOT_OK;
-
-            auto def = nodeFactory.create<AST::ClassDefinitionNode>(id.raw);
-            def->modifiers = mods;
+            klass->name = id.raw;
 
             if (expect(TokenType::OpeningAngleBracket)) {
               state.internalIndex = 2;
-              ruleNode = std::move(def);
               ACP_RULE(Generic);
             }
 
             if (expectKeyword("extends")) {
               state.internalIndex = 3;
-              ruleNode = std::move(def);
               ACP_RULE(StrictAccessor);
             }
 
             if (!expect(TokenType::OpeningBrace)) ACP_NOT_OK;
 
-            ruleNode = std::move(def);
             state.internalIndex = 1;
             ACP_RULE(ClassStatement);
           } else if (state.internalIndex == 2) {
@@ -2168,7 +2192,7 @@ namespace AltaCore {
 
             state.internalIndex = 1;
             ACP_RULE(ClassStatement);
-          } else {
+          } else if (state.internalIndex == 1) {
             auto klass = std::dynamic_pointer_cast<AST::ClassDefinitionNode>(ruleNode);
 
             if (exps.back()) {

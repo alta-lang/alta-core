@@ -300,3 +300,52 @@ std::string AltaCore::DET::Class::toString() const {
 
   return result;
 };
+
+bool AltaCore::DET::Class::isCaptureClass() const {
+  if (auto pScope = parentScope.lock()) {
+    while (auto ns = pScope->parentNamespace.lock()) {
+      pScope = ns->parentScope.lock();
+      if (!pScope) return false;
+    }
+    if (pScope->parentModule.lock()) {
+      return false;
+    }
+  }
+  return true;
+};
+
+auto AltaCore::DET::Class::fullPrivateHoistedItems() const -> std::vector<std::shared_ptr<ScopeItem>> {
+  auto result = privateHoistedItems;
+
+  for (auto& item: scope->items) {
+    auto priv = item->fullPrivateHoistedItems();
+    result.insert(result.end(), priv.begin(), priv.end());
+  }
+
+  for (auto& ctor: constructors) {
+    auto priv = ctor->fullPrivateHoistedItems();
+    result.insert(result.end(), priv.begin(), priv.end());
+  }
+
+  if (destructor) {
+    auto priv = destructor->fullPrivateHoistedItems();
+    result.insert(result.end(), priv.begin(), priv.end());
+  }
+
+  for (auto& from: fromCasts) {
+    auto priv = from->fullPrivateHoistedItems();
+    result.insert(result.end(), priv.begin(), priv.end());
+  }
+
+  for (auto& to: toCasts) {
+    auto priv = to->fullPrivateHoistedItems();
+    result.insert(result.end(), priv.begin(), priv.end());
+  }
+
+  for (auto& op: operators) {
+    auto priv = op->fullPrivateHoistedItems();
+    result.insert(result.end(), priv.begin(), priv.end());
+  }
+
+  return result;
+};
