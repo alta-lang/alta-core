@@ -302,6 +302,7 @@ namespace AltaCore {
 
       bool referencesOutsideLambda = false;
       bool referencesOutsideCaptureClass = false;
+      bool referencesInsideGenerator = false;
     };
     class FunctionCallExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(FunctionCallExpression, ExpressionNode);
@@ -334,11 +335,14 @@ namespace AltaCore {
       std::shared_ptr<Type> returnType = nullptr;
       std::shared_ptr<BlockNode> body = nullptr;
       std::vector<std::shared_ptr<AttributeNode>> attributes;
+      std::shared_ptr<Type> generatorParameter = nullptr;
+      bool isGenerator = false;
 
       std::vector<std::shared_ptr<GenericFunctionInstantiationDefinitionNode>> genericInstantiations;
       std::vector<std::shared_ptr<Generic>> genericDetails;
 
       std::shared_ptr<DET::Function> function = nullptr;
+      std::shared_ptr<DET::Class> generator = nullptr;
     };
     class GenericFunctionInstantiationDefinitionNode: public FunctionDefinitionNode {
       ALTACORE_DH_CTOR(GenericFunctionInstantiationDefinitionNode, FunctionDefinitionNode);
@@ -583,6 +587,13 @@ namespace AltaCore {
       ALTACORE_MAP<std::string, std::shared_ptr<ExpressionNode>> memberDetails;
       ALTACORE_MAP<std::string, std::shared_ptr<DET::Function>> memberOperators;
       bool isExport;
+    };
+    class YieldExpression: public ExpressionNode {
+      ALTACORE_DH_CTOR(YieldExpression, ExpressionNode);
+
+      std::shared_ptr<ExpressionNode> target = nullptr;
+
+      std::shared_ptr<DET::Function> generator = nullptr;
     };
 
     #undef ALTACORE_DH_CTOR

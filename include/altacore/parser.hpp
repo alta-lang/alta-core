@@ -91,6 +91,7 @@ namespace AltaCore {
         "literal",
         "export",
         "generic",
+        "generator",
       },
       {
         "literal",
@@ -204,6 +205,7 @@ namespace AltaCore {
       SpecialFetch,
       OperatorDefinition,
       Enumeration,
+      Yield,
     };
 
     enum class PrepoRuleType {

@@ -77,6 +77,7 @@ namespace AltaCore {
       SpecialFetchExpression,
       ClassOperatorDefinitionStatement,
       EnumerationDefinitionNode,
+      YieldExpression,
     };
 
     static const char* const NodeType_names[] = {
@@ -145,6 +146,7 @@ namespace AltaCore {
       "SpecialFetchExpression",
       "ClassOperatorDefinitionStatement",
       "EnumerationDefinitionNode",
+      "YieldExpression",
     };
   };
 };

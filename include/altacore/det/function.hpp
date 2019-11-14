@@ -43,8 +43,11 @@ namespace AltaCore {
         bool isDestructor = false;
         bool isLambda = false;
         bool isOperator = false;
+        bool isGenerator = false;
         Shared::ClassOperatorType operatorType = Shared::ClassOperatorType::NONE;
         Shared::ClassOperatorOrientation orientation = Shared::ClassOperatorOrientation::Unary;
+        std::shared_ptr<Type> generatorParameterType = nullptr;
+        std::shared_ptr<Type> generatorReturnType = nullptr;
 
         // only used for lambdas
         std::vector<std::shared_ptr<Variable>> referencedVariables;

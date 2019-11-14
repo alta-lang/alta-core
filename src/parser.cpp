@@ -972,6 +972,8 @@ namespace AltaCore {
 
             if (!expectKeyword("function")) ACP_NOT_OK;
 
+            funcDef->isGenerator = std::find(funcDef->modifiers.begin(), funcDef->modifiers.end(), "generator") != funcDef->modifiers.end();
+
             auto name = expect(TokenType::Identifier);
             if (!name) ACP_NOT_OK;
             funcDef->name = name.raw;
@@ -1005,6 +1007,10 @@ namespace AltaCore {
             exps.clear(); // we don't need those parameter expecatations anymore
 
             if (!expect(TokenType::ClosingParenthesis)) ACP_NOT_OK;
+            if (funcDef->isGenerator && expect(TokenType::OpeningParenthesis)) {
+              state.internalIndex = 6;
+              ACP_RULE(Type);
+            }
             if (!expect(TokenType::Colon)) ACP_NOT_OK;
 
             state.internalIndex = 4;
@@ -1017,13 +1023,28 @@ namespace AltaCore {
 
             state.internalIndex = 5;
             ACP_RULE(Block);
-          } else {
+          } else if (state.internalIndex == 5) {
             auto funcDef = std::dynamic_pointer_cast<AST::FunctionDefinitionNode>(ruleNode);
 
             if (!exps.back()) ACP_NOT_OK;
             funcDef->body = std::dynamic_pointer_cast<AST::BlockNode>(*exps.back().item);
 
             ACP_NODE(std::move(funcDef));
+          } else if (state.internalIndex == 6) {
+            auto funcDef = std::dynamic_pointer_cast<AST::FunctionDefinitionNode>(ruleNode);
+
+            if (exps.back()) {
+              if (!(expect(TokenType::Dot) && expect(TokenType::Dot) && expect(TokenType::Dot))) {
+                ACP_NOT_OK;
+              }
+              funcDef->generatorParameter = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
+            }
+
+            if (!expect(TokenType::ClosingParenthesis)) ACP_NOT_OK;
+            if (!expect(TokenType::Colon)) ACP_NOT_OK;
+
+            state.internalIndex = 4;
+            ACP_RULE(Type);
           }
         } else if (rule == RuleType::Parameter) {
           if (state.internalIndex == 0) {
@@ -1441,7 +1462,7 @@ namespace AltaCore {
         } else if (rule == RuleType::Assignment) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
-            ACP_RULE(PunctualConditonalExpression);
+            ACP_RULE(Yield);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
 
@@ -1547,6 +1568,7 @@ namespace AltaCore {
               RuleType::Bitfield,
               RuleType::Enumeration,
               RuleType::Export,
+              RuleType::VariableDefinition,
 
               // general attributes must come last because
               // they're supposed to be able to interpreted as part of
@@ -1557,7 +1579,14 @@ namespace AltaCore {
           } else {
             while (expect(TokenType::Semicolon)); // optional
             if (!exps.back()) ACP_NOT_OK;
-            ACP_EXP(exps.back().item);
+            auto item = *exps.back().item;
+            if (auto var = std::dynamic_pointer_cast<AST::VariableDefinitionExpression>(item)) {
+              auto stmt = std::make_shared<AST::ExpressionStatement>(var);
+              ACP_NODE(stmt);
+            } else if (auto expr = std::dynamic_pointer_cast<AST::ExpressionNode>(item)) {
+              ACP_NOT_OK;
+            }
+            ACP_NODE(item);
           }
         } else if (rule == RuleType::Import) {
           if (!expectKeyword("import")) ACP_NOT_OK;
@@ -3734,6 +3763,21 @@ namespace AltaCore {
 
             state.internalIndex = 1;
             ACP_RULE(NullRule);
+          }
+        } else if (rule == RuleType::Yield) {
+          if (state.internalIndex == 0) {
+            state.internalIndex = expectKeyword("yield") ? 1 : 2;
+            ACP_RULE(PunctualConditonalExpression);
+          } else if (state.internalIndex == 1) {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto node = std::make_shared<AST::YieldExpression>();
+
+            node->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+            ACP_NODE(node);
+          } else if (state.internalIndex == 2) {
+            ACP_EXP(exps.back().item);
           }
         }
 

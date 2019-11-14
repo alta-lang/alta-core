@@ -92,6 +92,8 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
           mod->exports->items.push_back(info->function);
         }
       }
+
+      info->function->isGenerator = info->isGenerator = isGenerator;
     }
 
     std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
@@ -111,13 +113,34 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
       }
     }
 
+    if (generatorParameter && !info->generatorParameter) {
+      info->generatorParameter = generatorParameter->fullDetail(info->function->scope, false);
+    }
+
     if (!info->returnType) {
       info->returnType = returnType->fullDetail(info->function->scope, false);
       Util::exportClassIfNecessary(info->function->scope, info->returnType->type);
     }
 
+    if (info->isGenerator && !info->generator) {
+      info->generator = DET::Class::create("@Generator@", info->function->scope, {}, true);
+      info->function->scope->items.push_back(info->generator);
+      auto doneVar = std::make_shared<DET::Variable>("done", std::make_shared<DET::Type>(DET::NativeType::Bool), info->generator->scope);
+      info->generator->scope->items.push_back(doneVar);
+      auto nextFunc = DET::Function::create(info->generator->scope, "next", {}, info->returnType->type);
+      info->generator->scope->items.push_back(nextFunc);
+      if (info->generatorParameter) {
+        std::shared_ptr<DET::Function> nextFuncWithArgs = DET::Function::create(info->generator->scope, "next", {
+          {"input", info->generatorParameter->type, false, "not-so-random-uuid"},
+        }, info->returnType->type);
+        info->generator->scope->items.push_back(nextFuncWithArgs);
+      }
+    }
+
     if (!info->function->returnType) {
-      info->function->recreate(params, info->returnType->type);
+      info->function->recreate(params, info->isGenerator ? std::make_shared<DET::Type>(info->generator) : info->returnType->type);
+      info->function->generatorParameterType = info->generatorParameter ? info->generatorParameter->type : nullptr;
+      info->function->generatorReturnType = info->isGenerator ? info->returnType->type : nullptr;
     }
 
     if (info->attributes.size() != attributes.size()) {

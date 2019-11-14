@@ -93,6 +93,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/special-fetch-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/class-operator-definition-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/enumeration-definition-statement.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/yield-expression.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

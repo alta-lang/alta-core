@@ -67,5 +67,6 @@
 #include "ast/special-fetch-expression.hpp"
 #include "ast/class-operator-definition-statement.hpp"
 #include "ast/enumeration-definition-statement.hpp"
+#include "ast/yield-expression.hpp"
 
 #endif // ALTACORE_AST_HPP

@@ -71,6 +71,9 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
       if (acc->readAccessor) {
         return acc->readAccessor->returnType;
       }
+      if (acc->getsVariableLength) {
+        return std::make_shared<Type>(NativeType::UserDefined, std::vector<uint8_t> {}, "size_t");
+      }
       throw std::runtime_error("the given accessor has not been narrowed. either narrow it or use `AltaCore::DET::Type::getUnderlyingTypes` instead");
     }
     return getUnderlyingType(acc->narrowedTo);
@@ -129,6 +132,12 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     return getUnderlyingType(lambda->function);
   } else if (auto special = dynamic_cast<DH::SpecialFetchExpression*>(expression)) {
     return getUnderlyingType(special->items[0]);
+  } else if (auto yield = dynamic_cast<DH::YieldExpression*>(expression)) {
+    if (yield->generator->generatorParameterType) {
+      return std::make_shared<Type>(true, yield->generator->generatorParameterType);
+    } else {
+      return std::make_shared<Type>(NativeType::Void);
+    }
   }
 
   return nullptr;

@@ -25,6 +25,8 @@ namespace AltaCore {
         std::shared_ptr<BlockNode> body = nullptr;
         std::vector<std::shared_ptr<AttributeNode>> attributes;
         std::vector<std::shared_ptr<Generic>> generics;
+        std::shared_ptr<Type> generatorParameter = nullptr;
+        bool isGenerator = false;
 
         FunctionDefinitionNode() {};
         FunctionDefinitionNode(std::string name, std::vector<std::shared_ptr<Parameter>> parameters, std::shared_ptr<Type> returnType, std::vector<std::string> modifiers, std::shared_ptr<BlockNode> body);
