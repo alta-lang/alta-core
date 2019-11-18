@@ -2825,7 +2825,8 @@ namespace AltaCore {
                 loop->inclusive = true;
               }
             } else {
-              ACP_NOT_OK;
+              state.internalIndex = 4;
+              ACP_RULE(Statement);
             }
 
             state.internalIndex = 3;
