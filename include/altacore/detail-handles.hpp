@@ -447,7 +447,6 @@ namespace AltaCore {
       std::shared_ptr<DET::Scope> scope = nullptr;
       std::shared_ptr<DET::Variable> counter = nullptr;
       std::shared_ptr<DET::Function> next = nullptr;
-      std::shared_ptr<DET::ScopeItem> done = nullptr;
       std::shared_ptr<DET::Type> generatorType = nullptr;
     };
 

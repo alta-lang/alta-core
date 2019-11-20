@@ -11,9 +11,9 @@ AltaCore::AST::ReturnDirectiveNode::ReturnDirectiveNode(std::shared_ptr<AltaCore
 
 ALTACORE_AST_DETAIL_D(ReturnDirectiveNode) {
   ALTACORE_MAKE_DH(ReturnDirectiveNode);
+  auto func = Util::getFunction(scope).lock();
+  info->parentFunction = func;
   if (expression != nullptr) {
-    auto func = Util::getFunction(scope).lock();
-    info->parentFunction = func;
     info->expression = expression->fullDetail(scope);
   }
   return info;

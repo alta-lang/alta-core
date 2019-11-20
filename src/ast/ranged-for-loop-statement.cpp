@@ -42,22 +42,10 @@ ALTACORE_AST_VALIDATE_D(RangedForLoopStatement) {
           if (func->isAccessor) continue;
           if (info->next) throw std::runtime_error("Ranged-for loop iterator - next already found");
           info->next = func;
-        } else if (func->name == "done") {
-          if (func->returnType->nativeTypeName != DET::NativeType::Bool) continue;
-          if (func->returnType->pointerLevel() != 0) continue;
-          if (!func->isAccessor) continue;
-          if (info->done) throw std::runtime_error("Ranged-for loop iterator - done already found");
-          info->done = func;
         }
-      } else if (auto var = std::dynamic_pointer_cast<DET::Variable>(item)) {
-        if (var->name != "done") continue;
-        if (var->type->nativeTypeName != DET::NativeType::Bool) continue;
-        if (var->type->pointerLevel() != 0) continue;
-        if (info->done) throw std::runtime_error("Ranged-for loop iterator - done already found");
-        info->done = var;
       }
     }
-    if (!(info->next && info->done)) ALTACORE_VALIDATION_ERROR("Ranged-for loop target is not an iterator");
+    if (!info->next) ALTACORE_VALIDATION_ERROR("Ranged-for loop target is not an iterator");
     info->generatorType = type;
   }
   if (!body) ALTACORE_VALIDATION_ERROR("empty body for ranged `for` loop");

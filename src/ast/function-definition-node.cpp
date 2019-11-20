@@ -127,12 +127,12 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
       info->function->scope->items.push_back(info->generator);
       auto doneVar = std::make_shared<DET::Variable>("done", std::make_shared<DET::Type>(DET::NativeType::Bool), info->generator->scope);
       info->generator->scope->items.push_back(doneVar);
-      auto nextFunc = DET::Function::create(info->generator->scope, "next", {}, info->returnType->type);
+      auto nextFunc = DET::Function::create(info->generator->scope, "next", {}, info->returnType->type->makeOptional());
       info->generator->scope->items.push_back(nextFunc);
       if (info->generatorParameter) {
         std::shared_ptr<DET::Function> nextFuncWithArgs = DET::Function::create(info->generator->scope, "next", {
           {"input", info->generatorParameter->type, false, "not-so-random-uuid"},
-        }, info->returnType->type);
+        }, info->returnType->type->makeOptional());
         info->generator->scope->items.push_back(nextFuncWithArgs);
       }
     }
