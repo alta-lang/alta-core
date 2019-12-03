@@ -1433,10 +1433,8 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) const
       }
       compat -= SIZE_MAX - greatestCompat;
     }
-  } else {
-    if (klass->id != other.klass->id) {
-      compat -= 1;
-    }
+  } else if (klass && other.klass && klass->id != other.klass->id) {
+    compat -= 1;
   }
 
   return compat;
