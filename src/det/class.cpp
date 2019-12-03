@@ -71,12 +71,12 @@ namespace {
   bool doFromOrToLoop(std::shared_ptr<Type> from, std::shared_ptr<Type> to, size_t onlyDo = 0) {
     using NT = NativeType;
 
-    // simple equality
-    if (*from == *to || *from == *to->deconstify() || *from == *to->deconstify(true)) {
-      return true;
-    }
-
     // basic iteration
+    {
+      if (*from == *to || *from == *to->deconstify() || *from == *to->deconstify(true)) {
+        return true;
+      }
+    };
     AC_CAST_FROM_LOOP;
       if (*special == *to || *special == *to->deconstify() || *special == *to->deconstify(true)) {
         return true;
@@ -88,7 +88,25 @@ namespace {
       }
     AC_CAST_TO_LOOP_END;
 
-    // native iteration - floating-point
+    // floating-point iteration
+    {
+      if (
+        from->indirectionLevel() == 0 &&
+        to->indirectionLevel() == 0 &&
+        from->isNative &&
+        to->isNative &&
+        (
+          from->nativeTypeName == NT::Float ||
+          from->nativeTypeName == NT::Double
+        ) &&
+        (
+          to->nativeTypeName == NT::Float ||
+          to->nativeTypeName == NT::Double
+        )
+      ) {
+        return true;
+      }
+    };
     AC_CAST_FROM_LOOP;
       if (
         special->indirectionLevel() == 0 &&
@@ -126,6 +144,12 @@ namespace {
       }
     AC_CAST_TO_LOOP_END;
 
+    // native iteration
+    {
+      if (from->indirectionLevel() == 0 && to->indirectionLevel() == 0 && from->isNative && to->isNative && !from->isAny && !to->isAny) {
+        return true;
+      }
+    };
     AC_CAST_FROM_LOOP;
       if (special->indirectionLevel() == 0 && to->indirectionLevel() == 0 && special->isNative && to->isNative && !special->isAny && !to->isAny) {
         return true;
@@ -137,6 +161,17 @@ namespace {
       }
     AC_CAST_TO_LOOP_END;
 
+    // ref iteration
+    {
+      size_t maxToRefLevel = 0;
+      if (to->referenceLevel() > maxToRefLevel) {
+        maxToRefLevel = to->referenceLevel();
+      }
+
+      if (from->referenceLevel() < maxToRefLevel) {
+        if (doFromOrToLoop(from->reference(), to)) return true;
+      };
+    };
     AC_CAST_FROM_LOOP;
       size_t maxToRefLevel = 0;
       if (to->referenceLevel() > maxToRefLevel) {
@@ -158,6 +193,14 @@ namespace {
       };
     AC_CAST_TO_LOOP_END;
 
+    // union iteration
+    {
+      if (!from->isUnion() && to->isUnion() && to->indirectionLevel() == 0) {
+        for (auto& otherTo: to->unionOf) {
+          if (doFromOrToLoop(from, otherTo)) return true;
+        }
+      }
+    };
     AC_CAST_FROM_LOOP;
       if (!special->isUnion() && to->isUnion() && to->indirectionLevel() == 0) {
         for (auto& otherTo: to->unionOf) {
