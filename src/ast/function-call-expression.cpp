@@ -233,7 +233,51 @@ ALTACORE_AST_DETAIL_D(FunctionCallExpression) {
   }
 
   if (index == SIZE_MAX) {
-    ALTACORE_DETAILING_ERROR("no functions were found that match the call signature");
+    std::string message = "no functions were found that match the call signature\n";
+    message += "argument types are: (";
+    bool isFirst = true;
+    for (size_t i = 0; i < arguments.size(); i++) {
+      if (isFirst) {
+        isFirst = false;
+      } else {
+        message += ", ";
+      }
+      auto& [argName, argExpr, argDet] = argsWithDet[i];
+      auto types = DET::Type::getUnderlyingTypes(argDet.get());
+      bool isFirst2 = true;
+      for (auto& type: types) {
+        if (isFirst2) {
+          isFirst2 = false;
+        } else {
+          message += " | ";
+        }
+        message += type->toString();
+      }
+    }
+    message += ")\n";
+    message += "available call signatures:\n";
+    bool foundOne = false;
+    for (size_t index = 0; index < targetTypes.size(); index++) {
+      auto& targetType = targetTypes[index];
+      if (!targetType) continue;
+      if (!targetType->isFunction) continue;
+      foundOne = true;
+      message += "  (";
+      bool isFirst = true;
+      for (auto& [name, type, variadic, id]: targetType->parameters) {
+        if (isFirst) {
+          isFirst = false;
+        } else {
+          message += ", ";
+        }
+        message += type->toString();
+      }
+      message += ") => " + targetType->returnType->toString() + "\n";
+    }
+    if (!foundOne) {
+      message += "  **none**";
+    }
+    ALTACORE_DETAILING_ERROR(message);
   }
 
   if (maybe) {
