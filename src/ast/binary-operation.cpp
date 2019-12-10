@@ -128,8 +128,12 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
       }
     } else {
       usedCast = true;
+      auto isLeftNative = info->leftType->pointerLevel() == 0 && info->leftType->isNative;
+      auto isOneNative = isLeftNative || (info->rightType->pointerLevel() == 0 && info->rightType->isNative);
       auto rightToLeft = DET::Type::findCast(info->rightType, info->leftType);
+      auto leftToRight = DET::Type::findCast(info->leftType, info->rightType);
       if (
+        (!isOneNative || isLeftNative) &&
         rightToLeft.size() > 0 &&
         !(
           info->leftType->pointerLevel() > 0 &&
@@ -139,8 +143,8 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
       ) {
         info->commonOperandType = info->leftType;
       } else {
-        auto leftToRight = DET::Type::findCast(info->leftType, info->rightType);
         if (
+          (!isOneNative || !isLeftNative) &&
           leftToRight.size() > 0  &&
           !(
             info->rightType->pointerLevel() > 0 &&
@@ -150,7 +154,10 @@ ALTACORE_AST_DETAIL_D(BinaryOperation) {
         ) {
           info->commonOperandType = info->rightType;
         } else {
-          ALTACORE_DETAILING_ERROR("binary operation performed on incompatible types");
+          std::string msg = "binary operation performed on incompatible types\n";
+          msg += "left operand type = " + info->leftType->toString() + '\n';
+          msg += "right operand type = " + info->rightType->toString();
+          ALTACORE_DETAILING_ERROR(msg);
         }
       }
     }
@@ -187,7 +194,9 @@ ALTACORE_AST_VALIDATE_D(BinaryOperation) {
   right->validate(stack, info->right);
 
   if (!info->operatorMethod && info->commonOperandType->pointerLevel() == 0 && !info->commonOperandType->isNative && !(info->commonOperandType->isFunction && info->commonOperandType->isRawFunction)) {
-    ALTACORE_VALIDATION_ERROR("Operation impossible with given operands (no operator method, operands are not pointers, not native, and not raw functions)");
+    std::string msg = "Operation impossible with given operands (no operator method, operands are not pointers, not native, and not raw functions)\n";
+    msg += "deduced common operand type = " + info->commonOperandType->toString();
+    ALTACORE_VALIDATION_ERROR(msg);
   }
 
   ALTACORE_VS_E;
