@@ -295,6 +295,15 @@ bool AltaCore::DET::Scope::canSee(std::shared_ptr<ScopeItem> item) const {
     if (itemScope && id != itemScope->id && !hasParent(itemScope)) {
       return false;
     }
+  } else if (item->visibility == Visibility::Protected) {
+    auto itemClass = Util::getClass(item->parentScope.lock()).lock();
+    auto thisClass = Util::getClass(shared_from_this()).lock();
+    if (!itemClass || !thisClass) {
+      return false;
+    }
+    if (thisClass->id != itemClass->id && !thisClass->hasParent(itemClass)) {
+      return false;
+    }
   }
   return true;
 };

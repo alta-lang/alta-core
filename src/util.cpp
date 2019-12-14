@@ -77,7 +77,7 @@ std::weak_ptr<AltaCore::DET::Function> AltaCore::Util::getFunction(std::shared_p
   return std::weak_ptr<AltaCore::DET::Function>();
 };
 
-std::weak_ptr<AltaCore::DET::Class> AltaCore::Util::getClass(std::shared_ptr<AltaCore::DET::Scope> scope) {
+std::weak_ptr<AltaCore::DET::Class> AltaCore::Util::getClass(std::shared_ptr<const AltaCore::DET::Scope> scope) {
   if (scope == nullptr) {
     return std::weak_ptr<AltaCore::DET::Class>();
   }
