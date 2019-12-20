@@ -81,6 +81,10 @@ void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<DH::Fetch> info, size_t i) {
     }
   }
   if (info->narrowedTo) {
+    if (info->fetchingReturnType) {
+      auto itemType = DET::Type::getUnderlyingType(info->narrowedTo);
+      info->narrowedTo = itemType->returnType;
+    }
     info->inputScope->hoist(info->narrowedTo);
   }
 };
@@ -151,6 +155,8 @@ ALTACORE_AST_DETAIL_D(Fetch) {
       }
     }
   }
+
+  detailAttributes(info);
 
   if (items.size() == 1 && (info->items[0]->nodeType() != DET::NodeType::Function || !std::dynamic_pointer_cast<DET::Function>(info->items[0])->isAccessor)) {
     narrowTo(info, 0);

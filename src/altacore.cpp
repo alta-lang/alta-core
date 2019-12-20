@@ -92,6 +92,14 @@ void AltaCore::registerGlobalAttributes() {
       }
     }
   AC_END_ATTRIBUTE;
+
+  AC_ATTRIBUTE(Accessor, "returnTypeOf");
+    info->fetchingReturnType = true;
+  AC_END_ATTRIBUTE;
+
+  AC_ATTRIBUTE(Fetch, "returnTypeOf");
+    info->fetchingReturnType = true;
+  AC_END_ATTRIBUTE;
 };
 
 #undef AC_END_ATTRIBUTE

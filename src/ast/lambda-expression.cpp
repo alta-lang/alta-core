@@ -28,9 +28,7 @@ ALTACORE_AST_DETAIL_D(LambdaExpression) {
 
   info->function->recreate(params, info->returnType->type);
 
-  for (auto& attr: attributes) {
-    info->attributes.push_back(attr->fullDetail(info->inputScope, shared_from_this(), info));
-  }
+  detailAttributes(info);
 
   info->function->beganThrowing.listen([=]() {
     info->function->scope->isTry = true;

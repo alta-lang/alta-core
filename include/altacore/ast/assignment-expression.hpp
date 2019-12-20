@@ -8,14 +8,13 @@ namespace AltaCore {
   namespace AST {
     using Shared::AssignmentType;
 
-    class AssignmentExpression: public ExpressionNode, public std::enable_shared_from_this<AssignmentExpression> {
+    class AssignmentExpression: public ExpressionNode, public inheritable_enable_shared_from_this<AssignmentExpression> {
       public:
         virtual const NodeType nodeType();
 
         std::shared_ptr<AST::ExpressionNode> target;
         std::shared_ptr<AST::ExpressionNode> value;
         AssignmentType type = AssignmentType::Simple;
-        std::vector<std::shared_ptr<AST::AttributeNode>> attributes;
 
         AssignmentExpression() {};
         AssignmentExpression(std::shared_ptr<AST::ExpressionNode> target, std::shared_ptr<AST::ExpressionNode> value);

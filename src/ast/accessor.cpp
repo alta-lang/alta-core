@@ -173,6 +173,8 @@ ALTACORE_AST_DETAIL_D(Accessor) {
     }
   }
 
+  detailAttributes(info);
+
   if (info->items.size() == 0) {
     ALTACORE_DETAILING_ERROR("no items found for `" + query + "` in target");
   } else if (info->items.size() == 1) {
@@ -271,6 +273,10 @@ void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<DH::Accessor> info, std::
     }
   }
   if (info->narrowedTo) {
+    if (info->fetchingReturnType) {
+      auto itemType = DET::Type::getUnderlyingType(info->narrowedTo);
+      info->narrowedTo = itemType->returnType;
+    }
     //if (auto parentScope = info->narrowedTo->parentScope.lock()) {
       //if (auto parentModule = parentScope->parentModule.lock()) {
         info->inputScope->hoist(info->narrowedTo);
@@ -285,6 +291,10 @@ void AltaCore::AST::Accessor::narrowTo(std::shared_ptr<DH::Accessor> info, size_
   info->narrowedTo = info->items[i];
   info->narrowedToIndex = i;
   if (info->narrowedTo) {
+    if (info->fetchingReturnType) {
+      auto itemType = DET::Type::getUnderlyingType(info->narrowedTo);
+      info->narrowedTo = itemType->returnType;
+    }
     //if (auto parentScope = info->narrowedTo->parentScope.lock()) {
       //if (auto parentModule = parentScope->parentModule.lock()) {
         info->inputScope->hoist(info->narrowedTo);

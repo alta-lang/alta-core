@@ -29,7 +29,12 @@ namespace AltaCore {
         {};
     };
 
-    ALTACORE_DH_SIMPLE_ALIAS(ExpressionNode, Node);
+    class ExpressionNode: public Node {
+      ALTACORE_DH_CTOR(ExpressionNode, Node);
+
+      std::vector<std::shared_ptr<AttributeNode>> attributes;
+    };
+
     ALTACORE_DH_SIMPLE_ALIAS(StatementNode, Node);
     ALTACORE_DH_SIMPLE_ALIAS(ClassStatementNode, Node);
 
@@ -84,6 +89,7 @@ namespace AltaCore {
       ALTACORE_DH_CTOR(RetrievalNode, ExpressionNode);
 
       std::vector<std::shared_ptr<DET::ScopeItem>> items;
+      bool fetchingReturnType = false;
     };
 
     class Accessor: public RetrievalNode {
@@ -118,8 +124,6 @@ namespace AltaCore {
       std::shared_ptr<DET::Function> operatorMethod = nullptr;
 
       bool strict = false;
-
-      std::vector<std::shared_ptr<AttributeNode>> attributes;
     };
     class AttributeNode: public Node {
       ALTACORE_DH_CTOR(AttributeNode, Node);
@@ -566,8 +570,6 @@ namespace AltaCore {
 
       std::vector<std::shared_ptr<Parameter>> parameters;
       std::shared_ptr<Type> returnType = nullptr;
-
-      std::vector<std::shared_ptr<AttributeNode>> attributes;
 
       std::shared_ptr<BlockNode> body = nullptr;
 

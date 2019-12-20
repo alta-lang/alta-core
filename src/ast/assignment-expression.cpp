@@ -30,9 +30,7 @@ ALTACORE_AST_DETAIL_D(AssignmentExpression) {
     info->inputScope->hoist(info->operatorMethod);
   }
 
-  for (auto& attr: attributes) {
-    info->attributes.push_back(attr->fullDetail(info->inputScope, shared_from_this(), info));
-  }
+  detailAttributes(info);
 
   return info;
 };

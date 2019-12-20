@@ -881,7 +881,9 @@ namespace AltaCore {
 
           if (currentState.currentPosition < tokens.size()) {
             auto& tok = tokens[farthestRule.currentState.currentPosition];
-            throw Errors::ParsingError("input not completely parsed; assuming failure", Errors::Position(tok.line, tok.column, filePath));
+            auto pos = Errors::Position(tok.line, tok.column, filePath);
+            pos.filePosition = tok.position;
+            throw Errors::ParsingError("input not completely parsed; assuming failure", pos);
           }
 
           root = nodeFactory.create<AST::RootNode>(statements);
@@ -1104,6 +1106,11 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::StrictAccessor) {
           if (state.internalIndex == 0) {
+            state.internalIndex = 3;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 3) {
+            if (exps.back()) ACP_RULE(Attribute);
+            exps.pop_back();
             state.internalIndex = 1;
             ACP_RULE(Fetch);
           } else if (state.internalIndex == 2) {
@@ -1133,12 +1140,24 @@ namespace AltaCore {
             if (!exps.back()) ACP_NOT_OK;
 
             auto savedState = currentState;
-            if (!expect(TokenType::Dot)) ACP_EXP(exps.back().item);
+            if (!expect(TokenType::Dot)) {
+              auto expr = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+              exps.pop_back();
+              for (auto exp: exps) {
+                expr->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+              }
+              ACP_NODE(expr);
+            }
 
             auto query = expect(TokenType::Identifier);
             if (!query) {
               currentState = savedState;
-              ACP_EXP(exps.back().item);
+              auto expr = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+              exps.pop_back();
+              for (auto exp: exps) {
+                expr->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+              }
+              ACP_NODE(expr);
             }
 
             auto acc = nodeFactory.create<AST::Accessor>(std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item), query.raw);
@@ -1152,6 +1171,11 @@ namespace AltaCore {
               }
               acc = nodeFactory.create<AST::Accessor>(acc, query.raw);
               savedState = currentState;
+            }
+
+            exps.pop_back();
+            for (auto exp: exps) {
+              acc->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
             }
 
             saveState();

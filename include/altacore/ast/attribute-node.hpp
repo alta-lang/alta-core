@@ -5,7 +5,6 @@
 #include "node.hpp"
 #include <vector>
 #include <string>
-#include "literal-node.hpp"
 #include "../attributes.hpp"
 
 namespace AltaCore {

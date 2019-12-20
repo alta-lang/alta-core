@@ -1,5 +1,6 @@
 #include "../../include/altacore/ast/attribute-node.hpp"
 #include "../../include/altacore/util.hpp"
+#include "../../include/altacore/ast/literal-node.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::AttributeNode::nodeType() {
   return NodeType::AttributeNode;

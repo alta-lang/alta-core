@@ -9,7 +9,7 @@
 
 namespace AltaCore {
   namespace AST {
-    class LambdaExpression: public ExpressionNode, public std::enable_shared_from_this<LambdaExpression> {
+    class LambdaExpression: public ExpressionNode, public inheritable_enable_shared_from_this<LambdaExpression> {
       public:
         virtual const NodeType nodeType();
 
@@ -17,7 +17,6 @@ namespace AltaCore {
         std::shared_ptr<Type> returnType = nullptr;
 
         std::vector<std::string> modifiers;
-        std::vector<std::shared_ptr<AttributeNode>> attributes;
 
         std::shared_ptr<BlockNode> body = nullptr;
 
