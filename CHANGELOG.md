@@ -4,7 +4,12 @@ All the changes for Alta's frontend/core functionality (parser, lexer, AST, DET,
 This project follows [semantic versioning](https://semver.org).
 
 ## [Unreleased]
-Nothing yet.
+  * Many, MANY changes; still TBD (to-be-documented)
+### Fixed
+#### Palo (parser)
+  * Fix `super` parsing in classes
+    * I don't know what I was thinking when I originally limited `super` to only methods. Anyways, it can be used anywhere inside a class definition now
+    * It'll still be a regular identifier anywhere else (although its usage as a regular identifier is not recommended)
 
 ## [0.10.0] - 2018-12-20
 ### Added

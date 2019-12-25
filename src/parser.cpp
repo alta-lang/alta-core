@@ -2243,6 +2243,8 @@ namespace AltaCore {
 
             if (!expect(TokenType::OpeningBrace)) ACP_NOT_OK;
 
+            inClass = true;
+
             state.internalIndex = 1;
             ACP_RULE(ClassStatement);
           } else if (state.internalIndex == 1) {
@@ -2252,6 +2254,8 @@ namespace AltaCore {
               klass->statements.push_back(std::dynamic_pointer_cast<AST::ClassStatementNode>(*exps.back().item));
               ACP_RULE(ClassStatement);
             }
+
+            inClass = false;
 
             if (!expect(TokenType::ClosingBrace)) ACP_NOT_OK;
 
@@ -2312,10 +2316,8 @@ namespace AltaCore {
             state.internalValue = attrs;
             ruleNode = nodeFactory.create<AST::ClassMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod));
             state.internalIndex = 2;
-            inClass = true;
             ACP_RULE(FunctionDefinition);
           } else {
-            inClass = false;
             if (!exps.back()) ACP_NOT_OK;
 
             auto attrs = ALTACORE_ANY_CAST<std::vector<std::shared_ptr<AST::AttributeNode>>>(state.internalValue);
@@ -2401,10 +2403,8 @@ namespace AltaCore {
             if (!expect(TokenType::ClosingParenthesis)) ACP_NOT_OK;
 
             state.internalIndex = 4;
-            inClass = true;
             ACP_RULE(Block);
           } else if (state.internalIndex == 4) {
-            inClass = false;
             if (!exps.back()) ACP_NOT_OK;
 
             auto method = std::dynamic_pointer_cast<AST::ClassSpecialMethodDefinitionStatement>(ruleNode);
@@ -2418,7 +2418,6 @@ namespace AltaCore {
             method->specialType = std::dynamic_pointer_cast<AST::Type>(*exps.back().item);
 
             state.internalIndex = 4;
-            inClass = true;
             ACP_RULE(Block);
           }
         } else if (rule == RuleType::ClassInstantiation) {
