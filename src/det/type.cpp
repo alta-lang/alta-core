@@ -1,6 +1,7 @@
 #include "../../include/altacore/det/type.hpp"
 #include "../../include/altacore/ast.hpp"
 #include "../../include/altacore/util.hpp"
+#include <queue>
 
 bool AltaCore::DET::CastComponent::operator ==(const CastComponent& other) const {
   if (type != other.type) return false;
@@ -540,7 +541,7 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     #define AC_FROM_LOOP_END }
     #define AC_RETURN_INDEX if (index) { *index = i; }
 
-    if (to->isAny) {
+    if (to->isAny && to->pointerLevel() == 0) {
       return { CC(CCT::Destination) };
     }
 
@@ -843,8 +844,11 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
           AC_RETURN_INDEX;
           return { CC(CCT::Destination, SCT::EmptyOptional) };
         }
+        if (to->pointerLevel() > 0) {
+          AC_RETURN_INDEX;
+          return { CC(CCT::Destination) };
+        }
       AC_TO_LOOP_END;
-      return { CC(CCT::Destination) };
     }
 
     decltype(tos) deconstTos;
@@ -965,6 +969,9 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
       if (*from == *to) {
         return { CC(CCT::Destination) };
       }
+      if (from->pointerLevel() == 1 && from->isAny && to->pointerLevel() == 1) {
+        return { CC(CCT::Destination) };
+      }
 
       // basic iteration
       AC_CAST_FROM_LOOP;
@@ -1016,6 +1023,7 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
         }
       AC_CAST_TO_LOOP_END;
 
+      // native iteration
       AC_CAST_FROM_LOOP;
         if (special->indirectionLevel() == 0 && to->indirectionLevel() == 0 && special->isNative && to->isNative && !special->isAny && !to->isAny) {
           return { CC(CCT::To, method), CC(CCT::SimpleCoercion, to), CC(CCT::Destination) };
@@ -1027,6 +1035,7 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
         }
       AC_CAST_TO_LOOP_END;
 
+      // reference iteration
       AC_CAST_FROM_LOOP;
         size_t maxToRefLevel = 0;
         if (to->referenceLevel() > maxToRefLevel) {
@@ -1058,6 +1067,7 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
         };
       AC_CAST_TO_LOOP_END;
 
+      // union iteration
       AC_CAST_FROM_LOOP;
         if (!special->isUnion() && to->isUnion() && to->indirectionLevel() == 0) {
           for (auto& otherTo: to->unionOf) {
@@ -1095,8 +1105,35 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
         auto cast = doFromOrToLoop(from, special);
         if (cast.size() > 0) {
           cast.insert(cast.end() - 1, CC(CCT::From, method));
+          return cast;
         }
       AC_CAST_TO_LOOP_END;
+
+      // parent from-to iteration
+      AC_CAST_FROM_LOOP;
+        if (special->klass) {
+          std::queue<std::vector<std::shared_ptr<Class>>> nextUp;
+          for (auto& parent: special->klass->parents) {
+            nextUp.push({ parent });
+          }
+          while (nextUp.size() > 0) {
+            auto curr = nextUp.front();
+            nextUp.pop();
+            for (auto& parent: curr.back()->parents) {
+              auto copy = curr;
+              copy.push_back(parent);
+              nextUp.push(copy);
+            }
+            auto cast = doFromOrToLoop(std::make_shared<Type>(curr.back()), to);
+            if (cast.size() > 0) {
+              for (auto& parent: curr) {
+                cast.insert(cast.begin(), CC(CCT::Upcast, parent));
+              }
+              return cast;
+            }
+          }
+        }
+      AC_CAST_FROM_LOOP_END;
 
       return {};
     };
@@ -1105,6 +1142,31 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
       if (cast.size() > 0) {
         AC_RETURN_INDEX;
         return cast;
+      }
+    AC_TO_LOOP_END;
+    AC_TO_LOOP;
+      if (from->klass && from->indirectionLevel() == 0) {
+        std::queue<std::vector<std::shared_ptr<Class>>> nextUp;
+        for (auto& parent: from->klass->parents) {
+          nextUp.push({ parent });
+        }
+        while (nextUp.size() > 0) {
+          auto curr = nextUp.front();
+          nextUp.pop();
+          for (auto& parent: curr.back()->parents) {
+            auto copy = curr;
+            copy.push_back(parent);
+            nextUp.push(copy);
+          }
+          auto cast = doFromOrToLoop(std::make_shared<Type>(curr.back()), to);
+          if (cast.size() > 0) {
+            for (auto& parent: curr) {
+              cast.insert(cast.begin(), CC(CCT::Upcast, parent));
+            }
+            AC_RETURN_INDEX;
+            return cast;
+          }
+        }
       }
     AC_TO_LOOP_END;
 
@@ -1288,13 +1350,22 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     dontLoopBack = false;
 
     AC_TO_LOOP;
-      if (to->isAny) {
+      if (to->isAny && to->pointerLevel() == 0) {
         AC_RETURN_INDEX;
         return { CC(CCT::Destination) };
       }
     AC_TO_LOOP_END;
 
-    if (manual) {
+    if (
+      manual &&
+      tos.size() == 1 &&
+      (
+        (from->isNative && tos.front()->isNative) ||
+        (from->pointerLevel() > 0 && tos.front()->pointerLevel() > 0) ||
+        (from->isNative && tos.front()->pointerLevel() > 0) ||
+        (from->pointerLevel() > 0 && tos.front()->isNative)
+      )
+    ) {
       return { CC(CCT::SimpleCoercion, tos.front()), CC(CCT::Destination) };
     }
 

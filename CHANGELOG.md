@@ -5,11 +5,20 @@ This project follows [semantic versioning](https://semver.org).
 
 ## [Unreleased]
   * Many, MANY changes; still TBD (to-be-documented)
+### Added
+#### DET
+  * Check parent classes for possible `from` or `to` casts
 ### Fixed
 #### Palo (parser)
   * Fix `super` parsing in classes
     * I don't know what I was thinking when I originally limited `super` to only methods. Anyways, it can be used anywhere inside a class definition now
     * It'll still be a regular identifier anywhere else (although its usage as a regular identifier is not recommended)
+#### DET
+  * Don't treat `nullptr` like a regular `any` type
+  * Don't allow manual casts to cast freely
+    * e.g. They can't coerce a class to a pointer or a boolean
+    * Note that *conversion* is not *coercion*
+      * Alta types can use conversion (`from` and `to` are the main methods of conversion), but coercion is only allowed between native types and pointers
 
 ## [0.10.0] - 2018-12-20
 ### Added
