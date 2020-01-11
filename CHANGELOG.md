@@ -19,6 +19,10 @@ This project follows [semantic versioning](https://semver.org).
     * e.g. They can't coerce a class to a pointer or a boolean
     * Note that *conversion* is not *coercion*
       * Alta types can use conversion (`from` and `to` are the main methods of conversion), but coercion is only allowed between native types and pointers
+#### AST
+  * Add ranged-loop iterator details in the detailing method
+    * I don't know why the details were being added in the validation method in the first place
+    * This way, validating a module (or really, even a single RangedForLoopStatement node) twice won't trigger errors due to the information being set twice
 
 ## [0.10.0] - 2018-12-20
 ### Added

@@ -13,6 +13,22 @@ ALTACORE_AST_DETAIL_D(RangedForLoopStatement) {
   info->start = start->fullDetail(info->scope);
   if (end) {
     info->end = end->fullDetail(info->scope);
+  } else {
+    auto type = DET::Type::getUnderlyingType(info->start.get());
+    if (!type->klass) ALTACORE_DETAILING_ERROR("Ranged-for loop target is not an iterator");
+    for (auto& item: type->klass->scope->items) {
+      if (auto func = std::dynamic_pointer_cast<DET::Function>(item)) {
+        if (func->parameters.size() != 0) continue;
+        if (func->name == "next") {
+          if (*func->returnType == DET::Type(DET::NativeType::Void)) continue;
+          if (func->isAccessor) continue;
+          if (info->next) ALTACORE_DETAILING_ERROR("Ranged-for loop iterator - next already found");
+          info->next = func;
+        }
+      }
+    }
+    if (!info->next) ALTACORE_DETAILING_ERROR("Ranged-for loop target is not an iterator");
+    info->generatorType = type;
   }
 
   info->counter = std::make_shared<DET::Variable>(counterName, info->counterType->type, info->scope);
@@ -31,22 +47,6 @@ ALTACORE_AST_VALIDATE_D(RangedForLoopStatement) {
   start->validate(stack, info->start);
   if (end) {
     end->validate(stack, info->end);
-  } else {
-    auto type = DET::Type::getUnderlyingType(info->start.get());
-    if (!type->klass) ALTACORE_VALIDATION_ERROR("Ranged-for loop target is not an iterator");
-    for (auto& item: type->klass->scope->items) {
-      if (auto func = std::dynamic_pointer_cast<DET::Function>(item)) {
-        if (func->parameters.size() != 0) continue;
-        if (func->name == "next") {
-          if (*func->returnType == DET::Type(DET::NativeType::Void)) continue;
-          if (func->isAccessor) continue;
-          if (info->next) throw std::runtime_error("Ranged-for loop iterator - next already found");
-          info->next = func;
-        }
-      }
-    }
-    if (!info->next) ALTACORE_VALIDATION_ERROR("Ranged-for loop target is not an iterator");
-    info->generatorType = type;
   }
   if (!body) ALTACORE_VALIDATION_ERROR("empty body for ranged `for` loop");
   body->validate(stack, info->body);
