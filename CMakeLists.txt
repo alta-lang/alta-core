@@ -27,6 +27,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/altacore.cpp"
   "${PROJECT_SOURCE_DIR}/src/errors.cpp"
   "${PROJECT_SOURCE_DIR}/src/timing.cpp"
+  "${PROJECT_SOURCE_DIR}/src/logging.cpp"
 
   # AST nodes
   "${PROJECT_SOURCE_DIR}/src/ast/node.cpp"

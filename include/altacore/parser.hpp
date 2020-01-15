@@ -283,10 +283,12 @@ namespace AltaCore {
         State stateAtStart;
         State currentState;
         ALTACORE_ANY internalValue;
+        RuleType rule = RuleType::None;
 
-        RuleState(State _stateAtStart):
+        RuleState(State _stateAtStart, RuleType _rule):
           stateAtStart(_stateAtStart),
-          currentState(_stateAtStart)
+          currentState(_stateAtStart),
+          rule(_rule)
           {};
     };
 
@@ -335,6 +337,7 @@ namespace AltaCore {
         Filesystem::Path filePath;
 
         bool inClass = false;
+        bool findingConditionalTest = false;
 
         std::vector<Token> tokens;
         std::vector<Token> originalTokens;
@@ -350,7 +353,7 @@ namespace AltaCore {
         Lexer::Lexer relexer = Lexer::Lexer(Filesystem::Path());
       public:
         ALTACORE_OPTIONAL<NodeType> root;
-        RuleState farthestRule = RuleState(currentState);
+        RuleState farthestRule = RuleState(currentState, RuleType::None);
         ALTACORE_MAP<std::string, PrepoExpression>& definitions;
 
         void parse();

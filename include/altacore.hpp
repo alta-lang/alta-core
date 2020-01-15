@@ -11,6 +11,7 @@
 #include "altacore/validator.hpp"
 #include "altacore/errors.hpp"
 #include "altacore/timing.hpp"
+#include "altacore/logging.hpp"
 
 namespace AltaCore {
   void registerGlobalAttributes();

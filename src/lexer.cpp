@@ -225,6 +225,9 @@ namespace AltaCore {
       token.type = rule;
       token.raw = std::string(1, character);
       token.valid = true;
+      if (tokens.size() == 0 || tokens.back().line != currentLine) {
+        token.firstInLine = true;
+      }
       tokens.push_back(token);
       if (setHanging) hangingRule = rule;
       return tokens.back();

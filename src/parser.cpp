@@ -1,6 +1,7 @@
 #include <algorithm>
 #include "../include/altacore/parser.hpp"
 #include "../include/altacore/util.hpp"
+#include "../include/altacore/logging.hpp"
 
 namespace AltaCore {
   namespace Parser {
@@ -32,6 +33,21 @@ namespace AltaCore {
         if (tokens[currentState.currentPosition].type == expectation) {
           tok = tokens[currentState.currentPosition++];
           break;
+        }
+      }
+
+      if (tok.firstInLine && tok.type == TokenType::OpeningParenthesis) {
+        if (currentState.currentPosition - 1 != 0) {
+          auto prev = tokens[currentState.currentPosition - 2];
+          if (prev.type == TokenType::Integer || prev.type == TokenType::Identifier || prev.type == TokenType::String || prev.type == TokenType::ClosingParenthesis || prev.type == TokenType::ClosingAngleBracket) {
+            if (findingConditionalTest) {
+              Logging::log(Logging::Message("S0001", Logging::Severity::Warning, Errors::Position(tok.line, tok.column, filePath, tok.position), "To prevent a possible error and silence this warning, surround the conditional's body with braces ({...})"));
+            } else {
+              Logging::log(Logging::Message("S0001", Logging::Severity::Warning, Errors::Position(tok.line, tok.column, filePath, tok.position), "To prevent a possible error and silence this warning, add a semicolon (;) before the parenthesis"));
+            }
+          }
+        } else {
+          Logging::log(Logging::Message("S0001", Logging::Severity::Warning, Errors::Position(tok.line, tok.column, filePath, tok.position)));
         }
       }
 
@@ -296,7 +312,7 @@ namespace AltaCore {
       ruleStack.emplace(
         PrepoRuleType::Root,
         std::stack<PrepoRuleType>(),
-        RuleState(currentState),
+        RuleState(currentState, RuleType::None),
         std::vector<PrepoExpectation>(),
         PrepoExpression(),
         currentState
@@ -360,7 +376,7 @@ namespace AltaCore {
           ruleStack.emplace(
             nextExp,
             std::stack<PrepoRuleType>(),
-            RuleState(currentState),
+            RuleState(currentState, RuleType::None),
             std::vector<PrepoExpectation>(),
             PrepoExpression(),
             currentState
@@ -617,7 +633,7 @@ namespace AltaCore {
       ruleStack.emplace(
         RuleType::Root,
         std::stack<RuleType>(),
-        RuleState(currentState),
+        RuleState(currentState, RuleType::Root),
         std::vector<Expectation>(),
         nullptr,
         std::make_tuple(currentState, std::deque<bool>(), std::deque<bool>(), true)
@@ -732,7 +748,7 @@ namespace AltaCore {
           ruleStack.emplace(
             nextExp,
             std::stack<RuleType>(),
-            RuleState(currentState),
+            RuleState(currentState, rule),
             std::vector<Expectation>(),
             nullptr,
             std::make_tuple(currentState, prepoLevels, prepoLast, advanceExp)
@@ -2008,8 +2024,10 @@ namespace AltaCore {
 
             state.internalIndex = 1;
 
+            findingConditionalTest = true;
             ACP_RULE(Expression);
           } else if (state.internalIndex == 1) {
+            findingConditionalTest = false;
             if (!exps.back()) ACP_NOT_OK;
 
             auto cond = nodeFactory.create<AST::ConditionalStatement>();
@@ -2031,6 +2049,7 @@ namespace AltaCore {
             if (expectKeyword("else")) {
               if (expectKeyword("if")) {
                 state.internalIndex = 3;
+                findingConditionalTest = true;
                 ACP_RULE(Expression);
               } else {
                 state.internalIndex = 5;
@@ -2040,6 +2059,7 @@ namespace AltaCore {
 
             ACP_NODE(intern);
           } else if (state.internalIndex == 3) {
+            findingConditionalTest = false;
             auto intern = std::dynamic_pointer_cast<AST::ConditionalStatement>(ruleNode);
 
             if (!exps.back()) {
@@ -2070,6 +2090,7 @@ namespace AltaCore {
             if (expectKeyword("else")) {
               if (expectKeyword("if")) {
                 state.internalIndex = 3;
+                findingConditionalTest = true;
                 ACP_RULE(Expression);
               } else {
                 state.internalIndex = 5;
@@ -2636,12 +2657,15 @@ namespace AltaCore {
             if (!expectKeyword("while")) ACP_NOT_OK;
 
             state.internalIndex = 1;
+            findingConditionalTest = true;
             ACP_RULE(Expression);
           } else if (state.internalIndex == 1) {
+            findingConditionalTest = false;
             if (!exps.back()) ACP_NOT_OK;
 
             auto loop = nodeFactory.create<AST::WhileLoopStatement>();
             loop->test = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
             
             ruleNode = std::move(loop);
             state.internalIndex = 2;
@@ -2853,8 +2877,10 @@ namespace AltaCore {
             }
 
             state.internalIndex = 3;
+            findingConditionalTest = true;
             ACP_RULE(Expression);
           } else if (state.internalIndex == 3) {
+            findingConditionalTest = false;
             if (!exps.back()) ACP_NOT_OK;
 
             auto loop = std::dynamic_pointer_cast<AST::RangedForLoopStatement>(ruleNode);

@@ -228,6 +228,7 @@ namespace AltaCore {
       size_t line;
       size_t column;
       bool valid = false;
+      bool firstInLine = false;
 
       explicit operator bool() const {
         return valid;
