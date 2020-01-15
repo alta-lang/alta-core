@@ -187,7 +187,7 @@ void AltaCore::Filesystem::Path::absolutifyInPlace(AltaCore::Filesystem::Path re
       if (relativeTo.components.size() > 0) {
         relativeTo.components.pop_back();
       }
-    } else {
+    } else if (!component.empty()) {
       relativeTo.components.push_back(component);
     }
   }
@@ -206,7 +206,7 @@ AltaCore::Filesystem::Path AltaCore::Filesystem::Path::normalize() const {
       if (newPath.components.size() > 0) {
         newPath.components.pop_back();
       }
-    } else {
+    } else if (!component.empty()) {
       newPath.components.push_back(component);
     }
   }
@@ -301,6 +301,7 @@ AltaCore::Filesystem::Path AltaCore::Filesystem::Path::uproot() const {
 };
 
 void AltaCore::Filesystem::Path::push(std::string component) {
+  if (component.empty()) return;
   return components.push_back(component);
 };
 std::string AltaCore::Filesystem::Path::pop() {
@@ -310,6 +311,7 @@ std::string AltaCore::Filesystem::Path::pop() {
   return component;
 };
 void AltaCore::Filesystem::Path::unshift(std::string component) {
+  if (component.empty()) return;
   components.insert(components.begin(), component);
 };
 std::string AltaCore::Filesystem::Path::shift() {
@@ -352,7 +354,7 @@ bool AltaCore::Filesystem::Path::exists() const {
   return (statFunc(cstrPath, &buf) == 0);
 };
 bool AltaCore::Filesystem::Path::isDirectory() const {
-  // `Path().exists` for the rationale for using `_stat` instead of `stat` on Windows
+  // see `Path().exists` for the rationale for using `_stat` instead of `stat` on Windows
 #if defined(_WIN32) || defined(_WIN64)
   const auto statFunc = _stat;
   typedef struct _stat statStruct;
