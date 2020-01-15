@@ -161,6 +161,73 @@ namespace {
       }
     AC_CAST_TO_LOOP_END;
 
+    // child iteration
+    {
+      if (from->indirectionLevel() > 0 && to->indirectionLevel() > 0 && from->referenceLevel() == to->referenceLevel() && from->klass && to->klass && to->klass->hasParent(from->klass)) {
+        return true;
+      }
+    };
+    AC_CAST_FROM_LOOP;
+      if (special->indirectionLevel() > 0 && to->indirectionLevel() > 0 && special->referenceLevel() == to->referenceLevel() && special->klass && to->klass && to->klass->hasParent(special->klass)) {
+        return true;
+      }
+    AC_CAST_FROM_LOOP_END;
+    AC_CAST_TO_LOOP;
+      if (from->indirectionLevel() > 0 && special->indirectionLevel() > 0 && from->referenceLevel() == special->referenceLevel() && from->klass && special->klass && special->klass->hasParent(from->klass)) {
+        return true;
+      }
+    AC_CAST_TO_LOOP_END;
+
+    // parent iteration
+    {
+      if (
+        (
+          (
+            (from->referenceLevel() <= 1 && to->referenceLevel() <= 1) ||
+            (from->pointerLevel() <= 1)
+          ) &&
+          (to->pointerLevel() == from->pointerLevel())
+        ) &&
+        from->klass &&
+        to->klass &&
+        from->klass->hasParent(to->klass)
+      ) {
+        return true;
+      }
+    };
+    AC_CAST_FROM_LOOP;
+      if (
+        (
+          (
+            (special->referenceLevel() <= 1 && to->referenceLevel() <= 1) ||
+            (special->pointerLevel() <= 1)
+          ) &&
+          (to->pointerLevel() == special->pointerLevel())
+        ) &&
+        special->klass &&
+        to->klass &&
+        special->klass->hasParent(to->klass)
+      ) {
+        return true;
+      }
+    AC_CAST_FROM_LOOP_END;
+    AC_CAST_TO_LOOP;
+      if (
+        (
+          (
+            (from->referenceLevel() <= 1 && special->referenceLevel() <= 1) ||
+            (from->pointerLevel() <= 1)
+          ) &&
+          (special->pointerLevel() == from->pointerLevel())
+        ) &&
+        from->klass &&
+        special->klass &&
+        from->klass->hasParent(special->klass)
+      ) {
+        return true;
+      }
+    AC_CAST_TO_LOOP_END;
+
     // ref iteration
     {
       size_t maxToRefLevel = 0;
@@ -216,6 +283,20 @@ namespace {
       }
     AC_CAST_TO_LOOP_END;
 
+    // nullptr iteration
+    if (from->isAny && from->pointerLevel() == 1) {
+      {
+        if (to->pointerLevel() > 0) {
+          return true;
+        }
+      };
+      AC_CAST_TO_LOOP;
+        if (special->pointerLevel() > 0) {
+          return true;
+        }
+      AC_CAST_TO_LOOP_END;
+    }
+
     // recursive iteration
     AC_CAST_FROM_LOOP;
       if (doFromOrToLoop(special, to)) return true;
@@ -239,6 +320,8 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Class::findFromCast(cons
     auto special = std::get<1>(fromFunc->parameters[0]);
     if (doFromOrToLoop(std::make_shared<Type>(from), special)) return fromFunc;
   }
+  // note that for `from` casts, we CANNOT search parents for cast methods
+  // this is because we cannot automatically construct a child from a parent
   return nullptr;
 };
 
@@ -257,6 +340,9 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Class::findToCast(const 
     for (auto& uni: to.unionOf) {
       if (auto func = findToCast(*uni)) return func;
     }
+  }
+  for (auto& parent: parents) {
+    if (auto toCast = parent->findToCast(to)) return toCast;
   }
 
   return nullptr;

@@ -891,7 +891,7 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     }
 
     AC_TO_LOOP;
-      if (from->indirectionLevel() > 0 && to->indirectionLevel() > 0 && from->klass && to->klass && to->klass->hasParent(from->klass)) {
+      if (from->indirectionLevel() > 0 && to->indirectionLevel() > 0 && from->referenceLevel() == to->referenceLevel() && from->klass && to->klass && to->klass->hasParent(from->klass)) {
         AC_RETURN_INDEX;
         return { CC(CCT::Downcast, to->klass), CC(CCT::Destination) };
       }
@@ -900,8 +900,11 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     AC_TO_LOOP;
       if (
         (
-          (from->referenceLevel() <= 1 && to->referenceLevel() <= 1) ||
-          (from->pointerLevel() <= 1 && to->pointerLevel() == from->pointerLevel())
+          (
+            (from->referenceLevel() <= 1 && to->referenceLevel() <= 1) ||
+            (from->pointerLevel() <= 1)
+          ) &&
+          (to->pointerLevel() == from->pointerLevel())
         ) &&
         from->klass &&
         to->klass &&
@@ -1032,6 +1035,102 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
       AC_CAST_TO_LOOP;
         if (from->indirectionLevel() == 0 && special->indirectionLevel() == 0 && from->isNative && special->isNative && !from->isAny && !special->isAny) {
           return { CC(CCT::SimpleCoercion, special), CC(CCT::From, method), CC(CCT::Destination) };
+        }
+      AC_CAST_TO_LOOP_END;
+
+      // child iteration
+      AC_CAST_FROM_LOOP;
+        if (special->indirectionLevel() > 0 && to->indirectionLevel() > 0 && special->referenceLevel() == to->referenceLevel() && special->klass && to->klass && to->klass->hasParent(special->klass)) {
+          return { CC(CCT::To, method), CC(CCT::Downcast, to->klass), CC(CCT::Destination) };
+        }
+      AC_CAST_FROM_LOOP_END;
+      AC_CAST_TO_LOOP;
+        if (from->indirectionLevel() > 0 && special->indirectionLevel() > 0 && from->referenceLevel() == special->referenceLevel() && from->klass && special->klass && special->klass->hasParent(from->klass)) {
+          return { CC(CCT::Downcast, special->klass), CC(CCT::From, method), CC(CCT::Destination) };
+        }
+      AC_CAST_TO_LOOP_END;
+
+      // parent iteration
+      AC_CAST_FROM_LOOP;
+        if (
+          (
+            (
+              (special->referenceLevel() <= 1 && to->referenceLevel() <= 1) ||
+              (special->pointerLevel() <= 1)
+            ) &&
+            (to->pointerLevel() == special->pointerLevel())
+          ) &&
+          special->klass &&
+          to->klass &&
+          special->klass->hasParent(to->klass)
+        ) {
+          auto accessorClass = special->klass;
+          CastPath cast;
+          cast.push_back(CC(CCT::To, method));
+          if (special->referenceLevel() > 0) {
+            cast.push_back(CC(CCT::Dereference));
+          }
+          size_t i = 0;
+          while (i < accessorClass->parents.size()) {
+            auto& parent = accessorClass->parents[i];
+            if (parent->id == to->klass->id) {
+              cast.push_back(CC(CCT::Upcast, parent));
+              break;
+            }
+            if (parent->hasParent(to->klass)) {
+              cast.push_back(CC(CCT::Upcast, parent));
+              i = 0;
+              accessorClass = parent;
+              continue;
+            }
+            ++i;
+          }
+          if (to->referenceLevel() > 0) {
+            cast.push_back(CC(CCT::Reference));
+          }
+          cast.push_back(CC(CCT::Destination));
+          return cast;
+        }
+      AC_CAST_FROM_LOOP_END;
+      AC_CAST_TO_LOOP;
+        if (
+          (
+            (
+              (from->referenceLevel() <= 1 && special->referenceLevel() <= 1) ||
+              (from->pointerLevel() <= 1)
+            ) &&
+            (special->pointerLevel() == from->pointerLevel())
+          ) &&
+          from->klass &&
+          special->klass &&
+          from->klass->hasParent(special->klass)
+        ) {
+          auto accessorClass = from->klass;
+          CastPath cast;
+          if (from->referenceLevel() > 0) {
+            cast.push_back(CC(CCT::Dereference));
+          }
+          size_t i = 0;
+          while (i < accessorClass->parents.size()) {
+            auto& parent = accessorClass->parents[i];
+            if (parent->id == special->klass->id) {
+              cast.push_back(CC(CCT::Upcast, parent));
+              break;
+            }
+            if (parent->hasParent(special->klass)) {
+              cast.push_back(CC(CCT::Upcast, parent));
+              i = 0;
+              accessorClass = parent;
+              continue;
+            }
+            ++i;
+          }
+          if (special->referenceLevel() > 0) {
+            cast.push_back(CC(CCT::Reference));
+          }
+          cast.push_back(CC(CCT::From, method));
+          cast.push_back(CC(CCT::Destination));
+          return cast;
         }
       AC_CAST_TO_LOOP_END;
 
