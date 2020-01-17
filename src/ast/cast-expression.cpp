@@ -13,14 +13,16 @@ ALTACORE_AST_DETAIL_D(CastExpression) {
 
   info->targetType = DET::Type::getUnderlyingType(info->target.get());
 
-  if (info->targetType->pointerLevel() == 0 && info->targetType->klass) {
-    if (auto to = info->targetType->klass->findToCast(*info->type->type)) {
-      info->toCaster = to;
-    }
+  info->castPath = DET::Type::findCast(info->targetType, info->type->type, true);
+
+  if (info->castPath.size() == 0) {
+    ALTACORE_DETAILING_ERROR("no way to cast from (" + info->targetType->toString() + ") to (" + info->type->type->toString() + ')');
   }
-  if (info->type->type->pointerLevel() == 0 && info->type->type->klass) {
-    if (auto from = info->type->type->klass->findFromCast(*info->targetType)) {
-      info->fromCaster = from;
+
+  for (auto& component: info->castPath) {
+    if (component.type == DET::CastComponentType::From || component.type == DET::CastComponentType::To) {
+      info->usesFromOrTo = true;
+      break;
     }
   }
 

@@ -176,8 +176,8 @@ namespace AltaCore {
       std::shared_ptr<Type> type = nullptr;
 
       std::shared_ptr<DET::Type> targetType = nullptr;
-      std::shared_ptr<DET::Function> fromCaster = nullptr;
-      std::shared_ptr<DET::Function> toCaster = nullptr;
+      DET::CastPath castPath;
+      bool usesFromOrTo = false;
     };
     class ClassDefinitionNode: public StatementNode {
       ALTACORE_DH_CTOR(ClassDefinitionNode, StatementNode);
