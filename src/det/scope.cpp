@@ -175,6 +175,15 @@ void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::ScopeItem> item)
       }
     }
   }
+  if (item->nodeType() == NodeType::Variable) {
+    if (auto parent = item->parentScope.lock()) {
+      if (auto func = Util::getFunction(parent).lock()) {
+        return;
+      } if (auto klass = parent->parentClass.lock()) {
+        return;
+      }
+    }
+  }
   if (auto mod = parentModule.lock()) {
     mod->hoistedItems.push_back(item);
   } else if (auto func = parentFunction.lock()) {
