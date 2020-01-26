@@ -24,9 +24,11 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
       auto relativeFilePath = filePath.relativeTo(pkgInfo.root);
       moduleName = pkgInfo.name + '/' + (relativeFilePath.dirname() / relativeFilePath.filename()).toString("/");
     } catch (const Modules::ModuleError&) {
-      moduleName = (filePath.dirname() / filePath.filename()).uproot().toString("/");
+      moduleName = filePath.filename() + "/" + filePath.filename();
+      pkgInfo.name = filePath.filename();
       pkgInfo.main = filePath;
       pkgInfo.root = filePath.dirname();
+      pkgInfo.outputBinary = Modules::OutputBinaryType::Exectuable;
     }
   } else {
     try {
@@ -35,6 +37,7 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
       pkgInfo.main = filePath;
       pkgInfo.name = moduleName;
       pkgInfo.root = filePath.dirname();
+      pkgInfo.outputBinary = Modules::OutputBinaryType::Exectuable;
     }
   }
   info->module = DET::Module::create(moduleName, pkgInfo, filePath);
