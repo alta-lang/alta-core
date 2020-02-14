@@ -22,11 +22,10 @@ namespace AltaCore {
       public:
       virtual ~Node() = default;
 
+      std::string id;
       std::shared_ptr<DET::Scope> inputScope = nullptr;
 
-      Node(decltype(inputScope) _inputScope = nullptr):
-        inputScope(_inputScope)
-        {};
+      Node(decltype(inputScope) inputScope = nullptr);
     };
 
     class ExpressionNode: public Node {
@@ -128,7 +127,7 @@ namespace AltaCore {
     class AttributeNode: public Node {
       ALTACORE_DH_CTOR(AttributeNode, Node);
 
-      std::vector<std::shared_ptr<ExpressionNode>> arguments;
+      std::vector<std::shared_ptr<Node>> arguments;
 
       std::shared_ptr<AST::Node> target = nullptr;
       std::shared_ptr<Node> targetInfo = nullptr;

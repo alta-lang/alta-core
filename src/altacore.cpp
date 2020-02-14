@@ -1,4 +1,6 @@
 #include "../include/altacore.hpp"
+#include <sstream>
+#include <crossguid/guid.hpp>
 
 #define AC_ATTRIBUTE_FUNC [](std::shared_ptr<AST::Node> _target, std::shared_ptr<DH::Node> _info, std::vector<Attributes::AttributeArgument> args) -> void
 #define AC_ATTRIBUTE_CAST(x) auto target = std::dynamic_pointer_cast<AST::x>(_target);\
@@ -100,6 +102,14 @@ void AltaCore::registerGlobalAttributes() {
   AC_ATTRIBUTE(Fetch, "returnTypeOf");
     info->fetchingReturnType = true;
   AC_END_ATTRIBUTE;
+};
+
+AltaCore::DetailHandles::Node::Node(decltype(AltaCore::DetailHandles::Node::inputScope) _inputScope):
+  inputScope(_inputScope)
+{
+  std::stringstream uuidStream;
+  uuidStream << xg::newGuid();
+  id = uuidStream.str();
 };
 
 #undef AC_END_ATTRIBUTE

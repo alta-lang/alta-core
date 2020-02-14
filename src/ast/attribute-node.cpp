@@ -6,7 +6,7 @@ const AltaCore::AST::NodeType AltaCore::AST::AttributeNode::nodeType() {
   return NodeType::AttributeNode;
 };
 
-AltaCore::AST::AttributeNode::AttributeNode(std::vector<std::string> _accessors, std::vector<std::shared_ptr<AltaCore::AST::ExpressionNode>> _arguments):
+AltaCore::AST::AttributeNode::AttributeNode(std::vector<std::string> _accessors, std::vector<std::shared_ptr<AltaCore::AST::Node>> _arguments):
   accessors(_accessors),
   arguments(_arguments)
   {};
@@ -28,7 +28,7 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::AttributeNode::detail(std::sh
   info->module = Util::getModule(scope.get());
 
   for (auto& arg: arguments) {
-    auto argDet = arg->fullDetail(scope);
+    auto argDet = (arg->nodeType() == NodeType::Type) ? std::dynamic_pointer_cast<Type>(arg)->fullDetail(scope) : arg->fullDetail(scope);
     info->arguments.push_back(argDet);
     if (arg->nodeType() == NodeType::StringLiteralNode) {
       info->attributeArguments.emplace_back(std::dynamic_pointer_cast<AST::StringLiteralNode>(arg)->value);
@@ -62,6 +62,9 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::AttributeNode::detail(std::sh
         // TODO: warn about retrieval being automatically narrowed
       }
       info->attributeArguments.emplace_back(det->narrowedTo);
+    } else if (arg->nodeType() == NodeType::Type) {
+      auto type = std::dynamic_pointer_cast<DH::Type>(argDet);
+      info->attributeArguments.emplace_back(type->type);
     } else {
       throw std::runtime_error("welp.");
     }

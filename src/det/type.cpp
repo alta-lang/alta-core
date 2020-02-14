@@ -132,7 +132,11 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto lambda = dynamic_cast<DH::LambdaExpression*>(expression)) {
     return getUnderlyingType(lambda->function);
   } else if (auto special = dynamic_cast<DH::SpecialFetchExpression*>(expression)) {
-    return getUnderlyingType(special->items[0]);
+    if (special->attributes.size() > 0) {
+      return std::dynamic_pointer_cast<DET::Type>(special->items[0]);
+    } else {
+      return getUnderlyingType(special->items[0]);
+    }
   } else if (auto yield = dynamic_cast<DH::YieldExpression*>(expression)) {
     if (yield->generator->generatorParameterType) {
       return std::make_shared<Type>(true, yield->generator->generatorParameterType);

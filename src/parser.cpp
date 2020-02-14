@@ -1957,28 +1957,15 @@ namespace AltaCore {
             if (attr->accessors.size() == 0) ACP_NOT_OK;
 
             if (expect(TokenType::OpeningParenthesis)) {
-              state.internalIndex = 1;
               ruleNode = std::move(attr);
 
-              ACP_RULE_LIST(
-                RuleType::IntegralLiteral,
-                RuleType::BooleanLiteral,
-                RuleType::String,
-                RuleType::Character,
-                RuleType::DecimalLiteral,
-                RuleType::StrictAccessor,
-                RuleType::Fetch
-              );
-            } else {
-              ACP_NODE((std::move(attr)));
-            }
-          } else {
-            auto attr = std::dynamic_pointer_cast<AST::AttributeNode>(ruleNode);
+              saveState();
 
-            if (exps.back()) {
-              attr->arguments.push_back(std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item));
-
-              if (expect(TokenType::Comma)) {
+              if (expectKeyword("type")) {
+                state.internalIndex = 2;
+                ACP_RULE(Type);
+              } else {
+                state.internalIndex = 1;
                 ACP_RULE_LIST(
                   RuleType::IntegralLiteral,
                   RuleType::BooleanLiteral,
@@ -1988,6 +1975,75 @@ namespace AltaCore {
                   RuleType::StrictAccessor,
                   RuleType::Fetch
                 );
+              }
+            } else {
+              ACP_NODE((std::move(attr)));
+            }
+          } else if (state.internalIndex == 2) {
+            if (!exps.back()) {
+              restoreState();
+              state.internalIndex = 1;
+              ACP_RULE_LIST(
+                RuleType::IntegralLiteral,
+                RuleType::BooleanLiteral,
+                RuleType::String,
+                RuleType::Character,
+                RuleType::DecimalLiteral,
+                RuleType::StrictAccessor,
+                RuleType::Fetch
+              );
+            }
+
+            auto attr = std::dynamic_pointer_cast<AST::AttributeNode>(ruleNode);
+            attr->arguments.push_back(*exps.back().item);
+
+            if (expect(TokenType::Comma)) {
+              saveState();
+
+              if (expectKeyword("type")) {
+                state.internalIndex = 2;
+                ACP_RULE(Type);
+              } else {
+                state.internalIndex = 1;
+                ACP_RULE_LIST(
+                  RuleType::IntegralLiteral,
+                  RuleType::BooleanLiteral,
+                  RuleType::String,
+                  RuleType::Character,
+                  RuleType::DecimalLiteral,
+                  RuleType::StrictAccessor,
+                  RuleType::Fetch
+                );
+              }
+            }
+
+            if (!expect(TokenType::ClosingParenthesis)) ACP_NOT_OK;
+
+            ACP_NODE((attr));
+          } else {
+            auto attr = std::dynamic_pointer_cast<AST::AttributeNode>(ruleNode);
+
+            if (exps.back()) {
+              attr->arguments.push_back(*exps.back().item);
+
+              if (expect(TokenType::Comma)) {
+                saveState();
+
+                if (expectKeyword("type")) {
+                  state.internalIndex = 2;
+                  ACP_RULE(Type);
+                } else {
+                  state.internalIndex = 1;
+                  ACP_RULE_LIST(
+                    RuleType::IntegralLiteral,
+                    RuleType::BooleanLiteral,
+                    RuleType::String,
+                    RuleType::Character,
+                    RuleType::DecimalLiteral,
+                    RuleType::StrictAccessor,
+                    RuleType::Fetch
+                  );
+                }
               }
             }
 
@@ -3562,13 +3618,26 @@ namespace AltaCore {
           }
           #undef LAMBDA_RESTORE
         } else if (rule == RuleType::SpecialFetch) {
-          auto id = expect(TokenType::SpecialIdentifier);
-          if (!id) ACP_NOT_OK;
+          if (state.internalIndex == 0) {
+            state.internalIndex = 1;
+            ACP_RULE(Attribute);
+          } else {
+            if (exps.back()) ACP_RULE(Attribute);
 
-          auto special = nodeFactory.create<AST::SpecialFetchExpression>();
-          special->query = id.raw;
+            exps.pop_back();
 
-          ACP_NODE(special);
+            auto id = expect(TokenType::SpecialIdentifier);
+            if (!id) ACP_NOT_OK;
+
+            auto special = nodeFactory.create<AST::SpecialFetchExpression>();
+            special->query = id.raw;
+
+            for (auto& exp: exps) {
+              special->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+            }
+
+            ACP_NODE(special);
+          }
         } else if (rule == RuleType::OperatorDefinition) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;

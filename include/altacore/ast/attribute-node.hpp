@@ -14,10 +14,10 @@ namespace AltaCore {
         virtual const NodeType nodeType();
 
         std::vector<std::string> accessors;
-        std::vector<std::shared_ptr<ExpressionNode>> arguments;
+        std::vector<std::shared_ptr<Node>> arguments;
 
         AttributeNode() {};
-        AttributeNode(std::vector<std::string> accessors, std::vector<std::shared_ptr<ExpressionNode>> arguments = {});
+        AttributeNode(std::vector<std::string> accessors, std::vector<std::shared_ptr<Node>> arguments = {});
 
         bool matches(std::vector<std::string> path);
         void findAttribute(std::shared_ptr<DH::AttributeNode> info);
