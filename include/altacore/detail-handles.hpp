@@ -201,6 +201,7 @@ namespace AltaCore {
       std::vector<std::shared_ptr<DET::Variable>> toCopy;
       std::vector<std::shared_ptr<DET::Variable>> toReference;
       std::vector<std::shared_ptr<AttributeNode>> attributes;
+      std::shared_ptr<DET::Function> initializerMethod = nullptr;
     };
     class GenericClassInstantiationDefinitionNode: public ClassDefinitionNode {
       ALTACORE_DH_CTOR(GenericClassInstantiationDefinitionNode, ClassDefinitionNode);

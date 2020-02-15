@@ -26,6 +26,10 @@ namespace AltaCoreClassHelpers {
 
     bool canCreateDefaultCtor = true;
 
+    if (!info->initializerMethod) {
+      info->initializerMethod = DET::Function::create(info->klass->scope, "@initializer@", {}, std::make_shared<DET::Type>(DET::NativeType::Void));
+    }
+
     auto loop = [&](std::vector<std::shared_ptr<ClassStatementNode>>& tgt, bool noBodies = false) -> void {
       if (noBodies) {
         for (auto stmt: tgt) {
@@ -66,6 +70,9 @@ namespace AltaCoreClassHelpers {
             auto op = std::dynamic_pointer_cast<ClassOperatorDefinitionStatement>(stmt);
             auto opDet = std::dynamic_pointer_cast<DH::ClassOperatorDefinitionStatement>(det);
             info->klass->operators.push_back(opDet->method);
+          } else if (stmt->nodeType() == NodeType::ClassMemberDefinitionStatement) {
+            auto varDet = std::dynamic_pointer_cast<DH::ClassMemberDefinitionStatement>(det);
+            varDet->varDef->inputScope = info->initializerMethod->scope;
           }
         }
       } else {
@@ -75,6 +82,7 @@ namespace AltaCoreClassHelpers {
           stmt->detail(det, false);
           if (auto member = std::dynamic_pointer_cast<ClassMemberDefinitionStatement>(stmt)) {
             auto memberDet = std::dynamic_pointer_cast<DH::ClassMemberDefinitionStatement>(det);
+            info->klass->scope->hoist(memberDet->varDef->type->type);
             if (
               !member->varDef->initializationExpression &&
               (
