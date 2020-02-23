@@ -342,6 +342,7 @@ namespace AltaCore {
         std::vector<Token> tokens;
         std::vector<Token> originalTokens;
         State currentState;
+        Token lastToken;
 
         Token expect(std::vector<TokenType> expectations, bool rawPrepo = false);
         Token expect(TokenType expectation) {

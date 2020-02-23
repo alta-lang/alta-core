@@ -51,6 +51,8 @@ namespace AltaCore {
         }
       }
 
+      lastToken = tok;
+
       return tok;
     };
 
@@ -1709,12 +1711,20 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::FunctionCallOrSubscriptOrAccessorOrPostIncDec) {
           if (state.internalIndex == 0) {
+            state.internalIndex = 6;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 6) {
+            if (exps.back()) ACP_RULE(Attribute);
+            exps.pop_back();
             state.internalIndex = 1;
             ACP_RULE(ClassInstantiation);
           } else if (state.internalIndex == 1) {
-            if (!exps.back() && !ruleNode) ACP_NOT_OK;
+            if (!(exps.size() > 0 && exps.back()) && !ruleNode) ACP_NOT_OK;
 
             auto target = std::dynamic_pointer_cast<AST::ExpressionNode>(ruleNode ? ruleNode : *exps.back().item);
+            if (!ruleNode) {
+              exps.pop_back();
+            }
 
             bool isCall = false;
             bool isSubscript = false;
@@ -1724,24 +1734,81 @@ namespace AltaCore {
 
             bool isMaybe = false;
 
+            Token lastTok = lastToken;
+            Token firstTok;
+            Token maybeTok;
+
             saveState();
 
-            if (expect(TokenType::QuestionMark)) {
+            if (maybeTok = expect(TokenType::QuestionMark)) {
               isMaybe = true;
             }
 
-            if (expect(TokenType::OpeningParenthesis)) {
+            if (firstTok = expect(TokenType::OpeningParenthesis)) {
               isCall = true;
-            } else if (expect(TokenType::OpeningSquareBracket)) {
+            } else if (firstTok = expect(TokenType::OpeningSquareBracket)) {
               isSubscript = true;
             } else if (expect(TokenType::Dot) && expect(TokenType::Identifier)) {
               isAccessor = true;
-            } else if (expect(TokenType::Increment)) {
+            } else if (firstTok = expect(TokenType::Increment)) {
               isPostIncrement = true;
-            } else if (expect(TokenType::Decrement)) {
+            } else if (firstTok = expect(TokenType::Decrement)) {
               isPostDecrement = true;
             } else {
               restoreState();
+              for (auto exp: exps) {
+                target->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+              }
+              exps.clear();
+              ACP_NODE(target);
+            }
+
+            // make sure the question mark is only used for function calls
+            // AND
+            // it is only considered an optional function call if there is no space
+            // between the question mark and the parenthesis (e.g. `?(`)
+            // ALSO
+            // make sure that sensitive tokens like `[`, `(`, `++`, and `--`
+            // only match when they're on the same line as the last token of the
+            // child rule
+            // this is so that this will be matched a function call:
+            //     foo(bar)
+            // and this will be too:
+            //     foo(
+            //       bar
+            //     )
+            // but not this:
+            //     foo
+            //     (bar)
+            // or this:
+            //     foo
+            //     (
+            //       bar
+            //     )
+            // same for the other sensitive tokens
+            if (
+              (
+                !isCall &&
+                isMaybe
+              ) ||
+              (
+                isCall &&
+                isMaybe &&
+                (
+                  firstTok.line != maybeTok.column ||
+                  firstTok.column != maybeTok.column + 1
+                )
+              ) ||
+              (
+                firstTok &&
+                firstTok.line != lastToken.line
+              )
+            ) {
+              restoreState();
+              for (auto exp: exps) {
+                target->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+              }
+              exps.clear();
               ACP_NODE(target);
             }
 
@@ -1761,6 +1828,11 @@ namespace AltaCore {
                 nullptr,
               });
 
+              for (auto exp: exps) {
+                funcCall->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+              }
+              exps.clear();
+
               ruleNode = std::move(funcCall);
               state.internalIndex = 2;
 
@@ -1768,6 +1840,11 @@ namespace AltaCore {
             } else if (isSubscript) {
               auto subs = nodeFactory.create<AST::SubscriptExpression>();
               subs->target = target;
+
+              for (auto exp: exps) {
+                subs->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+              }
+              exps.clear();
 
               ruleNode = std::move(subs);
               state.internalIndex = 3;
@@ -1790,6 +1867,11 @@ namespace AltaCore {
                 op->type = AST::UOperatorType::PostDecrement;
               }
 
+              for (auto exp: exps) {
+                op->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+              }
+              exps.clear();
+
               ruleNode = std::move(op);
 
               ACP_RULE(NullRule);
@@ -1799,6 +1881,7 @@ namespace AltaCore {
 
             if (exps.back()) {
               callState->arguments.back().second = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+              exps.pop_back();
               if (expect(TokenType::Comma)) {
                 auto tmpState = currentState;
                 auto name = expect(TokenType::Identifier);
@@ -1815,6 +1898,7 @@ namespace AltaCore {
                 ACP_RULE(Expression);
               }
             } else {
+              exps.pop_back();
               callState->arguments.pop_back();
             }
 
@@ -1830,6 +1914,7 @@ namespace AltaCore {
             if (!expect(TokenType::ClosingSquareBracket)) ACP_NOT_OK;
 
             subs->index = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            exps.pop_back();
 
             state.internalIndex = 1;
             ACP_RULE(NullRule);
@@ -1842,6 +1927,7 @@ namespace AltaCore {
             }
 
             if (!exps.back()) {
+              exps.pop_back();
               if (acc->genericArguments.size() < 1) {
                 restoreState();
                 acc->genericArguments.clear();
@@ -1849,6 +1935,7 @@ namespace AltaCore {
               }
             } else {
               acc->genericArguments.push_back(std::dynamic_pointer_cast<AST::Type>(*exps.back().item));
+              exps.pop_back();
 
               if (expect(TokenType::Comma)) {
                 ACP_RULE(Type);
@@ -1870,6 +1957,12 @@ namespace AltaCore {
             while (expect(TokenType::Dot) && (id = expect(TokenType::Identifier))) {
               ruleNode = nodeFactory.create<AST::Accessor>(target, id.raw);
               target = std::dynamic_pointer_cast<AST::ExpressionNode>(ruleNode);
+              if (exps.size() > 0) {
+                for (auto exp: exps) {
+                  target->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+                }
+                exps.clear();
+              }
               saveState();
             }
 
