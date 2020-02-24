@@ -2042,14 +2042,20 @@ namespace AltaCore {
             auto attr = nodeFactory.create<AST::AttributeNode>();
 
             auto idExp = expect(TokenType::Identifier);
+            size_t lastCol = 0;
             while (idExp) {
               attr->accessors.push_back(idExp.raw);
+              lastCol = idExp.column + idExp.raw.length() - 1;
               if (!expect(TokenType::Dot)) break;
               idExp = expect(TokenType::Identifier);
             }
             if (attr->accessors.size() == 0) ACP_NOT_OK;
 
-            if (expect(TokenType::OpeningParenthesis)) {
+            saveState();
+
+            auto paren = expect(TokenType::OpeningParenthesis);
+
+            if (paren && paren.column == lastCol + 1) {
               ruleNode = std::move(attr);
 
               saveState();
@@ -2070,6 +2076,7 @@ namespace AltaCore {
                 );
               }
             } else {
+              restoreState();
               ACP_NODE((std::move(attr)));
             }
           } else if (state.internalIndex == 2) {
