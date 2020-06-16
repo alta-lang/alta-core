@@ -31,7 +31,7 @@ void AltaCore::AST::Fetch::narrowTo(std::shared_ptr<DH::Fetch> info, size_t i) {
   info->narrowedTo = info->items[i];
   if (info->narrowedTo->nodeType() == DET::NodeType::Variable) {
     if (auto func = Util::getFunction(info->inputScope).lock()) {
-      if (func->isGenerator) {
+      if (func->isGenerator || func->isAsync) {
         if (func->scope->contains(info->narrowedTo)) {
           info->referencesInsideGenerator = true;
         }

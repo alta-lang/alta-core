@@ -340,13 +340,16 @@ namespace AltaCore {
       std::shared_ptr<BlockNode> body = nullptr;
       std::vector<std::shared_ptr<AttributeNode>> attributes;
       std::shared_ptr<Type> generatorParameter = nullptr;
+
       bool isGenerator = false;
+      bool isAsync = false;
 
       std::vector<std::shared_ptr<GenericFunctionInstantiationDefinitionNode>> genericInstantiations;
       std::vector<std::shared_ptr<Generic>> genericDetails;
 
       std::shared_ptr<DET::Function> function = nullptr;
       std::shared_ptr<DET::Class> generator = nullptr;
+      std::shared_ptr<DET::Class> coroutine = nullptr;
     };
     class GenericFunctionInstantiationDefinitionNode: public FunctionDefinitionNode {
       ALTACORE_DH_CTOR(GenericFunctionInstantiationDefinitionNode, FunctionDefinitionNode);
@@ -577,6 +580,13 @@ namespace AltaCore {
 
       std::vector<std::shared_ptr<DET::Variable>> toCopy;
       std::vector<std::shared_ptr<DET::Variable>> toReference;
+      std::shared_ptr<Type> generatorParameter = nullptr;
+
+      std::shared_ptr<DET::Class> generator = nullptr;
+      std::shared_ptr<DET::Class> coroutine = nullptr;
+
+      bool isGenerator = false;
+      bool isAsync = false;
     };
     class SpecialFetchExpression: public RetrievalNode {
       ALTACORE_DH_CTOR(SpecialFetchExpression, RetrievalNode);
@@ -598,6 +608,11 @@ namespace AltaCore {
       std::shared_ptr<ExpressionNode> target = nullptr;
 
       std::shared_ptr<DET::Function> generator = nullptr;
+    };
+    class AssertionStatement: public StatementNode {
+      ALTACORE_DH_CTOR(AssertionStatement, StatementNode);
+
+      std::shared_ptr<ExpressionNode> test = nullptr;
     };
 
     #undef ALTACORE_DH_CTOR

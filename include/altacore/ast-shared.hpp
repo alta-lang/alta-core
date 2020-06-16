@@ -78,6 +78,7 @@ namespace AltaCore {
       ClassOperatorDefinitionStatement,
       EnumerationDefinitionNode,
       YieldExpression,
+      AssertionStatement,
     };
 
     static const char* const NodeType_names[] = {
@@ -147,6 +148,7 @@ namespace AltaCore {
       "ClassOperatorDefinitionStatement",
       "EnumerationDefinitionNode",
       "YieldExpression",
+      "AssertionStatement",
     };
   };
 };

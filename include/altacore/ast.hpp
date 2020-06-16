@@ -68,5 +68,6 @@
 #include "ast/class-operator-definition-statement.hpp"
 #include "ast/enumeration-definition-statement.hpp"
 #include "ast/yield-expression.hpp"
+#include "ast/assertion-statement.hpp"
 
 #endif // ALTACORE_AST_HPP

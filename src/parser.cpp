@@ -41,17 +41,18 @@ namespace AltaCore {
           auto prev = tokens[currentState.currentPosition - 2];
           if (prev.type == TokenType::Integer || prev.type == TokenType::Identifier || prev.type == TokenType::String || prev.type == TokenType::ClosingParenthesis || prev.type == TokenType::ClosingAngleBracket) {
             if (findingConditionalTest) {
-              Logging::log(Logging::Message("S0001", Logging::Severity::Warning, Errors::Position(tok.line, tok.column, filePath, tok.position), "To prevent a possible error and silence this warning, surround the conditional's body with braces ({...})"));
+              Logging::log(Logging::Message("parser", "S0001", Logging::Severity::Warning, Errors::Position(tok.line, tok.column, filePath, tok.position), "To prevent a possible error and silence this warning, surround the conditional's body with braces ({...})"));
             } else {
-              Logging::log(Logging::Message("S0001", Logging::Severity::Warning, Errors::Position(tok.line, tok.column, filePath, tok.position), "To prevent a possible error and silence this warning, add a semicolon (;) before the parenthesis"));
+              Logging::log(Logging::Message("parser", "S0001", Logging::Severity::Warning, Errors::Position(tok.line, tok.column, filePath, tok.position), "To prevent a possible error and silence this warning, add a semicolon (;) before the parenthesis"));
             }
           }
         } else {
-          Logging::log(Logging::Message("S0001", Logging::Severity::Warning, Errors::Position(tok.line, tok.column, filePath, tok.position)));
+          Logging::log(Logging::Message("parser", "S0001", Logging::Severity::Warning, Errors::Position(tok.line, tok.column, filePath, tok.position)));
         }
       }
 
-      lastToken = tok;
+      if (tok)
+        currentState.lastToken = tok;
 
       return tok;
     };
@@ -722,6 +723,22 @@ namespace AltaCore {
         advanceExp = advance;
       };
 
+      using SavedState = std::tuple<State, std::deque<bool>, std::deque<bool>, bool>;
+
+      auto manualSaveSpecificState = [&](State state) -> SavedState {
+        return std::make_tuple(state, prepoLevels, prepoLast, advanceExp);
+      };
+      auto manualSaveState = [&]() {
+        return manualSaveSpecificState(currentState);
+      };
+      auto manualRestoreState = [&](SavedState savedState) {
+        auto [state, levels, last, advance] = savedState;
+        currentState = state;
+        prepoLevels = levels;
+        prepoLast = last;
+        advanceExp = advance;
+      };
+
       auto topLevelTrue = [&]() {
         if (prepoLevels.size() < 1) return true;
         if (prepoLevels.back()) return true;
@@ -931,6 +948,7 @@ namespace AltaCore {
               RuleType::Throw,
               RuleType::CodeLiteral,
               RuleType::Bitfield,
+              RuleType::Assertion,
               RuleType::Expression,
 
               // general attributes must come last because
@@ -984,6 +1002,12 @@ namespace AltaCore {
             exps.pop_back();
 
             auto funcDef = std::dynamic_pointer_cast<AST::FunctionDefinitionNode>(ruleNode);
+            auto tmpMods = expectModifiers(ModifierTargetType::Function);
+            funcDef->modifiers.insert(funcDef->modifiers.end(), tmpMods.begin(), tmpMods.end());
+
+            if (tmpMods.size() > 0) {
+              ACP_RULE(Attribute);
+            }
 
             for (auto& exp: exps) {
               funcDef->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
@@ -993,6 +1017,7 @@ namespace AltaCore {
             if (!expectKeyword("function")) ACP_NOT_OK;
 
             funcDef->isGenerator = std::find(funcDef->modifiers.begin(), funcDef->modifiers.end(), "generator") != funcDef->modifiers.end();
+            funcDef->isAsync = std::find(funcDef->modifiers.begin(), funcDef->modifiers.end(), "async") != funcDef->modifiers.end();
 
             auto name = expect(TokenType::Identifier);
             if (!name) ACP_NOT_OK;
@@ -1623,7 +1648,7 @@ namespace AltaCore {
             if (!exps.back()) ACP_NOT_OK;
             auto item = *exps.back().item;
             if (auto var = std::dynamic_pointer_cast<AST::VariableDefinitionExpression>(item)) {
-              auto stmt = std::make_shared<AST::ExpressionStatement>(var);
+              auto stmt = nodeFactory.create<AST::ExpressionStatement>(var);
               ACP_NODE(stmt);
             } else if (auto expr = std::dynamic_pointer_cast<AST::ExpressionNode>(item)) {
               ACP_NOT_OK;
@@ -1734,7 +1759,7 @@ namespace AltaCore {
 
             bool isMaybe = false;
 
-            Token lastTok = lastToken;
+            Token lastTok = currentState.lastToken;
             Token firstTok;
             Token maybeTok;
 
@@ -1795,13 +1820,13 @@ namespace AltaCore {
                 isCall &&
                 isMaybe &&
                 (
-                  firstTok.line != maybeTok.column ||
+                  firstTok.line != maybeTok.line ||
                   firstTok.column != maybeTok.column + 1
                 )
               ) ||
               (
                 firstTok &&
-                firstTok.line != lastToken.line
+                firstTok.line != lastTok.line
               )
             ) {
               restoreState();
@@ -3637,13 +3662,21 @@ namespace AltaCore {
           if (state.internalIndex == 0) {
             saveState();
 
-            ruleNode = nodeFactory.create<AST::LambdaExpression>();
+            auto lambda = nodeFactory.create<AST::LambdaExpression>();
+            lambda->modifiers = expectModifiers(ModifierTargetType::Lambda);
+
+            ruleNode = std::move(lambda);
 
             state.internalIndex = 8;
             ACP_RULE(Attribute);
           } else if (state.internalIndex == 1) {
             ACP_EXP(exps.back().item);
           } else if (state.internalIndex == 2) {
+            auto lambda = std::dynamic_pointer_cast<AST::LambdaExpression>(ruleNode);
+
+            lambda->isGenerator = std::find(lambda->modifiers.begin(), lambda->modifiers.end(), "generator") != lambda->modifiers.end();
+            lambda->isAsync = std::find(lambda->modifiers.begin(), lambda->modifiers.end(), "async") != lambda->modifiers.end();
+
             if (!expect(TokenType::OpeningParenthesis)) LAMBDA_RESTORE;
 
             state.internalIndex = expect(TokenType::ClosingParenthesis) ? 5 : 3;
@@ -3705,8 +3738,14 @@ namespace AltaCore {
             if (exps.back()) ACP_RULE(Attribute);
 
             auto lambda = std::dynamic_pointer_cast<AST::LambdaExpression>(ruleNode);
+            auto tmp = expectModifiers(ModifierTargetType::Lambda);
+            lambda->modifiers.insert(lambda->modifiers.end(), tmp.begin(), tmp.end());
 
             exps.pop_back();
+
+            if (tmp.size() > 0) {
+              ACP_RULE(Attribute);
+            }
 
             for (auto& exp: exps) {
               lambda->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
@@ -3990,13 +4029,27 @@ namespace AltaCore {
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
 
-            auto node = std::make_shared<AST::YieldExpression>();
+            auto node = nodeFactory.create<AST::YieldExpression>();
 
             node->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
             ACP_NODE(node);
           } else if (state.internalIndex == 2) {
             ACP_EXP(exps.back().item);
+          }
+        } else if (rule == RuleType::Assertion) {
+          if (state.internalIndex == 0) {
+            if (!expectKeyword("assert")) ACP_NOT_OK;
+            state.internalIndex = 1;
+            ACP_RULE(Expression);
+          } else {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto node = nodeFactory.create<AST::AssertionStatement>();
+
+            node->test = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+
+            ACP_NODE(node);
           }
         }
 

@@ -37,6 +37,9 @@ ALTACORE_AST_DETAIL_D(ImportStatement) {
     } else {
       for (auto& [imp, alias]: imports) {
         auto items = info->importedModule->exports->findAll(imp);
+        if (items.size() == 0) {
+          ALTACORE_DETAILING_ERROR("no exports found with the name \"" + imp + "\" in the target module");
+        }
         info->importedItems.insert(info->importedItems.end(), items.begin(), items.end());
         for (auto& item: items) {
           auto aliasItem = std::make_shared<DET::Alias>(alias.empty() ? imp : alias, item, info->parentModule->scope);

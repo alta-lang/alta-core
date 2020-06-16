@@ -4,10 +4,19 @@
 #include <cstddef>
 #include <functional>
 #include <string>
+#include <vector>
+#include <array>
 #include "errors.hpp"
+#include "simple-map.hpp"
 
 namespace AltaCore {
   namespace Logging {
+    using CodeSummary = std::pair<std::string, std::string>;
+    constexpr auto make_summary = std::make_pair<std::string, std::string>;
+
+    extern std::vector<std::pair<std::string, std::string>> shortSubsystemNames;
+    extern ALTACORE_MAP<std::string, std::vector<CodeSummary>> codeSummaryRepositories;
+
     /**
      * Indicates the severity of a message
      *
@@ -30,80 +39,76 @@ namespace AltaCore {
     class Message {
       private:
         Severity _severity = Severity::Information;
-        std::string_view _code = "I0000";
+        std::string _subsystem = "internal";
+        std::string _code = "I0000";
         std::string _description;
         Errors::Position _location;
 
-        Message(bool _internal, std::string_view code, Severity severity = Severity::Information, Errors::Position location = Errors::Position(), std::string description = ""):
+        Message(bool _internal, std::string subsystem, std::string code, Severity severity = Severity::Information, Errors::Position location = Errors::Position(), std::string description = ""):
+          _subsystem(subsystem),
           _code(code),
           _severity(severity),
           _location(location),
           _description(description)
           {};
 
-        void verifyCode(const std::string_view code) const {
-          if (_code.size() != 5) {
-            throw Message(true, "I0001", Severity::Error, Errors::Position(), "Code not 5 characters long: " + std::string(_code));
-          }
-          if (_code[0] < 'A' || _code[0] > 'Z') {
-            throw Message(true, "I0002", Severity::Error, Errors::Position(), "First character of code does not satisfy /[A-Za-z]/\nCode is " + std::string(_code));
-          }
-          for (size_t i = 0; i < 4; ++i) {
-            if (_code[i + 1] < '0' || _code[i + 1] > '9') {
-              throw Message(true, "I0003", Severity::Error, Errors::Position(), "Last 4 characters of code are not digits\nCode is " + std::string(_code));
-            }
-          }
-        };
+        void verifyCode(const std::string code) const;
+        void verifySubsystem(const std::string subsystem) const;
 
       public:
         inline Severity severity() const {
           return _severity;
         }
         inline std::string code() const {
-          return std::string(_code);
+          return _code;
         };
-        inline std::string summary() const {
-          for (auto& entry: Errors::messageCodeSummary) {
-            if (entry.first == _code) {
-              return std::string(entry.second);
-            }
-          }
-          return "~~No summary available for code~~";
+        inline std::string subsystem() const {
+          return _subsystem;
         };
         inline std::string description() const {
           return _description;
         };
         inline Errors::Position location() const {
           return _location;
-        }
+        };
+        std::string shortSubsystem() const;
+        std::string summary() const;
 
-        Message(const std::string_view code, Severity severity = Severity::Information, Errors::Position location = Errors::Position(), std::string description = ""):
+        Message(std::string subsystem, const std::string code, Severity severity = Severity::Information, Errors::Position location = Errors::Position(), std::string description = ""):
+          _subsystem(subsystem),
           _code(code),
           _severity(severity),
           _location(location),
           _description(description)
         {
           verifyCode(code);
+          verifySubsystem(subsystem);
         };
-        Message(const std::string_view code, Severity severity = Severity::Information, std::string description = ""):
+        Message(std::string subsystem, const std::string code, Severity severity = Severity::Information, std::string description = ""):
+          _subsystem(subsystem),
           _code(code),
           _severity(severity),
           _description(description)
         {
           verifyCode(code);
+          verifySubsystem(subsystem);
         };
-        Message(const std::string_view code, Errors::Position location = Errors::Position(), std::string description = ""):
+        Message(std::string subsystem, const std::string code, Errors::Position location = Errors::Position(), std::string description = ""):
+          _subsystem(subsystem),
           _code(code),
           _location(location),
           _description(description)
         {
           verifyCode(code);
+          verifySubsystem(subsystem);
         };
-        Message(const std::string_view code, std::string description = ""):
+        Message(std::string subsystem, const std::string code, std::string description = ""):
+          _subsystem(subsystem),
           _code(code),
           _description(description)
         {
           verifyCode(code);
+          verifySubsystem(subsystem);
         };
     };
   };

@@ -79,6 +79,7 @@ namespace AltaCore {
       Structure,
       Bitfield,
       Enumeration,
+      Lambda,
     };
 
     /**
@@ -92,6 +93,7 @@ namespace AltaCore {
         "export",
         "generic",
         "generator",
+        "async",
       },
       {
         "literal",
@@ -128,6 +130,10 @@ namespace AltaCore {
       },
       {
         "export",
+      },
+      {
+        "generator",
+        "async",
       },
     };
 
@@ -207,6 +213,7 @@ namespace AltaCore {
       OperatorDefinition,
       Enumeration,
       Yield,
+      Assertion,
     };
 
     enum class PrepoRuleType {
@@ -272,6 +279,7 @@ namespace AltaCore {
     class State {
       public:
         size_t currentPosition = 0;
+        Token lastToken;
 
         bool operator ==(const State& rhs) const;
     };
@@ -342,7 +350,6 @@ namespace AltaCore {
         std::vector<Token> tokens;
         std::vector<Token> originalTokens;
         State currentState;
-        Token lastToken;
 
         Token expect(std::vector<TokenType> expectations, bool rawPrepo = false);
         Token expect(TokenType expectation) {

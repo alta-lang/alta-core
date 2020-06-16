@@ -15,10 +15,14 @@ namespace AltaCore {
 
         std::vector<std::shared_ptr<Parameter>> parameters;
         std::shared_ptr<Type> returnType = nullptr;
+        std::shared_ptr<Type> generatorParameter = nullptr;
 
         std::vector<std::string> modifiers;
 
         std::shared_ptr<BlockNode> body = nullptr;
+
+        bool isGenerator = false;
+        bool isAsync = false;
 
         LambdaExpression() {};
 

@@ -94,6 +94,11 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
       }
 
       info->function->isGenerator = info->isGenerator = isGenerator;
+      info->function->isAsync = info->isAsync = isAsync;
+
+      if (isGenerator && isAsync) {
+        ALTACORE_DETAILING_ERROR("a function cannot be asynchronous and be a generator");
+      }
     }
 
     std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
@@ -137,10 +142,23 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
       }
     }
 
+    if (info->isAsync && !info->coroutine) {
+      info->coroutine = DET::Class::create("@Coroutine@", info->function->scope, {}, true);
+      info->function->scope->items.push_back(info->coroutine);
+      auto doneVar = std::make_shared<DET::Variable>("done", std::make_shared<DET::Type>(DET::NativeType::Bool), info->coroutine->scope);
+      info->coroutine->scope->items.push_back(doneVar);
+      auto valueAcc = DET::Function::create(info->coroutine->scope, "value", {}, info->returnType->type->makeOptional());
+      valueAcc->isAccessor = true;
+      info->coroutine->scope->items.push_back(valueAcc);
+      auto nextFunc = DET::Function::create(info->coroutine->scope, "next", {}, std::make_shared<DET::Type>(DET::NativeType::Void));
+      info->coroutine->scope->items.push_back(nextFunc);
+    }
+
     if (!info->function->returnType) {
-      info->function->recreate(params, info->isGenerator ? std::make_shared<DET::Type>(info->generator) : info->returnType->type);
+      info->function->recreate(params, info->isGenerator ? std::make_shared<DET::Type>(info->generator) : (info->isAsync ? std::make_shared<DET::Type>(info->coroutine) : info->returnType->type));
       info->function->generatorParameterType = info->generatorParameter ? info->generatorParameter->type : nullptr;
       info->function->generatorReturnType = info->isGenerator ? info->returnType->type : nullptr;
+      info->function->coroutineReturnType = info->isAsync ? info->returnType->type : nullptr;
     }
 
     if (info->attributes.size() != attributes.size()) {
@@ -200,6 +218,10 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::AST::FunctionDefinitionNode::
   
   inst->function->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
   inst->function->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
+  inst->function->isMethod = info->function->isMethod;
+  inst->function->isGenerator = info->function->isGenerator;
+  inst->function->isAsync = info->function->isAsync;
+  inst->function->parentClassType = info->function->parentClassType;
 
   auto thisMod = Util::getModule(info->inputScope.get()).lock();
   auto& gDepEntry = thisMod->genericDependencies[inst->function->id];

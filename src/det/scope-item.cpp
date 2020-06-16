@@ -1,5 +1,6 @@
 #include "../../include/altacore/det/scope-item.hpp"
 #include "../../include/altacore/ast.hpp"
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::ScopeItem::nodeType() {
   return NodeType::ScopeItem;
@@ -24,7 +25,7 @@ AltaCore::DET::ScopeItem::ScopeItem(std::string _name, std::shared_ptr<AltaCore:
     itemID = _parentScope->nextItemID++;
   }
   if (auto scope = parentScope.lock()) {
-    if (auto mod = scope->parentModule.lock()) {
+    if (auto mod = Util::getModule(scope.get()).lock()) {
       moduleIndex = mod->rootItemCount++;
     }
   }
