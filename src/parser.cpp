@@ -1446,6 +1446,10 @@ namespace AltaCore {
             varDef->modifiers = expectModifiers(ModifierTargetType::Variable);
 
             if (!expectKeyword("let") && !expectKeyword("var")) {
+              // root + module only statement + variable definition
+              if (ruleStack.size() == 3) ACP_NOT_OK;
+              // when the rule stack is greater than 3, this rule isn't being used on module level,
+              // it's being used as an expression. so, we have to check for other expressions
               currentState = saved;
               state.internalIndex = 3;
               ACP_RULE(Assignment);
@@ -1634,8 +1638,8 @@ namespace AltaCore {
               RuleType::CodeLiteral,
               RuleType::Bitfield,
               RuleType::Enumeration,
-              RuleType::Export,
               RuleType::VariableDefinition,
+              RuleType::Export,
 
               // general attributes must come last because
               // they're supposed to be able to interpreted as part of
