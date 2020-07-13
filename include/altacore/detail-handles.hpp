@@ -451,6 +451,7 @@ namespace AltaCore {
       std::shared_ptr<ExpressionNode> end = nullptr;
       std::shared_ptr<StatementNode> body = nullptr;
 
+      std::shared_ptr<DET::Scope> wrapperScope = nullptr;
       std::shared_ptr<DET::Scope> scope = nullptr;
       std::shared_ptr<DET::Variable> counter = nullptr;
       std::shared_ptr<DET::Function> next = nullptr;

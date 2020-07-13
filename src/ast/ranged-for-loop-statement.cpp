@@ -6,13 +6,14 @@ const AltaCore::AST::NodeType AltaCore::AST::RangedForLoopStatement::nodeType() 
 
 ALTACORE_AST_DETAIL_D(RangedForLoopStatement) {
   ALTACORE_MAKE_DH(RangedForLoopStatement);
-  info->scope = DET::Scope::makeWithParentScope(scope);
+  info->wrapperScope = DET::Scope::makeWithParentScope(scope);
+  info->scope = DET::Scope::makeWithParentScope(info->wrapperScope);
   info->scope->isLoopScope = true;
 
-  info->counterType = counterType->fullDetail(info->scope);
-  info->start = start->fullDetail(info->scope);
+  info->counterType = counterType->fullDetail(info->wrapperScope);
+  info->start = start->fullDetail(info->wrapperScope);
   if (end) {
-    info->end = end->fullDetail(info->scope);
+    info->end = end->fullDetail(info->wrapperScope);
   } else {
     auto type = DET::Type::getUnderlyingType(info->start.get());
     if (!type->klass) ALTACORE_DETAILING_ERROR("Ranged-for loop target is not an iterator");
@@ -31,8 +32,8 @@ ALTACORE_AST_DETAIL_D(RangedForLoopStatement) {
     info->generatorType = type;
   }
 
-  info->counter = std::make_shared<DET::Variable>(counterName, info->counterType->type, info->scope);
-  info->scope->items.push_back(info->counter);
+  info->counter = std::make_shared<DET::Variable>(counterName, info->counterType->type, info->wrapperScope);
+  info->wrapperScope->items.push_back(info->counter);
 
   info->body = body->fullDetail(info->scope);
   return info;
