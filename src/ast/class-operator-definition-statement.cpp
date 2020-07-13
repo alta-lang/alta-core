@@ -16,6 +16,10 @@ ALTACORE_AST_DETAIL_NO_BODY_OPT_D(ClassOperatorDefinitionStatement) {
 
 ALTACORE_AST_VALIDATE_D(ClassOperatorDefinitionStatement) {
   ALTACORE_VS_S(ClassOperatorDefinitionStatement);
+  returnType->validate(stack, info->returnType);
+  if (argumentType)
+    argumentType->validate(stack, info->argumentType);
+  block->validate(stack, info->block);
   ALTACORE_VS_E;
 };
 

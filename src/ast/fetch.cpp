@@ -247,5 +247,11 @@ ALTACORE_AST_VALIDATE_D(Fetch) {
       ALTACORE_VALIDATION_ERROR("Class methods must be accessed through `this`");
     }
   }
+  if (info->readAccessor && info->readAccessor->parentScope.lock() && info->readAccessor->parentScope.lock()->parentClass.lock()) {
+    ALTACORE_VALIDATION_ERROR("Class read accessors must be accessed through `this`");
+  }
+  if (info->writeAccessor && info->writeAccessor->parentScope.lock() && info->writeAccessor->parentScope.lock()->parentClass.lock()) {
+    ALTACORE_VALIDATION_ERROR("Class write accessors must be accessed through `this`");
+  }
   ALTACORE_VS_E;
 };

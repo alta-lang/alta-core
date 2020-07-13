@@ -20,6 +20,6 @@ ALTACORE_AST_DETAIL_D(AliasStatement) {
 
 ALTACORE_AST_VALIDATE_D(AliasStatement) {
   ALTACORE_VS_S(AliasStatement);
-
+  target->validate(stack, info->target);
   ALTACORE_VS_E;
 };

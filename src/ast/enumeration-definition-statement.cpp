@@ -63,5 +63,13 @@ ALTACORE_AST_DETAIL_D(EnumerationDefinitionNode) {
 
 ALTACORE_AST_VALIDATE_D(EnumerationDefinitionNode) {
   ALTACORE_VS_S(EnumerationDefinitionNode);
+
+  if (underlyingType)
+    underlyingType->validate(stack, info->underlyingType);
+
+  for (auto& [key, value]: members) {
+    value->validate(stack, info->memberDetails[key]);
+  }
+
   ALTACORE_VS_E;
 };

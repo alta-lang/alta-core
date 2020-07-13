@@ -114,5 +114,17 @@ ALTACORE_AST_DETAIL_D(LambdaExpression) {
 
 ALTACORE_AST_VALIDATE_D(LambdaExpression) {
   ALTACORE_VS_S(LambdaExpression);
+
+  for (size_t i = 0; i < parameters.size(); ++i) {
+    parameters[i]->validate(stack, info->parameters[i]);
+  }
+
+  returnType->validate(stack, info->returnType);
+
+  if (generatorParameter)
+    generatorParameter->validate(stack, info->generatorParameter);
+
+  body->validate(stack, info->body);
+
   ALTACORE_VS_E;
 };

@@ -90,5 +90,18 @@ ALTACORE_AST_DETAIL_D(BitfieldDefinitionNode) {
 ALTACORE_AST_VALIDATE_D(BitfieldDefinitionNode) {
   ALTACORE_VS_S(BitfieldDefinitionNode);
 
+  if (underlyingType)
+    underlyingType->validate(stack, info->underlyingType);
+
+  for (size_t i = 0; i < members.size(); ++i) {
+    auto& [type, name, start, end] = members[i];
+    if (type)
+      type->validate(stack, info->memberTypes[i]);
+  }
+
+  for (size_t i = 0; i < attributes.size(); ++i) {
+    attributes[i]->validate(stack, info->attributes[i]);
+  }
+
   ALTACORE_VS_E;
 };

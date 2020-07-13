@@ -32,8 +32,8 @@ ALTACORE_AST_DETAIL_D(RangedForLoopStatement) {
     info->generatorType = type;
   }
 
-  info->counter = std::make_shared<DET::Variable>(counterName, info->counterType->type, info->wrapperScope);
-  info->wrapperScope->items.push_back(info->counter);
+  info->counter = std::make_shared<DET::Variable>(counterName, info->counterType->type, info->scope);
+  info->scope->items.push_back(info->counter);
 
   info->body = body->fullDetail(info->scope);
   return info;

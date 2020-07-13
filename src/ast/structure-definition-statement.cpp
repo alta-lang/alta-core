@@ -32,6 +32,7 @@ ALTACORE_AST_DETAIL_D(StructureDefinitionStatement) {
   auto voidType = std::make_shared<DET::Type>(DET::NativeType::Void);
 
   info->structure->constructors.push_back(DET::Function::create(info->structure->scope, "constructor", {}, voidType));
+  info->structure->defaultConstructor = info->structure->constructors.front();
 
   for (size_t i = 0; i < members.size(); i++) {
     auto& [type, name] = members[i];
@@ -67,6 +68,16 @@ ALTACORE_AST_DETAIL_D(StructureDefinitionStatement) {
 
 ALTACORE_AST_VALIDATE_D(StructureDefinitionStatement) {
   ALTACORE_VS_S(StructureDefinitionStatement);
+
+  for (size_t i = 0; i < members.size(); ++i) {
+    auto& [type, name] = members[i];
+
+    type->validate(stack, info->memberTypes[i]);
+  }
+
+  for (size_t i = 0; i < attributes.size(); ++i) {
+    attributes[i]->validate(stack, info->attributes[i]);
+  }
 
   ALTACORE_VS_E;
 };

@@ -23,5 +23,8 @@ ALTACORE_AST_DETAIL_D(YieldExpression) {
 
 ALTACORE_AST_VALIDATE_D(YieldExpression) {
   ALTACORE_VS_S(YieldExpression);
+
+  target->validate(stack, info->target);
+
   ALTACORE_VS_E;
 };
