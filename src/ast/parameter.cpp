@@ -16,6 +16,8 @@ std::shared_ptr<AltaCore::DH::Node> AltaCore::AST::Parameter::detail(std::shared
     info->attributes.push_back(attr->fullDetail(scope, shared_from_this(), info));
   }
   info->type = type->fullDetail(scope, hoist);
+  if (defaultValue)
+    info->defaultValue = defaultValue->fullDetail(scope);
   return info;
 };
 
@@ -30,5 +32,7 @@ ALTACORE_AST_VALIDATE_D(Parameter) {
     if (!attr) ALTACORE_VALIDATION_ERROR("empty attribute for parameter");
     attr->validate(stack, attrDet);
   }
+  if (defaultValue)
+    defaultValue->validate(stack, info->defaultValue);
   ALTACORE_VS_E;
 };

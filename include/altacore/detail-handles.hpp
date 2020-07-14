@@ -369,6 +369,7 @@ namespace AltaCore {
 
       std::shared_ptr<Type> type = nullptr;
       std::vector<std::shared_ptr<AttributeNode>> attributes;
+      std::shared_ptr<ExpressionNode> defaultValue = nullptr;
     };
     class PointerExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(PointerExpression, ExpressionNode);

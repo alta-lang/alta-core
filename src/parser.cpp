@@ -1117,7 +1117,7 @@ namespace AltaCore {
 
             typesToIgnore.insert("any");
             ACP_RULE(Type);
-          } else {
+          } else if (state.internalIndex == 2) {
             typesToIgnore.erase("any");
 
             bool isAny = false;
@@ -1144,6 +1144,20 @@ namespace AltaCore {
             } else {
               currentState = savedState;
             }
+
+            if (expect(TokenType::EqualSign)) {
+              state.internalIndex = 3;
+              ruleNode = std::move(param);
+              ACP_RULE(Expression);
+            }
+
+            ACP_NODE(std::move(param));
+          } else {
+            if (!exps.back()) ACP_NOT_OK;
+
+            auto param = std::dynamic_pointer_cast<AST::Parameter>(ruleNode);
+
+            param->defaultValue = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
             ACP_NODE(std::move(param));
           }

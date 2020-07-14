@@ -8,6 +8,7 @@
 #include "attribute-node.hpp"
 #include <string>
 #include <vector>
+#include "expression-node.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -19,6 +20,7 @@ namespace AltaCore {
         std::shared_ptr<Type> type = nullptr;
         bool isVariable = false;
         std::vector<std::shared_ptr<AttributeNode>> attributes;
+        std::shared_ptr<ExpressionNode> defaultValue = nullptr;
 
         Parameter() {};
         Parameter(std::string name, std::shared_ptr<Type> type, bool isVariable = false);
