@@ -51,6 +51,11 @@ namespace AltaCore {
         std::shared_ptr<Type> generatorReturnType = nullptr;
         std::shared_ptr<Type> coroutineReturnType = nullptr;
 
+        // only used for functions with optional parameters
+        //
+        // check if this function is an optional variant by checking if this is nullptr
+        std::shared_ptr<Function> optionalVariantParent = nullptr;
+
         // only used for lambdas
         std::vector<std::shared_ptr<Variable>> referencedVariables;
 

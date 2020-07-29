@@ -37,8 +37,6 @@ ALTACORE_AST_INFO_DETAIL_D(ClassOperatorDefinitionStatement) {
     info->method->parentClassType = std::make_shared<DET::Type>(klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
   }
 
-  std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
-
   if (!info->argumentType && argumentType) {
     info->argumentType = argumentType->fullDetail(info->method->scope);
   }

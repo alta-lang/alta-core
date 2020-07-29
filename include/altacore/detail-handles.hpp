@@ -350,6 +350,7 @@ namespace AltaCore {
       std::shared_ptr<DET::Function> function = nullptr;
       std::shared_ptr<DET::Class> generator = nullptr;
       std::shared_ptr<DET::Class> coroutine = nullptr;
+      std::vector<std::tuple<std::shared_ptr<DET::Function>, std::vector<bool>>> optionalVariantFunctions;
     };
     class GenericFunctionInstantiationDefinitionNode: public FunctionDefinitionNode {
       ALTACORE_DH_CTOR(GenericFunctionInstantiationDefinitionNode, FunctionDefinitionNode);
