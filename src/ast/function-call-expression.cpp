@@ -270,6 +270,8 @@ ALTACORE_AST_DETAIL_D(FunctionCallExpression) {
         } else {
           message += ", ";
         }
+        if (!name.empty())
+          message += name + ": ";
         message += type->toString();
       }
       message += ") => " + targetType->returnType->toString() + "\n";
