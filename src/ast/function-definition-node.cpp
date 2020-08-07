@@ -345,7 +345,7 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
 
             if (!same) {
               auto func = DET::Function::create(info->inputScope, name, variantParams, info->function->returnType);
-              info->optionalVariantFunctions.push_back(std::make_tuple(func, optionalValueProvided));
+              info->optionalVariantFunctions.push_back(std::make_pair(func, optionalValueProvided));
               info->inputScope->items.push_back(func);
 
               func->isLiteral = info->function->isLiteral;
@@ -397,7 +397,7 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
           }
 
           auto func = DET::Function::create(info->inputScope, name, soloVariantParams, info->function->returnType);
-          info->optionalVariantFunctions.push_back(std::make_tuple(func, optionalValueProvided));
+          info->optionalVariantFunctions.push_back(std::make_pair(func, optionalValueProvided));
           info->inputScope->items.push_back(func);
 
           func->isLiteral = info->function->isLiteral;
@@ -427,7 +427,7 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
       }
 
       auto func = DET::Function::create(info->inputScope, name, emptyVariantParams, info->function->returnType);
-      info->optionalVariantFunctions.push_back(std::make_tuple(func, std::vector<bool>(optionalParameterIndexes.size(), false)));
+      info->optionalVariantFunctions.push_back(std::make_pair(func, std::vector<bool>(optionalParameterIndexes.size(), false)));
       info->inputScope->items.push_back(func);
 
       func->isLiteral = info->function->isLiteral;
