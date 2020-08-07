@@ -12,7 +12,7 @@
 
 namespace AltaCore {
   namespace AST {
-    class FunctionDeclarationNode: public StatementNode {
+    class FunctionDeclarationNode: public StatementNode, public std::enable_shared_from_this<FunctionDeclarationNode> {
       public:
         virtual const NodeType nodeType();
 
@@ -20,6 +20,7 @@ namespace AltaCore {
         std::vector<std::shared_ptr<Parameter>> parameters;
         std::shared_ptr<Type> returnType = nullptr;
         std::vector<std::string> modifiers;
+        std::vector<std::shared_ptr<AttributeNode>> attributes;
 
         FunctionDeclarationNode() {};
         FunctionDeclarationNode(std::string name, std::vector<std::shared_ptr<Parameter>> parameters, std::shared_ptr<Type> returnType, std::vector<std::string> modifiers);

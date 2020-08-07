@@ -2032,10 +2032,38 @@ namespace AltaCore {
           ACP_NODE((nodeFactory.create<AST::CharacterLiteralNode>((cont.length() == 2) ? cont[1] : cont[0], cont.length() == 2)));
         } else if (rule == RuleType::FunctionDeclaration) {
           if (state.internalIndex == 0) {
+            state.internalIndex = 1;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 1) {
+            if (exps.back()) ACP_RULE(Attribute);
+
+            exps.pop_back();
+
             if (!expectKeyword("declare")) ACP_NOT_OK;
 
             auto funcDecl = nodeFactory.create<AST::FunctionDeclarationNode>();
             funcDecl->modifiers = expectModifiers(ModifierTargetType::Function);
+
+            ruleNode = std::move(funcDecl);
+            state.internalIndex = 2;
+            ACP_RULE(Attribute);
+          } else if (state.internalIndex == 2) {
+            if (exps.back()) ACP_RULE(Attribute);
+
+            exps.pop_back();
+
+            auto funcDecl = std::dynamic_pointer_cast<AST::FunctionDeclarationNode>(ruleNode);
+            auto tmpMods = expectModifiers(ModifierTargetType::Function);
+            funcDecl->modifiers.insert(funcDecl->modifiers.end(), tmpMods.begin(), tmpMods.end());
+
+            if (tmpMods.size() > 0) {
+              ACP_RULE(Attribute);
+            }
+
+            for (auto& exp: exps) {
+              funcDecl->attributes.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
+            }
+            exps.clear();
 
             if (!expectKeyword("function")) ACP_NOT_OK;
 
@@ -2045,10 +2073,9 @@ namespace AltaCore {
 
             if (!expect(TokenType::OpeningParenthesis)) ACP_NOT_OK;
 
-            ruleNode = std::move(funcDecl);
-            state.internalIndex = 1;
+            state.internalIndex = 3;
             ACP_RULE(Parameter);
-          } else if (state.internalIndex == 1) {
+          } else if (state.internalIndex == 3) {
             auto funcDecl = std::dynamic_pointer_cast<AST::FunctionDeclarationNode>(ruleNode);
 
             if (exps.back()) {
@@ -2068,7 +2095,7 @@ namespace AltaCore {
             if (!expect(TokenType::ClosingParenthesis)) ACP_NOT_OK;
             if (!expect(TokenType::Colon)) ACP_NOT_OK;
 
-            state.internalIndex = 2;
+            state.internalIndex = 4;
             ACP_RULE(Type);
           } else {
             auto funcDecl = std::dynamic_pointer_cast<AST::FunctionDeclarationNode>(ruleNode);

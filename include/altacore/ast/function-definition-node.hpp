@@ -37,6 +37,8 @@ namespace AltaCore {
         ALTACORE_AST_DETAIL_NO_BODY_OPT(FunctionDefinitionNode);
         ALTACORE_AST_INFO_DETAIL(FunctionDefinitionNode);
         ALTACORE_AST_VALIDATE;
+
+        static std::vector<std::pair<std::shared_ptr<DET::Function>, std::vector<bool>>> expandOptionalVariants(std::vector<size_t> optionalParameterIndexes, std::vector<std::shared_ptr<Parameter>> parameters);
     };
   };
 };

@@ -52,6 +52,11 @@ ALTACORE_AST_DETAIL_D(FunctionDeclarationNode) {
       mod->exports->items.push_back(info->function);
     }
   }
+
+  if (info->attributes.size() != attributes.size()) {
+    info->attributes = Attributes::detailAttributes(attributes, info->inputScope, shared_from_this(), info);
+  }
+
   return info;
 };
 
@@ -68,6 +73,12 @@ ALTACORE_AST_VALIDATE_D(FunctionDeclarationNode) {
   returnType->validate(stack, info->returnType);
   for (auto& mod: modifiers) {
     if (mod.empty()) ALTACORE_VALIDATION_ERROR("empty modifier for function declaration");
+  }
+  for (size_t i = 0; i < attributes.size(); i++) {
+    auto& attr = attributes[i];
+    auto& attrDet = info->attributes[i];
+    if (!attr) ALTACORE_VALIDATION_ERROR("empty attribute for parameter");
+    attr->validate(stack, attrDet);
   }
   ALTACORE_VS_E;
 };
