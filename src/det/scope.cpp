@@ -152,7 +152,10 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
 };
 
 void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::ScopeItem> item) {
-  if (item->nodeType() == NodeType::Namespace) return;
+  if (auto ns = std::dynamic_pointer_cast<DET::Namespace>(item)) {
+    if (!ns->underlyingEnumerationType)
+      return;
+  }
   if (item->nodeType() == NodeType::Type) {
     auto type = std::dynamic_pointer_cast<DET::Type>(item);
     if (type->name.empty()) {

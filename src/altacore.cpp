@@ -102,6 +102,10 @@ void AltaCore::registerGlobalAttributes() {
   AC_ATTRIBUTE(Fetch, "returnTypeOf");
     info->fetchingReturnType = true;
   AC_END_ATTRIBUTE;
+
+  AC_ATTRIBUTE(SubscriptExpression, "reverse");
+    info->reverseLookup = true;
+  AC_END_ATTRIBUTE;
 };
 
 AltaCore::DetailHandles::Node::Node(decltype(AltaCore::DetailHandles::Node::inputScope) _inputScope):

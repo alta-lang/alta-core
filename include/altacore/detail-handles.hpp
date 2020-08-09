@@ -470,6 +470,8 @@ namespace AltaCore {
       std::shared_ptr<DET::Type> targetType = nullptr;
       std::shared_ptr<DET::Type> indexType = nullptr;
       std::shared_ptr<DET::Function> operatorMethod = nullptr;
+      std::shared_ptr<DET::Namespace> enumeration = nullptr;
+      bool reverseLookup = false;
     };
     class SuperClassFetch: public ExpressionNode {
       ALTACORE_DH_CTOR(SuperClassFetch, ExpressionNode);
