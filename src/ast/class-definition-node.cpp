@@ -161,6 +161,9 @@ namespace AltaCoreClassHelpers {
       if (parent->copyConstructor) {
         requiresCopyCtor = true;
       }
+      if (parent->destructor) {
+        requiresDtor = true;
+      }
     }
 
     if (!info->klass->destructor && requiresDtor) {
