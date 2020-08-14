@@ -191,6 +191,7 @@ namespace AltaCoreClassHelpers {
       info->defaultCopyConstructorDetail->isCopyConstructor = true;
       info->defaultCopyConstructorDetail->isDefaultCopyConstructor = true;
       info->klass->copyConstructor = info->defaultCopyConstructorDetail->method;
+      info->klass->constructors.push_back(info->defaultCopyConstructorDetail->method);
     }
 
     info->toReference = info->klass->referencedVariables;
