@@ -73,17 +73,38 @@ namespace {
 
     // basic iteration
     {
-      if (*from == *to || *from == *to->deconstify() || *from == *to->deconstify(true)) {
+      if (
+        *from == *to ||
+        *from == *to->deconstify() ||
+        *from == *to->deconstify(true) ||
+        *from->deconstify() == *to ||
+        *from->deconstify() == *to->deconstify() ||
+        *from->deconstify() == *to->deconstify(true)
+      ) {
         return true;
       }
     };
     AC_CAST_FROM_LOOP;
-      if (*special == *to || *special == *to->deconstify() || *special == *to->deconstify(true)) {
+      if (
+        *special == *to ||
+        *special == *to->deconstify() ||
+        *special == *to->deconstify(true) ||
+        *special->deconstify() == *to ||
+        *special->deconstify() == *to->deconstify() ||
+        *special->deconstify() == *to->deconstify(true)
+      ) {
         return true;
       }
     AC_CAST_FROM_LOOP_END;
     AC_CAST_TO_LOOP;
-      if (*from == *special || *from == *special->deconstify() || *from == *special->deconstify(true)) {
+      if (
+        *from == *special ||
+        *from == *special->deconstify() ||
+        *from == *special->deconstify(true) ||
+        *from->deconstify() == *special ||
+        *from->deconstify() == *special->deconstify() ||
+        *from->deconstify() == *special->deconstify(true)
+      ) {
         return true;
       }
     AC_CAST_TO_LOOP_END;
