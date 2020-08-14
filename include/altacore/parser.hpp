@@ -112,6 +112,8 @@ namespace AltaCore {
         "public",
         "private",
         "protected",
+        "module",
+        "package",
       },
       {
         "literal",

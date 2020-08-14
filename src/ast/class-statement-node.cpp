@@ -15,5 +15,11 @@ AltaCore::AST::Visibility AltaCore::AST::parseVisibility(std::string visibilityS
   if (visibilityString == "public") {
     return Visibility::Public;
   }
+  if (visibilityString == "module") {
+    return Visibility::Module;
+  }
+  if (visibilityString == "package") {
+    return Visibility::Package;
+  }
   throw std::runtime_error("failed to parse visibility (input was \"" + visibilityString + "\")");
 };

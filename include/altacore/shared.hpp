@@ -22,6 +22,8 @@ namespace AltaCore {
       Public,
       Protected,
       Private,
+      Module,
+      Package,
     };
 
     enum class OperatorType {
