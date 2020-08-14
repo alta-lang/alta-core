@@ -187,6 +187,17 @@ void AltaCore::DET::Scope::hoist(std::shared_ptr<AltaCore::DET::ScopeItem> item)
       }
     }
   }
+  // this is weird, we shouldn't need this but it covers some functions being weird
+  if (auto func = std::dynamic_pointer_cast<Function>(item)) {
+    for (auto& param: func->parameters) {
+      if (auto type = std::get<1>(param)) {
+        hoist(type);
+      }
+    }
+    if (func->returnType) {
+      hoist(func->returnType);
+    }
+  }
   if (auto mod = parentModule.lock()) {
     mod->hoistedItems.push_back(item);
   } else if (auto func = parentFunction.lock()) {
@@ -314,6 +325,24 @@ bool AltaCore::DET::Scope::canSee(std::shared_ptr<ScopeItem> item) const {
       return false;
     }
     if (thisClass->id != itemClass->id && !thisClass->hasParent(itemClass)) {
+      return false;
+    }
+  } else if (item->visibility == Visibility::Module) {
+    auto itemModule = Util::getModule(item->parentScope.lock().get()).lock();
+    auto thisModule = Util::getModule(this).lock();
+    if (!itemModule || !thisModule) {
+      return false;
+    }
+    if (itemModule->id != thisModule->id) {
+      return false;
+    }
+  } else if (item->visibility == Visibility::Package) {
+    auto itemModule = Util::getModule(item->parentScope.lock().get()).lock();
+    auto thisModule = Util::getModule(this).lock();
+    if (!itemModule || !thisModule) {
+      return false;
+    }
+    if (!(itemModule->packageInfo.root == thisModule->packageInfo.root)) {
       return false;
     }
   }
