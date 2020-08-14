@@ -22,7 +22,7 @@ bool AltaCore::Util::isInFunction(const AltaCore::DET::ScopeItem* item) {
   return false;
 };
 
-std::weak_ptr<AltaCore::DET::Module> AltaCore::Util::getModule(AltaCore::DET::Scope* scope) {
+std::weak_ptr<AltaCore::DET::Module> AltaCore::Util::getModule(const AltaCore::DET::Scope* scope) {
   if (scope == nullptr) {
     return std::weak_ptr<AltaCore::DET::Module>();
   }
@@ -51,7 +51,7 @@ std::weak_ptr<AltaCore::DET::Module> AltaCore::Util::getModule(AltaCore::DET::Sc
   return std::weak_ptr<AltaCore::DET::Module>();
 };
 
-std::weak_ptr<AltaCore::DET::Function> AltaCore::Util::getFunction(std::shared_ptr<AltaCore::DET::Scope> scope) {
+std::weak_ptr<AltaCore::DET::Function> AltaCore::Util::getFunction(std::shared_ptr<const AltaCore::DET::Scope> scope) {
   if (scope == nullptr) {
     return std::weak_ptr<AltaCore::DET::Function>();
   }
