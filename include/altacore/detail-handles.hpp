@@ -254,6 +254,7 @@ namespace AltaCore {
       bool isCopyConstructor = false;
       bool isDefaultCopyConstructor = false;
       bool isCastConstructor = false;
+      std::vector<std::pair<std::shared_ptr<DET::Function>, std::vector<bool>>> optionalVariantFunctions;
     };
     class ClassOperatorDefinitionStatement: public ClassStatementNode {
       ALTACORE_DH_CTOR(ClassOperatorDefinitionStatement, ClassStatementNode);

@@ -6,6 +6,288 @@ const AltaCore::AST::NodeType AltaCore::AST::FunctionDefinitionNode::nodeType() 
   return NodeType::FunctionDefinitionNode;
 };
 
+std::vector<std::pair<std::shared_ptr<AltaCore::DET::Function>, std::vector<bool>>> AltaCore::AST::FunctionDefinitionNode::expandOptionalVariants(std::vector<size_t> optionalParameterIndexes, std::shared_ptr<DET::Function> original, std::vector<std::shared_ptr<Parameter>> parameters, std::vector<std::shared_ptr<DH::Parameter>> paramInfos) {
+  auto inputScope = original->parentScope.lock();
+
+  std::vector<std::pair<std::shared_ptr<AltaCore::DET::Function>, std::vector<bool>>> optionalVariantFunctions;
+  if (optionalParameterIndexes.size() > 0) {
+    /**
+     * calculate all the possible optional parameter combinations
+     *
+     * basic example of how this needs to work:
+     *
+     *     given the following optional parameters:
+     *         a b c d e
+     *     these are the possible combinations:
+     *     ----
+     *
+     *     a b c d e
+     *     a b c d
+     *     a c d e
+     *     a b d e
+     *     a b c e
+     *     a b c
+     *     a c d
+     *     a d e
+     *     a b e
+     *     a b
+     *     a c
+     *     a d
+     *     a e
+     *     a
+     *
+     *     b c d e
+     *     b c d
+     *     b d e
+     *     b c e
+     *     b c
+     *     b d
+     *     b e
+     *     b
+     *
+     *     c d e
+     *     c d
+     *     c e
+     *     c
+     *
+     *     d e
+     *     d
+     *
+     *     e
+     *
+     *     <empty>
+     *
+     * essentially, the pattern here is:
+     *   1. iterate over each index as a starting element
+     *   2. loop to choose how many elements to keep
+     *   3. iterate over each possible keep index start
+     *     - the elements to keep MUST wrap around
+     *     - for example: in the example above, if we're iterating on the first element (`a`)
+     *       and we're told to keep 2 elements and we're currently on the last element (`e`),
+     *       we have to wrap around and include the first (includable) element (`b`)
+     */
+
+    // first loop: variant parameter start
+    // decides what the first optional parameter of this variant is
+    for (size_t i = 0; i < optionalParameterIndexes.size(); ++i) {
+      // second loop: kept parameter count
+      // decides how many parameters need to be kept in this variant
+      // (not including the start parameter)
+      //
+      // should be `optionalParameterIndexes.size() - i - 1` and `kept >= 0`, but we're using an unsigned type,
+      // so we can't subtract from 0. remember to do `kept - 1` to get the correct value for the counter
+      for (size_t kept = optionalParameterIndexes.size() - i; kept > 0; --kept) {
+        // third loop: combinator
+        // iterates over the remaining, non-skipped parameters to add them to the variant
+        // the current counter (`j`) actually indicates an element to start the included elements from
+        // this needs to wrap around as described before
+        for (size_t j = i + 1; j < optionalParameterIndexes.size(); ++j) {
+          std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> variantParams;
+          std::vector<bool> optionalValueProvided;
+
+          size_t paramAfterCount = optionalParameterIndexes.size() - 1 - j;
+          size_t wrappedParamCount = (kept < 2 || (kept - 2) < paramAfterCount) ? 0 : (kept - 2) - paramAfterCount;
+
+          // add regular parameters up to the current start parameter
+          for (size_t k = 0; k < optionalParameterIndexes[i]; ++k) {
+            auto& param = parameters[k];
+            auto& det = paramInfos[k];
+            if (param->defaultValue) {
+              optionalValueProvided.push_back(false);
+              continue;
+            }
+            variantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
+          }
+
+          // add the current start parameter
+          auto thisOptParam = parameters[optionalParameterIndexes[i]];
+          auto& thisOptDet = paramInfos[optionalParameterIndexes[i]];
+          optionalValueProvided.push_back(true);
+          variantParams.push_back(std::make_tuple(thisOptParam->name, thisOptDet->type->type, thisOptParam->isVariable, thisOptParam->id));
+
+          // add wrapped parameters
+          for (size_t k = 0; k < wrappedParamCount; ++k) {
+            // add regular parameters in between wrapped parameters
+            for (size_t l = optionalParameterIndexes[i + k]; l < optionalParameterIndexes[i + 1 + k]; ++l) {
+              auto& param = parameters[l];
+              auto& det = paramInfos[l];
+              if (param->defaultValue) {
+                optionalValueProvided.push_back(false);
+                continue;
+              }
+              variantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
+            }
+
+            auto thisOptParam = parameters[optionalParameterIndexes[i + 1 + k]];
+            auto& thisOptDet = paramInfos[optionalParameterIndexes[i + 1 + k]];
+            optionalValueProvided.push_back(true);
+            variantParams.push_back(std::make_tuple(thisOptParam->name, thisOptDet->type->type, thisOptParam->isVariable, thisOptParam->id));
+          }
+
+          // add regular parameters up to the kept parameters
+          for (size_t k = optionalParameterIndexes[i + wrappedParamCount] + 1; k < optionalParameterIndexes[j]; ++k) {
+            auto& param = parameters[k];
+            auto& det = paramInfos[k];
+            if (param->defaultValue) {
+              optionalValueProvided.push_back(false);
+              continue;
+            }
+            variantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
+          }
+
+          // add the kept parameters
+          for (size_t k = 0; k < (kept - 1) - wrappedParamCount; ++k) {
+            auto thisOptParam = parameters[optionalParameterIndexes[j + k]];
+            auto& thisOptDet = paramInfos[optionalParameterIndexes[j + k]];
+            optionalValueProvided.push_back(true);
+            variantParams.push_back(std::make_tuple(thisOptParam->name, thisOptDet->type->type, thisOptParam->isVariable, thisOptParam->id));
+
+            // add regular parameters after the current kept parameter
+            for (size_t l = optionalParameterIndexes[j + k] + 1; (optionalParameterIndexes.size() - 1 == j + k) ? l < parameters.size() : l < optionalParameterIndexes[j + 1 + k]; ++l) {
+              auto& param = parameters[l];
+              auto& det = paramInfos[l];
+              if (param->defaultValue) {
+                optionalValueProvided.push_back(false);
+                continue;
+              }
+              variantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
+            }
+          }
+
+          bool same = i == 0 && kept == optionalParameterIndexes.size();
+          for (size_t k = 0; k < optionalVariantFunctions.size(); ++k) {
+            auto& thisVariant = std::get<0>(optionalVariantFunctions[k]);
+            if (thisVariant->parameters.size() != variantParams.size())
+              continue;
+            same = true;
+            for (size_t l = 0; l < variantParams.size(); ++l) {
+              auto& [thisName, thisType, thisIsVariable, thisId] = variantParams[l];
+              auto& [thatName, thatType, thatIsVariable, thatId] = thisVariant->parameters[l];
+              if (thisName != thatName) {
+                same = false;
+                break;
+              }
+              if (!(*thisType == *thatType)) {
+                same = false;
+                break;
+              }
+              if (thisIsVariable != thatIsVariable) {
+                same = false;
+                break;
+              }
+              if (thisId != thatId) {
+                same = false;
+                break;
+              }
+            }
+            if (same) {
+              break;
+            }
+          }
+
+          if (!same) {
+            auto func = DET::Function::create(inputScope, original->name, variantParams, original->returnType);
+            optionalVariantFunctions.push_back(std::make_pair(func, optionalValueProvided));
+
+            func->isLiteral = original->isLiteral;
+            func->isExport = original->isExport;
+
+            if (func->isExport) {
+              if (auto mod = Util::getModule(inputScope.get()).lock()) {
+                mod->exports->items.push_back(func);
+              }
+            }
+
+            func->isGenerator = original->isGenerator;
+            func->isAsync = original->isAsync;
+            func->visibility = original->visibility;
+          }
+        }
+      }
+
+      // add the solo parameter variant
+      // (the one where the only optional parameter is the current one we're iterating on)
+      //
+      // only do this when there's a single optional parameter, because when there's more,
+      // the loops will automatically take care of it
+      if (i + 1 == optionalParameterIndexes.size() && i > 0) {
+        std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> soloVariantParams;
+        std::vector<bool> optionalValueProvided;
+
+        for (size_t j = 0; j < optionalParameterIndexes[i]; ++j) {
+          auto& param = parameters[j];
+          auto& det = paramInfos[j];
+          if (param->defaultValue) {
+            optionalValueProvided.push_back(false);
+            continue;
+          }
+          soloVariantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
+        }
+
+        auto idx = soloVariantParams.size();
+        optionalValueProvided.push_back(true);
+        soloVariantParams.push_back(std::make_tuple(parameters[optionalParameterIndexes[i]]->name, paramInfos[optionalParameterIndexes[i]]->type->type, parameters[optionalParameterIndexes[i]]->isVariable, parameters[optionalParameterIndexes[i]]->id));
+
+        for (size_t j = optionalParameterIndexes[i] + 1; j < parameters.size(); ++j) {
+          auto& param = parameters[j];
+          auto& det = paramInfos[j];
+          if (param->defaultValue) {
+            optionalValueProvided.push_back(false);
+            continue;
+          }
+          soloVariantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
+        }
+
+        auto func = DET::Function::create(inputScope, original->name, soloVariantParams, original->returnType);
+        optionalVariantFunctions.push_back(std::make_pair(func, optionalValueProvided));
+
+        func->isLiteral = original->isLiteral;
+        func->isExport = original->isExport;
+
+        if (func->isExport) {
+          if (auto mod = Util::getModule(inputScope.get()).lock()) {
+            mod->exports->items.push_back(func);
+          }
+        }
+
+        func->isGenerator = original->isGenerator;
+        func->isAsync = original->isAsync;
+        func->visibility = original->visibility;
+      }
+    }
+
+    // add the empty parameter variant
+    // (the one where there are *no* optional parameters present)
+    std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> emptyVariantParams;
+
+    for (size_t i = 0; i < parameters.size(); ++i) {
+      auto& param = parameters[i];
+      auto& det = paramInfos[i];
+      if (param->defaultValue)
+        continue;
+      emptyVariantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
+    }
+
+    auto func = DET::Function::create(inputScope, original->name, emptyVariantParams, original->returnType);
+    optionalVariantFunctions.push_back(std::make_pair(func, std::vector<bool>(optionalParameterIndexes.size(), false)));
+
+    func->isLiteral = original->isLiteral;
+    func->isExport = original->isExport;
+
+    if (func->isExport) {
+      if (auto mod = Util::getModule(inputScope.get()).lock()) {
+        mod->exports->items.push_back(func);
+      }
+    }
+
+    func->isGenerator = original->isGenerator;
+    func->isAsync = original->isAsync;
+    func->visibility = original->visibility;
+  }
+
+  return optionalVariantFunctions;
+};
+
 AltaCore::AST::FunctionDefinitionNode::FunctionDefinitionNode(
   std::string _name,
   std::vector<std::shared_ptr<AltaCore::AST::Parameter>> _parameters,
@@ -167,280 +449,11 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
       info->function->coroutineReturnType = info->isAsync ? info->returnType->type : nullptr;
     }
 
-
     if (optionalParameterIndexes.size() > 0 && info->optionalVariantFunctions.size() == 0) {
-      /**
-       * calculate all the possible optional parameter combinations
-       *
-       * basic example of how this needs to work:
-       *
-       *     given the following optional parameters:
-       *         a b c d e
-       *     these are the possible combinations:
-       *     ----
-       *
-       *     a b c d e
-       *     a b c d
-       *     a c d e
-       *     a b d e
-       *     a b c e
-       *     a b c
-       *     a c d
-       *     a d e
-       *     a b e
-       *     a b
-       *     a c
-       *     a d
-       *     a e
-       *     a
-       *
-       *     b c d e
-       *     b c d
-       *     b d e
-       *     b c e
-       *     b c
-       *     b d
-       *     b e
-       *     b
-       *
-       *     c d e
-       *     c d
-       *     c e
-       *     c
-       *
-       *     d e
-       *     d
-       *
-       *     e
-       *
-       *     <empty>
-       *
-       * essentially, the pattern here is:
-       *   1. iterate over each index as a starting element
-       *   2. loop to choose how many elements to keep
-       *   3. iterate over each possible keep index start
-       *     - the elements to keep MUST wrap around
-       *     - for example: in the example above, if we're iterating on the first element (`a`)
-       *       and we're told to keep 2 elements and we're currently on the last element (`e`),
-       *       we have to wrap around and include the first (includable) element (`b`)
-       */
-
-      // first loop: variant parameter start
-      // decides what the first optional parameter of this variant is
-      for (size_t i = 0; i < optionalParameterIndexes.size(); ++i) {
-        // second loop: kept parameter count
-        // decides how many parameters need to be kept in this variant
-        // (not including the start parameter)
-        //
-        // should be `optionalParameterIndexes.size() - i - 1` and `kept >= 0`, but we're using an unsigned type,
-        // so we can't subtract from 0. remember to do `kept - 1` to get the correct value for the counter
-        for (size_t kept = optionalParameterIndexes.size() - i; kept > 0; --kept) {
-          // third loop: combinator
-          // iterates over the remaining, non-skipped parameters to add them to the variant
-          // the current counter (`j`) actually indicates an element to start the included elements from
-          // this needs to wrap around as described before
-          for (size_t j = i + 1; j < optionalParameterIndexes.size(); ++j) {
-            std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> variantParams;
-            std::vector<bool> optionalValueProvided;
-
-            size_t paramAfterCount = optionalParameterIndexes.size() - 1 - j;
-            size_t wrappedParamCount = (kept < 2 || (kept - 2) < paramAfterCount) ? 0 : (kept - 2) - paramAfterCount;
-
-            // add regular parameters up to the current start parameter
-            for (size_t k = 0; k < optionalParameterIndexes[i]; ++k) {
-              auto& param = parameters[k];
-              auto& det = info->parameters[k];
-              if (param->defaultValue) {
-                optionalValueProvided.push_back(false);
-                continue;
-              }
-              variantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
-            }
-
-            // add the current start parameter
-            auto thisOptParam = parameters[optionalParameterIndexes[i]];
-            auto& thisOptDet = info->parameters[optionalParameterIndexes[i]];
-            optionalValueProvided.push_back(true);
-            variantParams.push_back(std::make_tuple(thisOptParam->name, thisOptDet->type->type, thisOptParam->isVariable, thisOptParam->id));
-
-            // add wrapped parameters
-            for (size_t k = 0; k < wrappedParamCount; ++k) {
-              // add regular parameters in between wrapped parameters
-              for (size_t l = optionalParameterIndexes[i + k]; l < optionalParameterIndexes[i + 1 + k]; ++l) {
-                auto& param = parameters[l];
-                auto& det = info->parameters[l];
-                if (param->defaultValue) {
-                  optionalValueProvided.push_back(false);
-                  continue;
-                }
-                variantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
-              }
-
-              auto thisOptParam = parameters[optionalParameterIndexes[i + 1 + k]];
-              auto& thisOptDet = info->parameters[optionalParameterIndexes[i + 1 + k]];
-              optionalValueProvided.push_back(true);
-              variantParams.push_back(std::make_tuple(thisOptParam->name, thisOptDet->type->type, thisOptParam->isVariable, thisOptParam->id));
-            }
-
-            // add regular parameters up to the kept parameters
-            for (size_t k = optionalParameterIndexes[i + wrappedParamCount] + 1; k < optionalParameterIndexes[j]; ++k) {
-              auto& param = parameters[k];
-              auto& det = info->parameters[k];
-              if (param->defaultValue) {
-                optionalValueProvided.push_back(false);
-                continue;
-              }
-              variantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
-            }
-
-            // add the kept parameters
-            for (size_t k = 0; k < (kept - 1) - wrappedParamCount; ++k) {
-              auto thisOptParam = parameters[optionalParameterIndexes[j + k]];
-              auto& thisOptDet = info->parameters[optionalParameterIndexes[j + k]];
-              optionalValueProvided.push_back(true);
-              variantParams.push_back(std::make_tuple(thisOptParam->name, thisOptDet->type->type, thisOptParam->isVariable, thisOptParam->id));
-
-              // add regular parameters after the current kept parameter
-              for (size_t l = optionalParameterIndexes[j + k] + 1; (optionalParameterIndexes.size() - 1 == j + k) ? l < parameters.size() : l < optionalParameterIndexes[j + 1 + k]; ++l) {
-                auto& param = parameters[l];
-                auto& det = info->parameters[l];
-                if (param->defaultValue) {
-                  optionalValueProvided.push_back(false);
-                  continue;
-                }
-                variantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
-              }
-            }
-
-            bool same = i == 0 && kept == optionalParameterIndexes.size();
-            for (size_t k = 0; k < info->optionalVariantFunctions.size(); ++k) {
-              auto& thisVariant = std::get<0>(info->optionalVariantFunctions[k]);
-              if (thisVariant->parameters.size() != variantParams.size())
-                continue;
-              same = true;
-              for (size_t l = 0; l < variantParams.size(); ++l) {
-                auto& [thisName, thisType, thisIsVariable, thisId] = variantParams[l];
-                auto& [thatName, thatType, thatIsVariable, thatId] = thisVariant->parameters[l];
-                if (thisName != thatName) {
-                  same = false;
-                  break;
-                }
-                if (!(*thisType == *thatType)) {
-                  same = false;
-                  break;
-                }
-                if (thisIsVariable != thatIsVariable) {
-                  same = false;
-                  break;
-                }
-                if (thisId != thatId) {
-                  same = false;
-                  break;
-                }
-              }
-              if (same) {
-                break;
-              }
-            }
-
-            if (!same) {
-              auto func = DET::Function::create(info->inputScope, name, variantParams, info->function->returnType);
-              info->optionalVariantFunctions.push_back(std::make_pair(func, optionalValueProvided));
-              info->inputScope->items.push_back(func);
-
-              func->isLiteral = info->function->isLiteral;
-              func->isExport = info->function->isExport;
-
-              if (func->isExport) {
-                if (auto mod = Util::getModule(info->inputScope.get()).lock()) {
-                  mod->exports->items.push_back(func);
-                }
-              }
-
-              func->isGenerator = info->function->isGenerator;
-              func->isAsync = info->function->isAsync;
-            }
-          }
-        }
-
-        // add the solo parameter variant
-        // (the one where the only optional parameter is the current one we're iterating on)
-        //
-        // only do this when there's a single optional parameter, because when there's more,
-        // the loops will automatically take care of it
-        if (i + 1 == optionalParameterIndexes.size() && i > 0) {
-          std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> soloVariantParams;
-          std::vector<bool> optionalValueProvided;
-
-          for (size_t j = 0; j < optionalParameterIndexes[i]; ++j) {
-            auto& param = parameters[j];
-            auto& det = info->parameters[j];
-            if (param->defaultValue) {
-              optionalValueProvided.push_back(false);
-              continue;
-            }
-            soloVariantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
-          }
-
-          auto idx = soloVariantParams.size();
-          optionalValueProvided.push_back(true);
-          soloVariantParams.push_back(std::make_tuple(parameters[optionalParameterIndexes[i]]->name, info->parameters[optionalParameterIndexes[i]]->type->type, parameters[optionalParameterIndexes[i]]->isVariable, parameters[optionalParameterIndexes[i]]->id));
-
-          for (size_t j = optionalParameterIndexes[i] + 1; j < parameters.size(); ++j) {
-            auto& param = parameters[j];
-            auto& det = info->parameters[j];
-            if (param->defaultValue) {
-              optionalValueProvided.push_back(false);
-              continue;
-            }
-            soloVariantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
-          }
-
-          auto func = DET::Function::create(info->inputScope, name, soloVariantParams, info->function->returnType);
-          info->optionalVariantFunctions.push_back(std::make_pair(func, optionalValueProvided));
-          info->inputScope->items.push_back(func);
-
-          func->isLiteral = info->function->isLiteral;
-          func->isExport = info->function->isExport;
-
-          if (func->isExport) {
-            if (auto mod = Util::getModule(info->inputScope.get()).lock()) {
-              mod->exports->items.push_back(func);
-            }
-          }
-
-          func->isGenerator = info->function->isGenerator;
-          func->isAsync = info->function->isAsync;
-        }
+      info->optionalVariantFunctions = expandOptionalVariants(optionalParameterIndexes, info->function, parameters, info->parameters);
+      for (auto& func: info->optionalVariantFunctions) {
+        info->inputScope->items.push_back(func.first);
       }
-
-      // add the empty parameter variant
-      // (the one where there are *no* optional parameters present)
-      std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> emptyVariantParams;
-
-      for (size_t i = 0; i < parameters.size(); ++i) {
-        auto& param = parameters[i];
-        auto& det = info->parameters[i];
-        if (param->defaultValue)
-          continue;
-        emptyVariantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
-      }
-
-      auto func = DET::Function::create(info->inputScope, name, emptyVariantParams, info->function->returnType);
-      info->optionalVariantFunctions.push_back(std::make_pair(func, std::vector<bool>(optionalParameterIndexes.size(), false)));
-      info->inputScope->items.push_back(func);
-
-      func->isLiteral = info->function->isLiteral;
-      func->isExport = info->function->isExport;
-
-      if (func->isExport) {
-        if (auto mod = Util::getModule(info->inputScope.get()).lock()) {
-          mod->exports->items.push_back(func);
-        }
-      }
-
-      func->isGenerator = info->function->isGenerator;
-      func->isAsync = info->function->isAsync;
     }
 
     if (info->attributes.size() != attributes.size()) {

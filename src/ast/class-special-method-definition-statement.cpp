@@ -56,18 +56,26 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
   if (!info->method) {
     if (type == SpecialClassMethod::Constructor) {
       std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> params;
+      std::vector<size_t> optionalParameterIndexes;
 
-      for (auto& param: parameters) {
+      for (size_t i = 0; i < parameters.size(); i++) {
+        auto& param = parameters[i];
         auto det = param->fullDetail(info->inputScope, false);
         info->parameters.push_back(det);
         Util::exportClassIfNecessary(info->inputScope, det->type->type);
         params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
+        if (param->defaultValue)
+          optionalParameterIndexes.push_back(i);
       }
 
       info->method = DET::Function::create(info->inputScope, "constructor", params, voidType);
       info->method->visibility = visibilityModifier;
 
       info->isCopyConstructor = info->method->parameterVariables.size() == 1 && *info->method->parameterVariables.front()->type->deconstify(true) == *std::make_shared<DET::Type>(info->klass)->reference();
+
+      if (optionalParameterIndexes.size() > 0) {
+        info->optionalVariantFunctions = FunctionDefinitionNode::expandOptionalVariants(optionalParameterIndexes, info->method, parameters, info->parameters);
+      }
     } else if (type == SpecialClassMethod::Destructor) {
       info->method = DET::Function::create(info->inputScope, "destructor", {}, voidType);
       info->method->isDestructor = true;
