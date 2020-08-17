@@ -534,6 +534,7 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::AST::FunctionDefinitionNode::
     if (genericArg->klass) {
       auto thatMod = Util::getModule(genericArg->klass->parentScope.lock().get()).lock();
       gDepEntry.push_back(thatMod);
+      thatMod->dependents.push_back(thisMod);
     }
   }
 

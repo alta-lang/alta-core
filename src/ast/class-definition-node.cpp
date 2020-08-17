@@ -347,6 +347,7 @@ std::shared_ptr<AltaCore::DET::Class> AltaCore::AST::ClassDefinitionNode::instan
     if (genericArg->klass) {
       auto thatMod = Util::getModule(genericArg->klass->parentScope.lock().get()).lock();
       gDepEntry.push_back(thatMod);
+      thatMod->dependents.push_back(thisMod);
     }
   }
 
