@@ -25,6 +25,9 @@ namespace AltaCore {
         auto def = (definitions.find(name) != definitions.end()) ? definitions[name] : PrepoExpression();
         Timing::parseTimes[filePath].stop();
         relexer.relex(currentState.currentPosition, def);
+        if (relexer.tokens.size() > 0 && relexer.tokens.back().type == TokenType::PreprocessorDirective && relexer.tokens.back().raw == "#") {
+          relexer.tokens.pop_back();
+        }
         Timing::parseTimes[filePath].start();
         tokens = relexer.tokens;
       }

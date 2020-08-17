@@ -242,6 +242,13 @@ namespace AltaCore {
 
     /**
      * A streaming lexer for Alta
+     * 
+     * NOTE: this lexer currently has an issue where if the final scannable character in a file is pound sign (`#`),
+     *       it will incorrectly lex it as a preprocessor directive rather than a comment
+     *       the output must be checked before using it
+     *       the check if fairly straight forward:
+     *           if the final token is a preprocessor directive with only the content "#",
+     *           then change the token type to a comment
      */
     class Lexer {
       private:
