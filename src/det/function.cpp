@@ -186,7 +186,24 @@ std::string AltaCore::DET::Function::toString() const {
       }
     }
     result += "): ";
-    result += returnType->toString();
+    bool doIt = true;
+    if (returnType->klass) {
+      if (auto classParent = returnType->klass->parentScope.lock()) {
+        if (classParent->id == scope->id) {
+          doIt = false;
+          if (isAsync) {
+            result += "@Coroutine@";
+          } else if (isGenerator) {
+            result += "@Generator@";
+          } else {
+            result += "@CaptureClass@";
+          }
+        }
+      }
+    }
+    if (doIt) {
+      result += returnType->toString();
+    }
   }
 
   result = (parentScope.lock() ? parentScope.lock()->toString() : "") + '.' + result;
