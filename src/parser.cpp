@@ -2787,7 +2787,7 @@ namespace AltaCore {
         } else if (rule == RuleType::Cast) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
-            ACP_RULE(NotOrPointerOrDereferenceOrPreIncDecOrPlusMinusOrBitNot);
+            ACP_RULE(Await);
           } else if (state.internalIndex == 1) {
             if (!exps.back()) ACP_NOT_OK;
             auto cast = nodeFactory.create<AST::CastExpression>();
@@ -4098,6 +4098,25 @@ namespace AltaCore {
             node->test = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
 
             ACP_NODE(node);
+          }
+        } else if (rule == RuleType::Await) {
+          if (state.internalIndex == 0) {
+            saveState();
+            state.internalIndex = (expectKeyword("await")) ? 1 : 2;
+            ACP_RULE(NotOrPointerOrDereferenceOrPreIncDecOrPlusMinusOrBitNot);
+          } else if (state.internalIndex == 1) {
+            if (!exps.back()) {
+              exps.pop_back();
+              restoreState();
+              state.internalIndex = 2;
+              ACP_RULE(NotOrPointerOrDereferenceOrPreIncDecOrPlusMinusOrBitNot);
+            }
+
+            auto await = nodeFactory.create<AST::AwaitExpression>();
+            await->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            ACP_NODE(await);
+          } else {
+            ACP_EXP(exps.back().item);
           }
         }
 

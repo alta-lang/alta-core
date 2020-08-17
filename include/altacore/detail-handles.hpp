@@ -621,6 +621,13 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> test = nullptr;
     };
+    class AwaitExpression: public ExpressionNode {
+      ALTACORE_DH_CTOR(AwaitExpression, ExpressionNode);
+
+      std::shared_ptr<ExpressionNode> target = nullptr;
+
+      std::shared_ptr<DET::Function> coroutine = nullptr;
+    };
 
     #undef ALTACORE_DH_CTOR
   };

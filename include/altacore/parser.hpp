@@ -216,6 +216,7 @@ namespace AltaCore {
       Enumeration,
       Yield,
       Assertion,
+      Await,
     };
 
     enum class PrepoRuleType {

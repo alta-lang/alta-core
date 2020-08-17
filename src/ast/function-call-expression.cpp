@@ -224,6 +224,11 @@ ALTACORE_AST_DETAIL_D(FunctionCallExpression) {
       info->isMethodCall = true;
       auto tgt = std::dynamic_pointer_cast<AST::Accessor>(target);
       auto tgtInfo = std::dynamic_pointer_cast<DH::Accessor>(info->target);
+
+      if (!tgt || !tgtInfo) {
+        ALTACORE_DETAILING_ERROR("Class methods must be accessed through `this`");
+      }
+
       info->methodClassTarget = tgt->target;
       info->methodClassTargetInfo = tgtInfo->target;
     }

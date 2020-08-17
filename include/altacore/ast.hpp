@@ -69,5 +69,6 @@
 #include "ast/enumeration-definition-statement.hpp"
 #include "ast/yield-expression.hpp"
 #include "ast/assertion-statement.hpp"
+#include "ast/await-expression.hpp"
 
 #endif // ALTACORE_AST_HPP

@@ -153,6 +153,8 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     } else {
       return std::make_shared<Type>(NativeType::Void);
     }
+  } else if (auto await = dynamic_cast<DH::AwaitExpression*>(expression)) {
+    return await->coroutine->coroutineReturnType;
   }
 
   return nullptr;
