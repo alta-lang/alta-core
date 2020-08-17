@@ -4075,11 +4075,11 @@ namespace AltaCore {
             state.internalIndex = expectKeyword("yield") ? 1 : 2;
             ACP_RULE(PunctualConditonalExpression);
           } else if (state.internalIndex == 1) {
-            if (!exps.back()) ACP_NOT_OK;
-
             auto node = nodeFactory.create<AST::YieldExpression>();
 
-            node->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            if (exps.back()) {
+              node->target = std::dynamic_pointer_cast<AST::ExpressionNode>(*exps.back().item);
+            }
 
             ACP_NODE(node);
           } else if (state.internalIndex == 2) {
