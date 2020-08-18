@@ -434,6 +434,7 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
       info->coroutine = DET::Class::create("@Coroutine@", info->function->scope, {}, true);
       info->function->scope->items.push_back(info->coroutine);
       auto doneVar = std::make_shared<DET::Variable>("done", std::make_shared<DET::Type>(DET::NativeType::Bool), info->coroutine->scope);
+      doneVar->isLiteral = true;
       info->coroutine->scope->items.push_back(doneVar);
       auto valueAcc = DET::Function::create(info->coroutine->scope, "value", {}, info->returnType->type->makeOptional());
       valueAcc->isAccessor = true;

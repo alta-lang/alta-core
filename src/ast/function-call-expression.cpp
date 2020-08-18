@@ -3,6 +3,7 @@
 #include "../../include/altacore/ast/fetch.hpp"
 #include "../../include/altacore/ast/accessor.hpp"
 #include "../../include/altacore/simple-map.hpp"
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::FunctionCallExpression::nodeType() {
   return NodeType::FunctionCallExpression;
@@ -198,8 +199,41 @@ ALTACORE_AST_DETAIL_D(FunctionCallExpression) {
     }
   }
 
-  auto [index, argMap, adjArgs] = findCompatibleCall(argsWithDet, targetTypes);
-  
+  size_t index;
+  ALTACORE_MAP<size_t, size_t> argMap;
+  using ArgumentDetails = std::pair<std::shared_ptr<AltaCore::AST::ExpressionNode>, std::shared_ptr<AltaCore::DH::ExpressionNode>>;
+  std::vector<ALTACORE_VARIANT<ArgumentDetails, std::vector<ArgumentDetails>>> adjArgs;
+
+  info->isSpecialScheduleMethod = false;
+  if (auto acc = std::dynamic_pointer_cast<DH::Accessor>(info->target)) {
+    if (acc->narrowedTo && acc->narrowedTo->name == "schedule") {
+      if (auto pscope = acc->narrowedTo->parentScope.lock()) {
+        if (auto mod = Util::getModule(pscope.get()).lock()) {
+          if (mod->id == mod->internal.coroutinesModule->id) {
+            info->isSpecialScheduleMethod = true;
+          }
+        }
+      }
+    }
+  }
+
+  if (info->isSpecialScheduleMethod) {
+    if (arguments.size() != 1) {
+      ALTACORE_DETAILING_ERROR("`schedule` requires a single argument");
+    }
+
+    auto argType = DET::Type::getUnderlyingType(info->arguments[0].get());
+    if (!argType->klass || argType->klass->name != "@Coroutine@") {
+      ALTACORE_DETAILING_ERROR("argument to `schedule` must be a coroutine state instance");
+    }
+
+    index = 0;
+    argMap = ALTACORE_MAP<size_t, size_t> { {0, 0} };
+    adjArgs = std::vector<ALTACORE_VARIANT<ArgumentDetails, std::vector<ArgumentDetails>>> { ArgumentDetails { arguments[0].second, info->arguments[0] } };
+  } else {
+    std::tie(index, argMap, adjArgs) = findCompatibleCall(argsWithDet, targetTypes);
+  }
+
   if (index == SIZE_MAX && genericFunctionError) {
     ALTACORE_DETAILING_ERROR("target function not found (and was possibly generic and wasn't instantiated)");
   }

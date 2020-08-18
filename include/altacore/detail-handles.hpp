@@ -323,6 +323,7 @@ namespace AltaCore {
       std::vector<ALTACORE_VARIANT<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>, std::vector<std::pair<std::shared_ptr<AST::ExpressionNode>, std::shared_ptr<ExpressionNode>>>>> adjustedArguments;
 
       bool maybe = false;
+      bool isSpecialScheduleMethod = false;
     };
     class FunctionDeclarationNode: public StatementNode {
       ALTACORE_DH_CTOR(FunctionDeclarationNode, StatementNode);
