@@ -14,6 +14,22 @@ namespace AltaCore {
   };
 
   namespace DET {
+    class Module;
+    class Namespace;
+    class Class;
+    class Variable;
+
+    struct InternalPackage {
+      public:
+        std::shared_ptr<Module> module = nullptr;
+        std::shared_ptr<Module> coroutinesModule = nullptr;
+
+        std::shared_ptr<Namespace> coroutinesNamespace = nullptr;
+        std::shared_ptr<Class> schedulerClass = nullptr;
+
+        std::shared_ptr<Variable> schedulerVariable = nullptr;
+    };
+
     class Module: public Node {
       public:
         virtual const NodeType nodeType();
@@ -27,7 +43,6 @@ namespace AltaCore {
         Filesystem::Path path;
         std::shared_ptr<Scope> scope;
         std::shared_ptr<Scope> exports;
-        std::shared_ptr<Module> parent = nullptr;
         std::vector<std::shared_ptr<Module>> dependencies;
         std::vector<std::shared_ptr<Module>> dependents;
         ALTACORE_MAP<std::string, std::vector<std::shared_ptr<Module>>> genericDependencies;
@@ -35,6 +50,12 @@ namespace AltaCore {
         std::weak_ptr<AST::RootNode> ast;
         Modules::PackageInfo packageInfo;
         bool noRuntimeInclude = false;
+        InternalPackage internal;
+        // NOTE: this CANNOT be reliably used to determine what Module imported this Module,
+        //       it only refers to the one the *initially* imported it, because after the initial import,
+        //       the module remains in the cache. this is only useful to us right now for some hacks that we have to do
+        //       for the `_internal` package in root-node.cpp
+        std::shared_ptr<Module> parentModule = nullptr;
 
         std::vector<std::shared_ptr<ScopeItem>> hoistedItems;
         size_t rootItemCount = 0;

@@ -21,7 +21,7 @@ namespace AltaCore {
         RootNode();
         RootNode(std::vector<std::shared_ptr<StatementNode>> statements);
 
-        void detail(Filesystem::Path filePath, std::string moduleName = "");
+        void detail(Filesystem::Path filePath, std::string moduleName = "", std::shared_ptr<DET::Module> parent = nullptr);
         void detail(std::string filePath, std::string moduleName = "");
         ALTACORE_AST_VALIDATE;
     };
