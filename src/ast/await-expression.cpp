@@ -10,11 +10,16 @@ ALTACORE_AST_DETAIL_D(AwaitExpression) {
 
 	info->target = target->fullDetail(info->inputScope);
 
+	auto tgtType = DET::Type::getUnderlyingType(info->target.get());
+	if (!tgtType->klass || tgtType->klass->name != "@Coroutine@") {
+		ALTACORE_DETAILING_ERROR("`await` can only be performed on coroutine state instances");
+	}
+
 	auto func = Util::getFunction(info->inputScope).lock();
 
-	if (!func || !func->isAsync) {
-		ALTACORE_DETAILING_ERROR("`await` can only be used inside coroutines");
-	}
+	//if (!func || !func->isAsync) {
+	//	ALTACORE_DETAILING_ERROR("`await` can only be used inside coroutines");
+	//}
 
 	info->coroutine = func;
 

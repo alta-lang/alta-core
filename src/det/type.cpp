@@ -154,7 +154,8 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
       return std::make_shared<Type>(NativeType::Void);
     }
   } else if (auto await = dynamic_cast<DH::AwaitExpression*>(expression)) {
-    return await->coroutine->coroutineReturnType;
+    auto tgt = getUnderlyingType(await->target.get());
+    return std::dynamic_pointer_cast<DET::Function>(tgt->klass->scope->findAll("value")[0])->returnType->optionalTarget;
   }
 
   return nullptr;
