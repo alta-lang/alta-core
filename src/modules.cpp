@@ -137,7 +137,12 @@ AltaCore::Modules::PackageInfo AltaCore::Modules::getInfo(AltaCore::Filesystem::
 AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest, AltaCore::Filesystem::Path relativeTo) {
   using namespace Filesystem;
 
+  if (importRequest == "@internal@") {
+    return standardLibraryPath / "_internal" / "main.alta";
+  }
+
   relativeTo = relativeTo.normalize();
+  auto origRelativeTo = relativeTo;
   auto importPath = Path(importRequest, std::string(1, '/'));
   if (importPath.extname() == "alta") {
     // resolve locally
@@ -196,11 +201,26 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
       relativeTo = relativeTo.dirname();
     }
     auto truePath = importPath.absolutify(relativeTo);
-    if (truePath.exists()) {
-      auto info = getInfo(truePath);
-      if (info.main.isValid()) {
-        return info.main;
+    if (truePath.exists() && truePath.isDirectory()) {
+      try {
+        auto info = getInfo(truePath);
+        if (info.root == truePath) {
+          if (info.main.isValid()) {
+            return info.main;
+          }
+        }
+        if ((truePath / "main.alta").exists()) {
+          return truePath / "main.alta";
+        }
+      } catch (PackageInformationNotFoundError e) {
+        if ((truePath / "main.alta").exists()) {
+          return truePath / "main.alta";
+        }
       }
+    } else if (truePath.exists()) {
+      return truePath;
+    } else if ((truePath + ".alta").exists()) {
+      return truePath + ".alta";
     }
   } else {
     // try the priority search paths (they're the most important)
@@ -208,11 +228,24 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
       auto maybePath = path / importPath;
       if (maybePath.exists()) {
         if (maybePath.isDirectory()) {
-          auto info = getInfo(maybePath);
-          if (info.main.isValid()) {
-            maybePath = info.main;
-          } else {
-            continue;
+          try {
+            auto info = getInfo(maybePath);
+            if (info.root == maybePath) {
+              if (info.main.isValid()) {
+                maybePath = info.main;
+              }
+            }
+            if ((maybePath / "main.alta").exists()) {
+              maybePath = maybePath / "main.alta";
+            } else {
+              continue;
+            }
+          } catch (PackageInformationNotFoundError e) {
+            if ((maybePath / "main.alta").exists()) {
+              maybePath = maybePath / "main.alta";
+            } else {
+              continue;
+            }
           }
         }
         return maybePath.normalize();
@@ -237,8 +270,13 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
         auto modFolderPath = relativeTo / "alta-packages" / importPath;
         if (modFolderPath.exists()) {
           auto info = getInfo(modFolderPath);
-          if (info.main.isValid()) {
-            return info.main;
+          if (info.root == modFolderPath) {
+            if (info.main.isValid()) {
+              return info.main;
+            }
+          }
+          if ((modFolderPath / "main.alta").exists()) {
+            return modFolderPath / "main.alta";
           }
         }
         auto modFilePath = modFolderPath + ".alta";
@@ -252,11 +290,24 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
         auto maybePath = path / importPath;
         if (maybePath.exists()) {
           if (maybePath.isDirectory()) {
-            auto info = getInfo(maybePath);
-            if (info.main.isValid()) {
-              maybePath = info.main;
-            } else {
-              continue;
+            try {
+              auto info = getInfo(maybePath);
+              if (info.root == maybePath) {
+                if (info.main.isValid()) {
+                  maybePath = info.main;
+                }
+              }
+              if ((maybePath / "main.alta").exists()) {
+                maybePath = maybePath / "main.alta";
+              } else {
+                continue;
+              }
+            } catch (PackageInformationNotFoundError e) {
+              if ((maybePath / "main.alta").exists()) {
+                maybePath = maybePath / "main.alta";
+              } else {
+                continue;
+              }
             }
           }
           return maybePath.normalize();
@@ -267,5 +318,5 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
     }
   }
 
-  throw ModuleResolutionError(relativeTo, importRequest);
+  throw ModuleResolutionError(origRelativeTo, importRequest);
 };
