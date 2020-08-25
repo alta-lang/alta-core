@@ -441,6 +441,13 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
       info->coroutine->scope->items.push_back(valueAcc);
       auto nextFunc = DET::Function::create(info->coroutine->scope, "next", {}, std::make_shared<DET::Type>(DET::NativeType::Void));
       info->coroutine->scope->items.push_back(nextFunc);
+
+      auto coroutineStruct = DET::Class::create("@UserAccessibleCoroutineStructure@", info->function->scope, {}, true);
+      auto idVar = std::make_shared<DET::Variable>("id", std::make_shared<DET::Type>(DET::NativeType::UserDefined, std::vector<uint8_t> {}, "uint64_t"), coroutineStruct->scope);
+      idVar->isLiteral = true;
+      coroutineStruct->scope->items.push_back(idVar);
+      auto coroutineVar = std::make_shared<DET::Variable>("$coroutine", std::make_shared<DET::Type>(coroutineStruct, DET::Type::createModifierVector({ { TypeModifierFlag::Reference } })), info->function->scope);
+      info->function->scope->items.push_back(coroutineVar);
     }
 
     if (!info->function->returnType) {
