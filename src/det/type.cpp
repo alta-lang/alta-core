@@ -43,6 +43,9 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto assign = dynamic_cast<DH::AssignmentExpression*>(expression)) {
     return assign->operatorMethod ? assign->operatorMethod->returnType : getUnderlyingType(assign->target.get())->reference();
   } else if (auto fetch = dynamic_cast<DH::Fetch*>(expression)) {
+    if (fetch->isRootClassRetrieval) {
+      return std::make_shared<Type>(NativeType::Void, DET::Type::createModifierVector({ { Modifier::Pointer } }));
+    }
     if (!fetch->narrowedTo) {
       if (fetch->readAccessor) {
         return fetch->readAccessor->returnType;
@@ -68,6 +71,9 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     }
     return type;
   } else if (auto acc = dynamic_cast<DH::Accessor*>(expression)) {
+    if (acc->isRootClassRetrieval) {
+      return std::make_shared<Type>(NativeType::Void, DET::Type::createModifierVector({ { Modifier::Pointer } }));
+    }
     if (!acc->narrowedTo) {
       if (acc->readAccessor) {
         return acc->readAccessor->returnType;

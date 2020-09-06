@@ -106,6 +106,20 @@ void AltaCore::registerGlobalAttributes() {
   AC_ATTRIBUTE(SubscriptExpression, "reverse");
     info->reverseLookup = true;
   AC_END_ATTRIBUTE;
+
+  AltaCore::Attributes::registerAttribute({ "rootClass" }, {
+    AltaCore::AST::NodeType::Fetch,
+    AltaCore::AST::NodeType::Accessor,
+  }, AC_ATTRIBUTE_FUNC {
+    auto nt = _target->nodeType();
+    if (nt == AltaCore::AST::NodeType::Fetch) {
+      AC_ATTRIBUTE_CAST(Fetch);
+      info->isRootClassRetrieval = true;
+    } else if (nt == AltaCore::AST::NodeType::Accessor) {
+      AC_ATTRIBUTE_CAST(Accessor);
+      info->isRootClassRetrieval = true;
+    }
+  });
 };
 
 AltaCore::DetailHandles::Node::Node(decltype(AltaCore::DetailHandles::Node::inputScope) _inputScope):

@@ -108,6 +108,8 @@ namespace AltaCore {
       bool getsVariableLength = false;
       std::vector<std::shared_ptr<Type>> genericArgumentDetails;
       std::vector<std::shared_ptr<DET::Type>> genericArguments;
+
+      bool isRootClassRetrieval = false;
     };
 
     class AssignmentExpression: public ExpressionNode {
@@ -308,6 +310,8 @@ namespace AltaCore {
       bool referencesOutsideLambda = false;
       bool referencesOutsideCaptureClass = false;
       bool referencesInsideGenerator = false;
+
+      bool isRootClassRetrieval = false;
     };
     class FunctionCallExpression: public ExpressionNode {
       ALTACORE_DH_CTOR(FunctionCallExpression, ExpressionNode);
