@@ -58,6 +58,7 @@ namespace AltaCore {
 
         // only used for lambdas
         std::vector<std::shared_ptr<Variable>> referencedVariables;
+        std::vector<std::shared_ptr<Variable>> copiedVariables;
 
         bool throws() const {
           return _throws;

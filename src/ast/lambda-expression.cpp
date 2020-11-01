@@ -104,6 +104,8 @@ ALTACORE_AST_DETAIL_D(LambdaExpression) {
     if (!found) {
       info->toCopy.erase(info->toCopy.begin() + i);
       --i;
+    } else {
+      info->function->copiedVariables.push_back(info->toCopy[i]);
     }
   }
 
