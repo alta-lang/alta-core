@@ -154,6 +154,19 @@ std::vector<std::pair<std::shared_ptr<AltaCore::DET::Function>, std::vector<bool
             }
           }
 
+          if (kept == 1) {
+            // add the remaining regular parameters
+            for (size_t l = optionalParameterIndexes[j]; l < parameters.size(); ++l) {
+              auto& param = parameters[l];
+              auto& det = paramInfos[l];
+              if (param->defaultValue) {
+                optionalValueProvided.push_back(false);
+                continue;
+              }
+              variantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
+            }
+          }
+
           bool same = i == 0 && kept == optionalParameterIndexes.size();
           for (size_t k = 0; k < optionalVariantFunctions.size(); ++k) {
             auto& thisVariant = std::get<0>(optionalVariantFunctions[k]);

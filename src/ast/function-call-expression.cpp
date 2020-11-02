@@ -147,7 +147,7 @@ std::tuple<size_t, ALTACORE_MAP<size_t, size_t>, std::vector<ALTACORE_VARIANT<st
       // (if only the required number of arguments are given, the function defined first should be given precedence)
       if (compatabilities.size() > mostCompatibleCompatiblities.size() && arguments.size() > mostCompatibleType->requiredArgumentCount()) {
         numberGreater = SIZE_MAX;
-      } else {
+      } else if (compatabilities.size() >= mostCompatibleCompatiblities.size()) {
         // TODO: this doesn't handle the case where the variable parameters come in the middle of the parameter list
         for (size_t i = 0; i < mostCompatibleCompatiblities.size(); i++) {
           if (compatabilities[i] > mostCompatibleCompatiblities[i]) {
