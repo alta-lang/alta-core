@@ -143,7 +143,7 @@ std::vector<std::pair<std::shared_ptr<AltaCore::DET::Function>, std::vector<bool
             variantParams.push_back(std::make_tuple(thisOptParam->name, thisOptDet->type->type, thisOptParam->isVariable, thisOptParam->id));
 
             // add regular parameters after the current kept parameter
-            for (size_t l = optionalParameterIndexes[j + k] + 1; (optionalParameterIndexes.size() - 1 == j + k) ? l < parameters.size() : l < optionalParameterIndexes[j + 1 + k]; ++l) {
+            for (size_t l = optionalParameterIndexes[j + k] + 1; (k + 1 == (kept - 1) - wrappedParamCount) ? l < parameters.size() : l < optionalParameterIndexes[j + 1 + k]; ++l) {
               auto& param = parameters[l];
               auto& det = paramInfos[l];
               if (param->defaultValue) {
