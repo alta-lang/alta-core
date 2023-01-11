@@ -46,21 +46,34 @@ namespace AltaCore {
           if (first) {
             foundDecimalPoint = false;
             foundFraction = false;
+            foundExponentSeparator = false;
+            foundExponent = false;
           }
 
           if (character >= '0' && character <= '9') {
-            if (foundDecimalPoint) {
+            if (foundExponentSeparator) {
+              foundExponent = true;
+            } else if (foundDecimalPoint) {
               foundFraction = true;
             }
             return true;
+          } else if (character == '+' || character == '-') {
+            // + and - can only appear as the sign of the exponent
+            return foundExponentSeparator && !foundExponent;
           } else if (character == '.') {
-            if (foundDecimalPoint) {
+            if (foundDecimalPoint || foundExponentSeparator) {
               return false;
             }
             foundDecimalPoint = true;
             return true;
+          } else if (character == 'e' || character == 'E') {
+            if (foundExponentSeparator) {
+              return false;
+            }
+            foundExponentSeparator = true;
+            return true;
           } else {
-            if (foundDecimalPoint && foundFraction) {
+            if (foundDecimalPoint && foundFraction && (!foundExponentSeparator || foundExponent)) {
               *ended = true;
             }
             return false;

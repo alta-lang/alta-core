@@ -261,6 +261,8 @@ namespace AltaCore {
         bool characterLiteralEscaped = false;
         bool foundDecimalPoint = false;
         bool foundFraction = false;
+        bool foundExponentSeparator = false;
+        bool foundExponent = false;
         uint8_t backticksFound = 0;
         std::pair<size_t, size_t> lastPosition;
         bool foundBase = false;
