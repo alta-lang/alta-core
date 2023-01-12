@@ -13,9 +13,6 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/deps/variant")
 
 include("${PROJECT_SOURCE_DIR}/deps/CMakeLists-semver.c.cmake")
 
-# currently uses Boost 1.70.0
-add_subdirectory("${PROJECT_SOURCE_DIR}/deps/boost-cmake")
-
 add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/lexer.cpp"
   "${PROJECT_SOURCE_DIR}/src/parser.cpp"
@@ -132,7 +129,7 @@ if (CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "10.14")
 endif()
 
 target_link_libraries(altacore PRIVATE yaml-cpp)
-target_link_libraries(altacore PUBLIC semver_c optional crossguid mpark_variant Boost::filesystem)
+target_link_libraries(altacore PUBLIC semver_c optional crossguid mpark_variant)
 
 set_target_properties(altacore
   PROPERTIES

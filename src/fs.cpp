@@ -4,7 +4,7 @@
 #include <fstream>
 #include <locale>
 #include <codecvt>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
@@ -84,11 +84,11 @@ std::vector<AltaCore::Filesystem::Path> AltaCore::Filesystem::getDirectoryListin
   std::vector<Path> results;
   const auto dirStr = directory.toString();
 
-  for (auto file: boost::filesystem::directory_iterator(dirStr)) {
+  for (auto file: std::filesystem::directory_iterator(dirStr)) {
     auto tmp = file.path();
     auto path = Path(tmp.string());
     results.push_back(path);
-    if (recursive && boost::filesystem::is_directory(file)) {
+    if (recursive && std::filesystem::is_directory(file)) {
       auto arr = getDirectoryListing(path, true);
       results.insert(results.end(), arr.begin(), arr.end());
     }
