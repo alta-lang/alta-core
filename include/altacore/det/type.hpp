@@ -218,6 +218,22 @@ namespace AltaCore {
           return unionOf.size() > 0;
         };
 
+        inline bool isSigned() const {
+          bool result = true;
+          for (const auto& modifier: modifiers) {
+            if (modifier & static_cast<uint8_t>(AltaCore::DET::TypeModifierFlag::Signed)) {
+              result = true;
+            }
+            if (modifier & static_cast<uint8_t>(AltaCore::DET::TypeModifierFlag::Unsigned)) {
+              result = false;
+            }
+            if (modifier & (static_cast<uint8_t>(AltaCore::DET::TypeModifierFlag::Pointer) | static_cast<uint8_t>(AltaCore::DET::TypeModifierFlag::Reference))) {
+              break;
+            }
+          }
+          return result;
+        };
+
         const size_t requiredArgumentCount() const;
 
         bool includes(const std::shared_ptr<Type> otherType) const;
