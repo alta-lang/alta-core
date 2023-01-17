@@ -116,7 +116,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
    * a class would have to have to cause that would be absurd, but
    * nontheless possible. if we *can* handle it properly, why not?
    */
-  std::vector<std::shared_ptr<DET::Class>> currentParents;
+  std::vector<std::pair<std::shared_ptr<DET::Class>, size_t>> currentParents;
   std::stack<std::shared_ptr<DET::Class>> classStack;
   std::stack<size_t> idxs;
   classStack.push(targetScope->parentClass.lock());
@@ -129,7 +129,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
       bool loopBack = false;
       for (size_t i = idx; i < pc->parents.size(); i++) {
         auto& parent = pc->parents[i];
-        currentParents.push_back(parent);
+        currentParents.push_back(std::make_pair(parent, i));
         auto stuff = parent->scope->findAll(query, {}, false, scope);
         for (size_t j = 0; j < stuff.size(); j++) {
           info->parentClassAccessors[info->items.size()] = currentParents;

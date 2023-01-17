@@ -101,9 +101,14 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto ptr = dynamic_cast<DH::PointerExpression*>(expression)) {
     return getUnderlyingType(ptr->target.get())->destroyReferences()->point();
   } else if (auto deref = dynamic_cast<DH::DereferenceExpression*>(expression)) {
-    auto target = getUnderlyingType(deref->target.get());
+    auto origTarget = getUnderlyingType(deref->target.get());
+    auto target = origTarget->destroyReferences();
     if (target->pointerLevel() < 1 && target->isOptional) {
       target = target->optionalTarget->copy();
+      if (origTarget->referenceLevel() > 0) {
+        // if we have a reference to an optional, we can safely obtain a reference to the optional's contained type
+        target = target->reference();
+      }
     } else {
       target = target->follow();
     }
@@ -123,7 +128,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     }
     if (subs->operatorMethod)
       return subs->operatorMethod->returnType;
-    return getUnderlyingType(subs->target.get())->destroyReferences()->follow();
+    return getUnderlyingType(subs->target.get())->destroyReferences()->follow()->reference();
   } else if (auto sc = dynamic_cast<DH::SuperClassFetch*>(expression)) {
     return std::make_shared<Type>(sc->superclass, std::vector<uint8_t> { (uint8_t)Modifier::Reference });
   } else if (auto instOf = dynamic_cast<DH::InstanceofExpression*>(expression)) {
@@ -194,7 +199,13 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
     return type;
   } else if (itemType == ItemType::Variable) {
     auto var = std::dynamic_pointer_cast<Variable>(item);
-    return std::dynamic_pointer_cast<Type>(var->type);
+    if (auto klass = AltaCore::Util::getClass(var->parentScope.lock()).lock()) {
+      if (klass->isBitfield) {
+        // this is a bitfield member; its members don't have memory locations we can reference
+        return std::dynamic_pointer_cast<Type>(var->type);
+      }
+    }
+    return std::dynamic_pointer_cast<Type>(var->type)->reference();
   }
   return nullptr;
 };

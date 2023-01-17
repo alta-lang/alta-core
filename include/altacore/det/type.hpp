@@ -176,6 +176,14 @@ namespace AltaCore {
          */
         std::shared_ptr<Type> destroyReferences() const;
 
+        inline std::shared_ptr<Type> destroyIndirection() const {
+          auto result = followBlindly();
+          while (result->indirectionLevel() > 0) {
+            result = result->followBlindly();
+          }
+          return result;
+        };
+
         std::shared_ptr<Type> makeOptional() const;
 
         size_t compatiblity(const Type& other) const;
@@ -232,6 +240,10 @@ namespace AltaCore {
             }
           }
           return result;
+        };
+
+        inline bool isFloatingPoint() const {
+          return isNative && (nativeTypeName == NativeType::Float || nativeTypeName == NativeType::Double);
         };
 
         const size_t requiredArgumentCount() const;
