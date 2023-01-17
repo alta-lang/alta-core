@@ -12,6 +12,8 @@ namespace AltaCore {
     std::weak_ptr<DET::Module> getModule(const AltaCore::DET::Scope* scope);
     std::weak_ptr<DET::Function> getFunction(std::shared_ptr<const AltaCore::DET::Scope> scope);
     std::weak_ptr<DET::Class> getClass(std::shared_ptr<const AltaCore::DET::Scope> scope);
+    std::weak_ptr<DET::Namespace> getNamespace(std::shared_ptr<const AltaCore::DET::Scope> scope);
+    std::weak_ptr<DET::Namespace> getEnum(std::shared_ptr<const AltaCore::DET::Scope> scope);
     std::string unescape(const std::string& data);
     std::string escape(const std::string& data);
     uint8_t hexDigitToDecimal(const char singleDigit);

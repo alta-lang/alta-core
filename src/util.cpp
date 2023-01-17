@@ -103,6 +103,48 @@ std::weak_ptr<AltaCore::DET::Class> AltaCore::Util::getClass(std::shared_ptr<con
   return std::weak_ptr<AltaCore::DET::Class>();
 };
 
+std::weak_ptr<AltaCore::DET::Namespace> AltaCore::Util::getNamespace(std::shared_ptr<const AltaCore::DET::Scope> scope) {
+  if (scope == nullptr) {
+    return std::weak_ptr<AltaCore::DET::Namespace>();
+  }
+  if (!scope->parentNamespace.expired()) {
+    return scope->parentNamespace;
+  }
+  if (!scope->parentModule.expired()) {
+    return std::weak_ptr<AltaCore::DET::Namespace>();
+  }
+  if (!scope->parent.expired()) {
+    return getNamespace(scope->parent.lock());
+  }
+  if (auto klass = scope->parentClass.lock()) {
+    if (auto parent = klass->parentScope.lock()) {
+      return getNamespace(parent);
+    }
+  }
+  if (auto func = scope->parentFunction.lock()) {
+    if (auto parent = func->parentScope.lock()) {
+      return getNamespace(parent);
+    }
+  }
+  return std::weak_ptr<AltaCore::DET::Namespace>();
+};
+
+std::weak_ptr<AltaCore::DET::Namespace> AltaCore::Util::getEnum(std::shared_ptr<const AltaCore::DET::Scope> scope) {
+  if (scope == nullptr) {
+    return std::weak_ptr<AltaCore::DET::Namespace>();
+  }
+  if (auto ns = scope->parentNamespace.lock()) {
+    return ns->underlyingEnumerationType ? ns : nullptr;
+  }
+  if (!scope->parentModule.expired()) {
+    return std::weak_ptr<AltaCore::DET::Namespace>();
+  }
+  if (!scope->parent.expired()) {
+    return getNamespace(scope->parent.lock());
+  }
+  return std::weak_ptr<AltaCore::DET::Namespace>();
+};
+
 std::string AltaCore::Util::unescape(const std::string& data) {
   std::string result;
 
