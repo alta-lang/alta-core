@@ -205,7 +205,11 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(std:
         return std::dynamic_pointer_cast<Type>(var->type);
       }
     }
-    return std::dynamic_pointer_cast<Type>(var->type)->reference();
+    auto result = std::dynamic_pointer_cast<Type>(var->type);
+    if (!var->isVariable) {
+      result = result->reference();
+    }
+    return result;
   }
   return nullptr;
 };

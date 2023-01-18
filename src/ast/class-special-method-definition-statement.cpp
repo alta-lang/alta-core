@@ -95,6 +95,8 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
     } else {
       ALTACORE_DETAILING_ERROR("impossible error encountered: special method type not recognized");
     }
+
+    info->method->parentClassType = std::make_shared<DET::Type>(info->klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
   }
 
   if (!noBody && !info->body) {

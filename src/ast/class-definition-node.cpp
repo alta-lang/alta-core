@@ -28,6 +28,7 @@ namespace AltaCoreClassHelpers {
 
     if (!info->initializerMethod) {
       info->initializerMethod = DET::Function::create(info->klass->scope, "@initializer@", {}, std::make_shared<DET::Type>(DET::NativeType::Void));
+      info->initializerMethod->parentClassType = std::make_shared<DET::Type>(info->klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
     }
 
     auto loop = [&](std::vector<std::shared_ptr<ClassStatementNode>>& tgt, bool noBodies = false) -> void {
@@ -57,6 +58,7 @@ namespace AltaCoreClassHelpers {
                   specialDet->method->parameters[0],
                 }, std::make_shared<DET::Type>(info->klass));
                 method->visibility = specialDet->method->visibility;
+                method->parentClassType = std::make_shared<DET::Type>(info->klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
                 specialDet->correspondingMethod = method;
                 info->klass->fromCasts.push_back(method);
               }
