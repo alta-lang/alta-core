@@ -29,6 +29,7 @@ namespace AltaCoreClassHelpers {
     if (!info->initializerMethod) {
       info->initializerMethod = DET::Function::create(info->klass->scope, "@initializer@", {}, std::make_shared<DET::Type>(DET::NativeType::Void));
       info->initializerMethod->parentClassType = std::make_shared<DET::Type>(info->klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
+      info->initializerMethod->isMethod = true;
     }
 
     auto loop = [&](std::vector<std::shared_ptr<ClassStatementNode>>& tgt, bool noBodies = false) -> void {

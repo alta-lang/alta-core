@@ -33,6 +33,7 @@ ALTACORE_AST_DETAIL_D(StructureDefinitionStatement) {
 
   info->structure->constructors.push_back(DET::Function::create(info->structure->scope, "constructor", {}, voidType));
   info->structure->defaultConstructor = info->structure->constructors.front();
+  info->structure->defaultConstructor->isConstructor = true;
 
   for (size_t i = 0; i < members.size(); i++) {
     auto& [type, name] = members[i];
@@ -41,6 +42,7 @@ ALTACORE_AST_DETAIL_D(StructureDefinitionStatement) {
     auto var = std::make_shared<DET::Variable>(name, det->type, info->structure->scope);
     var->visibility = Visibility::Public;
     info->structure->scope->items.push_back(var);
+    info->structure->members.push_back(var);
 
     std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> params;
     for (size_t j = 0; j < i; j++) {
@@ -57,6 +59,7 @@ ALTACORE_AST_DETAIL_D(StructureDefinitionStatement) {
     params.push_back(std::make_tuple(name, info->memberTypes[i]->type, false, newID));
 
     info->structure->constructors.push_back(DET::Function::create(info->structure->scope, "constructor", params, voidType));
+    info->structure->constructors.back()->isConstructor = true;
   }
 
   for (auto& attr: attributes) {

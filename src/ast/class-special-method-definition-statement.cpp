@@ -70,6 +70,7 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
 
       info->method = DET::Function::create(info->inputScope, "constructor", params, voidType);
       info->method->visibility = visibilityModifier;
+      info->method->isConstructor = true;
 
       info->isCopyConstructor = info->method->parameterVariables.size() == 1 && *info->method->parameterVariables.front()->type->deconstify(true) == *std::make_shared<DET::Type>(info->klass)->reference();
 
@@ -92,6 +93,7 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
       info->specialType = specialType->fullDetail(info->inputScope);
       info->method = DET::Function::create(info->inputScope, "@to@", {}, info->specialType->type);
       info->method->visibility = visibilityModifier;
+      info->method->isMethod = true;
     } else {
       ALTACORE_DETAILING_ERROR("impossible error encountered: special method type not recognized");
     }

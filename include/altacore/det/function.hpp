@@ -45,6 +45,7 @@ namespace AltaCore {
         bool isOperator = false;
         bool isGenerator = false;
         bool isAsync = false;
+        bool isConstructor = false;
         Shared::ClassOperatorType operatorType = Shared::ClassOperatorType::NONE;
         Shared::ClassOperatorOrientation orientation = Shared::ClassOperatorOrientation::Unary;
         std::shared_ptr<Type> generatorParameterType = nullptr;
