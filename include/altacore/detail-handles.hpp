@@ -273,6 +273,7 @@ namespace AltaCore {
       std::shared_ptr<ExpressionNode> test = nullptr;
       std::shared_ptr<ExpressionNode> primaryResult = nullptr;
       std::shared_ptr<ExpressionNode> secondaryResult = nullptr;
+      std::shared_ptr<DET::Type> commonType = nullptr;
     };
     class ConditionalStatement: public StatementNode {
       ALTACORE_DH_CTOR(ConditionalStatement, StatementNode);

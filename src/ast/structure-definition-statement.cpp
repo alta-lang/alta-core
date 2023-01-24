@@ -34,6 +34,7 @@ ALTACORE_AST_DETAIL_D(StructureDefinitionStatement) {
   info->structure->constructors.push_back(DET::Function::create(info->structure->scope, "constructor", {}, voidType));
   info->structure->defaultConstructor = info->structure->constructors.front();
   info->structure->defaultConstructor->isConstructor = true;
+  info->structure->defaultConstructor->parentClassType = std::make_shared<DET::Type>(info->structure)->reference();
 
   for (size_t i = 0; i < members.size(); i++) {
     auto& [type, name] = members[i];
@@ -60,6 +61,7 @@ ALTACORE_AST_DETAIL_D(StructureDefinitionStatement) {
 
     info->structure->constructors.push_back(DET::Function::create(info->structure->scope, "constructor", params, voidType));
     info->structure->constructors.back()->isConstructor = true;
+    info->structure->constructors.back()->parentClassType = info->structure->defaultConstructor->parentClassType;
   }
 
   for (auto& attr: attributes) {

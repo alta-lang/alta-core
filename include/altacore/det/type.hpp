@@ -246,6 +246,42 @@ namespace AltaCore {
           return isNative && (nativeTypeName == NativeType::Float || nativeTypeName == NativeType::Double);
         };
 
+        inline size_t nativeTypeBits() const {
+          if (nativeTypeName == NativeType::Float) {
+            return 32;
+          } else if (nativeTypeName == NativeType::Double) {
+            return 64;
+          } else if (nativeTypeName == NativeType::Bool) {
+            return 1;
+          } else if (nativeTypeName == NativeType::Byte) {
+            return 8;
+          } else if (nativeTypeName == NativeType::Void) {
+            return 0;
+          }
+
+          uint8_t bits = 32;
+
+          for (const auto& modifier: modifiers) {
+            if (modifier & static_cast<uint8_t>(AltaCore::DET::TypeModifierFlag::Long)) {
+              if (bits < 64) {
+                bits *= 2;
+              }
+            }
+
+            if (modifier & static_cast<uint8_t>(AltaCore::DET::TypeModifierFlag::Short)) {
+              if (bits > 8) {
+                bits /= 2;
+              }
+            }
+
+            if (modifier & (static_cast<uint8_t>(AltaCore::DET::TypeModifierFlag::Pointer) | static_cast<uint8_t>(AltaCore::DET::TypeModifierFlag::Reference))) {
+              break;
+            }
+          }
+
+          return bits;
+        };
+
         const size_t requiredArgumentCount() const;
 
         bool includes(const std::shared_ptr<Type> otherType) const;
