@@ -87,7 +87,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
   } else if (auto str = dynamic_cast<DH::StringLiteralNode*>(expression)) {
     return std::make_shared<Type>(NativeType::Byte, std::vector<uint8_t> { (uint8_t)Modifier::Constant | (uint8_t)Modifier::Pointer, (uint8_t)Modifier::Constant });
   } else if (auto cond = dynamic_cast<DH::ConditionalExpression*>(expression)) {
-    return getUnderlyingType(cond->primaryResult.get());
+    return cond->commonType->copy();
   } else if (auto inst = dynamic_cast<DH::ClassInstantiationExpression*>(expression)) {
     if (inst->superclass) {
       return getUnderlyingType(inst->target.get());
@@ -110,7 +110,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
         target = target->reference();
       }
     } else {
-      target = target->follow();
+      target = target->follow()->reference();
     }
     return target;
   } else if (auto cast = dynamic_cast<DH::CastExpression*>(expression)) {
