@@ -296,6 +296,8 @@ std::vector<std::pair<std::shared_ptr<AltaCore::DET::Function>, std::vector<bool
     func->isGenerator = original->isGenerator;
     func->isAsync = original->isAsync;
     func->visibility = original->visibility;
+    func->isMethod = original->isMethod;
+    func->parentClassType = original->parentClassType;
   }
 
   return optionalVariantFunctions;

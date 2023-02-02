@@ -31,6 +31,11 @@ ALTACORE_AST_INFO_DETAIL_D(ClassMethodDefinitionStatement) {
     info->funcDef->function->isMethod = true;
     auto klass = info->inputScope->parentClass.lock();
     info->funcDef->function->parentClassType = std::make_shared<DET::Type>(klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
+    for (auto& [variant, ignored]: info->funcDef->optionalVariantFunctions) {
+      variant->visibility = visibilityModifier;
+      variant->isMethod = true;
+      variant->parentClassType = info->funcDef->function->parentClassType;
+    }
   }
   if (!info->funcDef->body) {
     info->funcDef = funcDef->fullDetail(info->funcDef, noBody);
