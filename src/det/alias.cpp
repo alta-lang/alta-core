@@ -25,7 +25,7 @@ AltaCore::DET::Alias::Alias(
   {};
 
 std::string AltaCore::DET::Alias::toString() const {
-  std::string result = name + " (alias for { " + target->toString() + " })";
+  std::string result = '[' + name + " (alias for { " + target->toString() + " })]";
 
   result = (parentScope.lock() ? parentScope.lock()->toString() : "") + result;
 

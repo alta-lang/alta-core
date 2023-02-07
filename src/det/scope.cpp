@@ -412,9 +412,7 @@ std::string AltaCore::DET::Scope::toString() const {
   if (auto pMod = parentModule.lock()) {
     result = '[' + pMod->toString() + "]." + result;
   } else if (auto pFunc = parentFunction.lock()) {
-    auto str = pFunc->toString();
-    auto pos = str.find_last_of('.');
-    result = str.substr(0, pos) + ".[" + str.substr(pos + 1) + "]." + result;
+    result = '[' + pFunc->toString() + "]." + result;
   } else if (auto pClass = parentClass.lock()) {
     result = pClass->toString() + '.' + result;
   } else if (auto pNamespace = parentNamespace.lock()) {
