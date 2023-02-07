@@ -2032,7 +2032,19 @@ namespace AltaCore {
           auto raw = expect(TokenType::Character);
           if (!raw) ACP_NOT_OK;
           auto cont = raw.raw.substr(1, raw.raw.length() - 2);
-          ACP_NODE((nodeFactory.create<AST::CharacterLiteralNode>((cont.length() == 2) ? cont[1] : cont[0], cont.length() == 2)));
+          auto val = (cont.length() == 2) ? cont[1] : cont[0];
+          auto escaped = cont.length() == 2;
+          if (escaped) {
+            switch (val) {
+              case 'n': val = '\n'; break;
+              case 'f': val = '\f'; break;
+              case 'r': val = '\r'; break;
+              case 't': val = '\t'; break;
+              case 'v': val = '\v'; break;
+              case '0': val = '\0'; break;
+            }
+          }
+          ACP_NODE((nodeFactory.create<AST::CharacterLiteralNode>(val, escaped)));
         } else if (rule == RuleType::FunctionDeclaration) {
           if (state.internalIndex == 0) {
             state.internalIndex = 1;
