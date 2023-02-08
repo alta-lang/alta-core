@@ -84,7 +84,7 @@ ALTACORE_AST_INFO_DETAIL_D(VariableDefinitionExpression) {
           ALTACORE_DETAILING_ERROR("can't infer variable type from `nullptr` (i.e. type must be explicitly declared for this variable)");
         }
         info->type = std::make_shared<DH::Type>(info->inputScope);
-        info->type->type = DET::Type::getUnderlyingType(info->initializationExpression.get())->deconstify();
+        info->type->type = DET::Type::getUnderlyingType(info->initializationExpression.get())->deconstify()->destroyReferences();
         info->type->isAny = info->type->type->isAny;
         info->type->isNative = info->type->type->isNative;
         info->type->isFunction = info->type->type->isFunction;
