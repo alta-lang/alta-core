@@ -31,7 +31,7 @@ ALTACORE_AST_DETAIL_D(ImportStatement) {
   info->importedModule->dependents.push_back(info->parentModule);
   if (!isManual) {
     if (isAliased) {
-      auto ns = std::make_shared<DET::Namespace>(alias, info->parentModule->scope);
+      auto ns = std::make_shared<DET::Namespace>(alias, position, info->parentModule->scope);
       ns->scope = info->importedModule->exports;
       info->parentModule->scope->items.push_back(ns);
     } else {
@@ -42,7 +42,7 @@ ALTACORE_AST_DETAIL_D(ImportStatement) {
         }
         info->importedItems.insert(info->importedItems.end(), items.begin(), items.end());
         for (auto& item: items) {
-          auto aliasItem = std::make_shared<DET::Alias>(alias.empty() ? imp : alias, item, info->parentModule->scope);
+          auto aliasItem = std::make_shared<DET::Alias>(alias.empty() ? imp : alias, item, position, info->parentModule->scope);
           info->parentModule->scope->items.push_back(aliasItem);
         }
       }

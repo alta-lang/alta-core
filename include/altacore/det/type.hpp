@@ -203,7 +203,7 @@ namespace AltaCore {
         };
 
         Type():
-          ScopeItem(""),
+          ScopeItem("", {}),
           isAny(true)
           {};
         Type(NativeType nativeTypeName, std::vector<uint8_t> modifiers = {}, std::string userDefinedName = "");
@@ -211,7 +211,7 @@ namespace AltaCore {
         Type(std::shared_ptr<Class> klass, std::vector<uint8_t> modifiers = {});
         Type(std::vector<std::shared_ptr<Type>> unionOf, std::vector<uint8_t> modifiers = {});
         Type(bool _isOptional, std::shared_ptr<Type> _optionalTarget, std::vector<uint8_t> _modifiers = {}):
-          ScopeItem(""),
+          ScopeItem("", {}),
           isOptional(_isOptional),
           optionalTarget(_optionalTarget),
           modifiers(_modifiers),

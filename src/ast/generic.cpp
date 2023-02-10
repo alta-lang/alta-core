@@ -16,7 +16,7 @@ ALTACORE_AST_DETAIL_D(Generic) {
   // it is unacceptable for most operations, thus leading to runtime
   // errors and making it easier to detect accidental leakage of default
   // generic type alias values
-  info->alias = std::make_shared<DET::Alias>(name, std::make_shared<DET::Type>(DET::NativeType::Void), info->inputScope);
+  info->alias = std::make_shared<DET::Alias>(name, std::make_shared<DET::Type>(DET::NativeType::Void), position, info->inputScope);
   info->inputScope->items.push_back(info->alias);
 
   return info;

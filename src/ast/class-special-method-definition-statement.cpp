@@ -68,7 +68,7 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
           optionalParameterIndexes.push_back(i);
       }
 
-      info->method = DET::Function::create(info->inputScope, "constructor", params, voidType);
+      info->method = DET::Function::create(info->inputScope, "constructor", params, voidType, position);
       info->method->visibility = visibilityModifier;
       info->method->isConstructor = true;
 
@@ -78,7 +78,7 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
         info->optionalVariantFunctions = FunctionDefinitionNode::expandOptionalVariants(optionalParameterIndexes, info->method, parameters, info->parameters);
       }
     } else if (type == SpecialClassMethod::Destructor) {
-      info->method = DET::Function::create(info->inputScope, "destructor", {}, voidType);
+      info->method = DET::Function::create(info->inputScope, "destructor", {}, voidType, position);
       info->method->isDestructor = true;
       info->method->visibility = visibilityModifier;
     } else if (type == SpecialClassMethod::From) {
@@ -87,11 +87,11 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
       uuidStream << xg::newGuid();
       info->method = DET::Function::create(info->inputScope, "@from@", {
         { "$", info->specialType->type, false, uuidStream.str() },
-      }, thisType);
+      }, thisType, position);
       info->method->visibility = visibilityModifier;
     } else if (type == SpecialClassMethod::To) {
       info->specialType = specialType->fullDetail(info->inputScope);
-      info->method = DET::Function::create(info->inputScope, "@to@", {}, info->specialType->type);
+      info->method = DET::Function::create(info->inputScope, "@to@", {}, info->specialType->type, position);
       info->method->visibility = visibilityModifier;
       info->method->isMethod = true;
     } else {

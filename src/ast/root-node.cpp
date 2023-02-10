@@ -58,6 +58,7 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
         info->module->internal.schedulerClass,
         DET::Type::createModifierVector({ { TypeModifierFlag::Reference } })
       ),
+      AltaCore::Errors::Position(0, 0, info->module->internal.module->path),
       info->module->scope
     );
     info->module->scope->items.push_back(info->module->internal.schedulerVariable);

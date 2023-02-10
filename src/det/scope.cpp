@@ -26,16 +26,19 @@ std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Scope::deepClone() {
   return self;
 };
 
-auto AltaCore::DET::Scope::makeWithParentScope(std::shared_ptr<Scope> parent) -> std::shared_ptr<Scope> {
-  auto scope = std::make_shared<Scope>(parent);
+auto AltaCore::DET::Scope::makeWithParentScope(std::shared_ptr<Scope> parent, AltaCore::Errors::Position position) -> std::shared_ptr<Scope> {
+  auto scope = std::make_shared<Scope>(parent, position);
   parent->childScopes.push_back(scope);
   return scope;
 };
 
-AltaCore::DET::Scope::Scope() {};
-AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Scope> _parent):
+AltaCore::DET::Scope::Scope(AltaCore::Errors::Position _position):
+  position(_position)
+  {};
+AltaCore::DET::Scope::Scope(std::shared_ptr<AltaCore::DET::Scope> _parent, AltaCore::Errors::Position _position):
   parent(_parent),
-  relativeID(_parent->nextChildID)
+  relativeID(_parent->nextChildID),
+  position(_position)
 {
   _parent->nextChildID++;
   noRuntime = _parent->noRuntime;

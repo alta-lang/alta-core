@@ -18,9 +18,10 @@ std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Alias::deepClone() {
 AltaCore::DET::Alias::Alias(
   std::string _name,
   std::shared_ptr<AltaCore::DET::ScopeItem> _target,
+  AltaCore::Errors::Position position,
   std::shared_ptr<AltaCore::DET::Scope> _parentScope
 ):
-  ScopeItem(_name, _parentScope),
+  ScopeItem(_name, position, _parentScope),
   target(_target)
   {};
 

@@ -22,7 +22,7 @@ namespace AltaCore {
         virtual std::shared_ptr<Node> clone();
         virtual std::shared_ptr<Node> deepClone();
 
-        static std::shared_ptr<Class> create(std::string name, std::shared_ptr<Scope> parentScope, std::vector<std::shared_ptr<Class>> parents = {}, bool isStructure = false);
+        static std::shared_ptr<Class> create(std::string name, std::shared_ptr<Scope> parentScope, AltaCore::Errors::Position position, std::vector<std::shared_ptr<Class>> parents = {}, bool isStructure = false);
 
         bool isStructure = false;
         bool isExternal = false;
@@ -52,7 +52,7 @@ namespace AltaCore {
         // only used for capture classes
         std::vector<std::shared_ptr<Variable>> referencedVariables;
 
-        Class(std::string name, std::shared_ptr<Scope> parentScope, std::vector<std::shared_ptr<Class>> parents = {});
+        Class(std::string name, std::shared_ptr<Scope> parentScope, AltaCore::Errors::Position position, std::vector<std::shared_ptr<Class>> parents = {});
 
         bool hasParent(std::shared_ptr<Class> parent) const;
         std::shared_ptr<Class> instantiateGeneric(std::vector<std::shared_ptr<Type>> genericArguments);

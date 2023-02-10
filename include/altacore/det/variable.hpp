@@ -20,7 +20,7 @@ namespace AltaCore {
         bool isBitfieldEntry = false;
         std::pair<size_t, size_t> bitfieldBits;
 
-        Variable(std::string name, std::shared_ptr<Type> type, std::shared_ptr<Scope> parentScope = nullptr);
+        Variable(std::string name, std::shared_ptr<Type> type, AltaCore::Errors::Position position, std::shared_ptr<Scope> parentScope = nullptr);
 
         virtual std::string toString() const;
     };

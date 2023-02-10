@@ -6,26 +6,26 @@ const AltaCore::AST::NodeType AltaCore::AST::TryCatchBlock::nodeType() {
 
 ALTACORE_AST_DETAIL_D(TryCatchBlock) {
   ALTACORE_MAKE_DH(TryCatchBlock);
-  info->tryScope = DET::Scope::makeWithParentScope(info->inputScope);
+  info->tryScope = DET::Scope::makeWithParentScope(info->inputScope, tryBlock->position);
   info->tryScope->isTry = true;
   info->tryBlock = tryBlock->fullDetail(info->tryScope);
   std::unordered_set<std::shared_ptr<DET::Type>, DET::TypePointerHash, DET::TypePointerComparator> caught;
   for (size_t i = 0; i < catchBlocks.size(); i++) {
     auto& id = catchIDs[i];
     auto& [type, block] = catchBlocks[i];
-    auto scope = DET::Scope::makeWithParentScope(info->inputScope);
+    auto scope = DET::Scope::makeWithParentScope(info->inputScope, block->position);
     info->catchScopes.push_back(scope);
     auto typeDet = type->fullDetail(scope);
     auto err = typeDet->type->copy()->deconstify();
     caught.insert(err);
-    auto errorVar = std::make_shared<DET::Variable>(id, typeDet->type, scope);
+    auto errorVar = std::make_shared<DET::Variable>(id, typeDet->type, type->position, scope);
     info->errorVariables.push_back(errorVar);
     scope->items.push_back(errorVar);
     auto stmtDet = block->fullDetail(scope);
     info->catchBlocks.push_back(std::make_pair(typeDet, stmtDet));
   }
   if (catchAllBlock) {
-    info->catchAllScope = DET::Scope::makeWithParentScope(info->inputScope);
+    info->catchAllScope = DET::Scope::makeWithParentScope(info->inputScope, catchAllBlock->position);
     info->catchAllBlock = catchAllBlock->fullDetail(info->catchAllScope);
   } else {
     for (auto& type: info->tryScope->typesThrown) {

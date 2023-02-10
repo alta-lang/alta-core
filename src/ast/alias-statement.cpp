@@ -10,7 +10,7 @@ ALTACORE_AST_DETAIL_D(AliasStatement) {
   info->target = target->fullDetail(info->inputScope);
 
   for (auto& item: info->target->items) {
-    auto alias = std::make_shared<DET::Alias>(name, item, info->inputScope);
+    auto alias = std::make_shared<DET::Alias>(name, item, position, info->inputScope);
     info->inputScope->items.push_back(alias);
     info->aliases.push_back(alias);
   }

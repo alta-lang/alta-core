@@ -1830,7 +1830,7 @@ bool AltaCore::DET::Type::isCompatibleWith(const AltaCore::DET::Type& other) con
 };
 
 AltaCore::DET::Type::Type(AltaCore::DET::NativeType _nativeTypeName, std::vector<uint8_t> _modifiers, std::string _userDefinedName):
-  ScopeItem(""),
+  ScopeItem("", {}),
   isNative(true),
   isFunction(false),
   nativeTypeName(_nativeTypeName),
@@ -1838,7 +1838,7 @@ AltaCore::DET::Type::Type(AltaCore::DET::NativeType _nativeTypeName, std::vector
   userDefinedName(_userDefinedName)
   {};
 AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> _parameters, std::vector<uint8_t> _modifiers, bool _isRawFunction):
-  ScopeItem(""),
+  ScopeItem("", {}),
   isNative(true),
   isFunction(true),
   returnType(_returnType),
@@ -1847,14 +1847,14 @@ AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Type> _returnType, std:
   isRawFunction(_isRawFunction)
   {};
 AltaCore::DET::Type::Type(std::shared_ptr<AltaCore::DET::Class> _klass, std::vector<uint8_t> _modifiers):
-  ScopeItem(""),
+  ScopeItem("", {}),
   isNative(false),
   isFunction(false),
   klass(_klass),
   modifiers(_modifiers)
   {};
 AltaCore::DET::Type::Type(std::vector<std::shared_ptr<AltaCore::DET::Type>> _unionOf, std::vector<uint8_t> _modifiers):
-  ScopeItem(""),
+  ScopeItem("", {}),
   isNative(false),
   isFunction(false),
   modifiers(_modifiers)

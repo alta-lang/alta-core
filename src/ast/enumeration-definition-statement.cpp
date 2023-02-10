@@ -8,7 +8,7 @@ const AltaCore::AST::NodeType AltaCore::AST::EnumerationDefinitionNode::nodeType
 ALTACORE_AST_DETAIL_D(EnumerationDefinitionNode) {
   ALTACORE_MAKE_DH(EnumerationDefinitionNode);
 
-  info->ns = DET::Namespace::create(info->inputScope, name);
+  info->ns = DET::Namespace::create(info->inputScope, name, position);
   info->inputScope->items.push_back(info->ns);
   info->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
 
@@ -30,7 +30,7 @@ ALTACORE_AST_DETAIL_D(EnumerationDefinitionNode) {
   for (size_t i = 0; i < members.size(); ++i) {
     auto& [key, value] = members[i];
     info->memberDetails[key] = value ? value->fullDetail(info->ns->scope) : nullptr;
-    info->memberVariables[key] = std::make_shared<DET::Variable>(key, info->memberType, info->ns->scope);
+    info->memberVariables[key] = std::make_shared<DET::Variable>(key, info->memberType, position, info->ns->scope);
     info->ns->scope->items.push_back(info->memberVariables[key]);
     if (!value) {
       bool found = false;

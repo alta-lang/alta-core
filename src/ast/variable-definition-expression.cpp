@@ -63,7 +63,7 @@ ALTACORE_AST_INFO_DETAIL_D(VariableDefinitionExpression) {
       info->type = type->fullDetail(info->inputScope);
     }
     if (!info->variable) {
-      info->variable = std::make_shared<DET::Variable>(name, info->type ? info->type->type : nullptr, info->inputScope);
+      info->variable = std::make_shared<DET::Variable>(name, info->type ? info->type->type : nullptr, position, info->inputScope);
       info->inputScope->items.push_back(info->variable);
       info->variable->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
       info->variable->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();
@@ -99,7 +99,7 @@ ALTACORE_AST_INFO_DETAIL_D(VariableDefinitionExpression) {
       info->inputScope->hoist(info->type->type);
     }
     if (!info->variable) {
-      info->variable = std::make_shared<DET::Variable>(name, info->type->type, info->inputScope);
+      info->variable = std::make_shared<DET::Variable>(name, info->type->type, position, info->inputScope);
       info->inputScope->items.push_back(info->variable);
       info->variable->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
       info->variable->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();

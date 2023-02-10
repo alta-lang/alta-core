@@ -19,7 +19,7 @@ ALTACORE_AST_DETAIL_D(ExportStatement) {
           info->externalTarget->importedModule->exports->items.end()
         );
       } else {
-        auto ns = std::make_shared<DET::Namespace>(externalTarget->alias, info->inputScope);
+        auto ns = std::make_shared<DET::Namespace>(externalTarget->alias, position, info->inputScope);
         ns->scope = info->externalTarget->importedModule->exports;
         info->externalTarget->parentModule->exports->items.push_back(ns);
       }
@@ -31,7 +31,7 @@ ALTACORE_AST_DETAIL_D(ExportStatement) {
         }
         info->externalTarget->importedItems.insert(info->externalTarget->importedItems.end(), items.begin(), items.end());
         for (auto& item: items) {
-          auto aliasItem = std::make_shared<DET::Alias>(alias.empty() ? imp : alias, item, info->externalTarget->parentModule->exports);
+          auto aliasItem = std::make_shared<DET::Alias>(alias.empty() ? imp : alias, item, position, info->externalTarget->parentModule->exports);
           info->externalTarget->parentModule->exports->items.push_back(aliasItem);
         }
       }
@@ -53,7 +53,7 @@ ALTACORE_AST_DETAIL_D(ExportStatement) {
           klass->isExport = true;
         }
 
-        auto aliasItem = std::make_shared<DET::Alias>(localTargetAlias.empty() ? localTarget->query : localTargetAlias, item, parentMod->exports);
+        auto aliasItem = std::make_shared<DET::Alias>(localTargetAlias.empty() ? localTarget->query : localTargetAlias, item, position, parentMod->exports);
         parentMod->exports->items.push_back(aliasItem);
       }
     }

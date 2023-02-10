@@ -6,7 +6,7 @@ const AltaCore::AST::NodeType AltaCore::AST::WhileLoopStatement::nodeType() {
 
 ALTACORE_AST_DETAIL_D(WhileLoopStatement) {
   ALTACORE_MAKE_DH(WhileLoopStatement);
-  info->scope = DET::Scope::makeWithParentScope(scope);
+  info->scope = DET::Scope::makeWithParentScope(scope, position);
   info->scope->isLoopScope = true;
 
   info->test = test->fullDetail(info->scope);

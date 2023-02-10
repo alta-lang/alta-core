@@ -27,7 +27,7 @@ namespace AltaCoreClassHelpers {
     bool canCreateDefaultCtor = true;
 
     if (!info->initializerMethod) {
-      info->initializerMethod = DET::Function::create(info->klass->scope, "@initializer@", {}, std::make_shared<DET::Type>(DET::NativeType::Void));
+      info->initializerMethod = DET::Function::create(info->klass->scope, "@initializer@", {}, std::make_shared<DET::Type>(DET::NativeType::Void), self->position);
       info->initializerMethod->parentClassType = std::make_shared<DET::Type>(info->klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
       info->initializerMethod->isMethod = true;
     }
@@ -57,7 +57,7 @@ namespace AltaCoreClassHelpers {
               if (specialDet->isCastConstructor) {
                 auto method = DET::Function::create(info->klass->scope, "@from@", {
                   specialDet->method->parameters[0],
-                }, std::make_shared<DET::Type>(info->klass));
+                }, std::make_shared<DET::Type>(info->klass), self->position);
                 method->visibility = specialDet->method->visibility;
                 method->parentClassType = std::make_shared<DET::Type>(info->klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
                 specialDet->correspondingMethod = method;

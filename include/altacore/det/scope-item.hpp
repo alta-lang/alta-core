@@ -4,6 +4,7 @@
 #include "node.hpp"
 #include <string>
 #include <vector>
+#include "../errors.hpp"
 
 namespace AltaCore {
   namespace AST {
@@ -24,13 +25,14 @@ namespace AltaCore {
         size_t genericParameterCount = 0;
         size_t moduleIndex = 0;
         size_t itemID = 0;
+        AltaCore::Errors::Position position;
 
         std::vector<std::shared_ptr<ScopeItem>> privateHoistedItems;
         std::vector<std::shared_ptr<ScopeItem>> publicHoistedItems;
 
         bool instantiatedFromSamePackage = false;
 
-        ScopeItem(std::string name, std::shared_ptr<Scope> parentScope = nullptr);
+        ScopeItem(std::string name, AltaCore::Errors::Position position, std::shared_ptr<Scope> parentScope = nullptr);
 
         static std::vector<std::shared_ptr<ScopeItem>> getUnderlyingItems(std::shared_ptr<DH::Node> node);
 

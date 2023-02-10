@@ -17,8 +17,9 @@ std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::ScopeItem::deepClone() {
   return clone();
 };
 
-AltaCore::DET::ScopeItem::ScopeItem(std::string _name, std::shared_ptr<AltaCore::DET::Scope> _parentScope):
+AltaCore::DET::ScopeItem::ScopeItem(std::string _name, AltaCore::Errors::Position _position, std::shared_ptr<AltaCore::DET::Scope> _parentScope):
   name(_name),
+  position(_position),
   parentScope(_parentScope)
 {
   if (_parentScope) {

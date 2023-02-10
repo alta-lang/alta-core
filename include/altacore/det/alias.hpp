@@ -14,7 +14,7 @@ namespace AltaCore {
 
         std::shared_ptr<ScopeItem> target;
 
-        Alias(std::string name, std::shared_ptr<ScopeItem> target, std::shared_ptr<Scope> parentScope = nullptr);
+        Alias(std::string name, std::shared_ptr<ScopeItem> target, AltaCore::Errors::Position position, std::shared_ptr<Scope> parentScope = nullptr);
 
         virtual std::string toString() const;
     };

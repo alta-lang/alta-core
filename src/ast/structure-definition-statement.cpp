@@ -14,7 +14,7 @@ AltaCore::AST::StructureDefinitionStatement::StructureDefinitionStatement(std::s
 ALTACORE_AST_DETAIL_D(StructureDefinitionStatement) {
   ALTACORE_MAKE_DH(StructureDefinitionStatement);
 
-  info->structure = DET::Class::create(name, info->inputScope, {}, true);
+  info->structure = DET::Class::create(name, info->inputScope, position, {}, true);
   info->inputScope->items.push_back(info->structure);
   info->structure->isStructure = true;
   info->structure->isExternal = info->isExternal = isExternal;
@@ -31,7 +31,7 @@ ALTACORE_AST_DETAIL_D(StructureDefinitionStatement) {
 
   auto voidType = std::make_shared<DET::Type>(DET::NativeType::Void);
 
-  info->structure->constructors.push_back(DET::Function::create(info->structure->scope, "constructor", {}, voidType));
+  info->structure->constructors.push_back(DET::Function::create(info->structure->scope, "constructor", {}, voidType, position));
   info->structure->defaultConstructor = info->structure->constructors.front();
   info->structure->defaultConstructor->isConstructor = true;
   info->structure->defaultConstructor->parentClassType = std::make_shared<DET::Type>(info->structure)->reference();
@@ -40,7 +40,7 @@ ALTACORE_AST_DETAIL_D(StructureDefinitionStatement) {
     auto& [type, name] = members[i];
     auto det = type->fullDetail(info->inputScope);
     info->memberTypes.push_back(det);
-    auto var = std::make_shared<DET::Variable>(name, det->type, info->structure->scope);
+    auto var = std::make_shared<DET::Variable>(name, det->type, position, info->structure->scope);
     var->visibility = Visibility::Public;
     info->structure->scope->items.push_back(var);
     info->structure->members.push_back(var);
@@ -59,7 +59,7 @@ ALTACORE_AST_DETAIL_D(StructureDefinitionStatement) {
     auto newID = uuidStream.str();
     params.push_back(std::make_tuple(name, info->memberTypes[i]->type, false, newID));
 
-    info->structure->constructors.push_back(DET::Function::create(info->structure->scope, "constructor", params, voidType));
+    info->structure->constructors.push_back(DET::Function::create(info->structure->scope, "constructor", params, voidType, position));
     info->structure->constructors.back()->isConstructor = true;
     info->structure->constructors.back()->parentClassType = info->structure->defaultConstructor->parentClassType;
   }

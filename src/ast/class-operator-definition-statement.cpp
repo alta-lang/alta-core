@@ -27,7 +27,7 @@ ALTACORE_AST_INFO_DETAIL_D(ClassOperatorDefinitionStatement) {
   ALTACORE_CAST_DH(ClassOperatorDefinitionStatement);
 
   if (!info->method) {
-    info->method = DET::Function::create(info->inputScope, std::string("@operator@") + ClassOperatorType_names[(size_t)type] + "@" + Shared::ClassOperatorOrientation_names[(size_t)orientation], {}, nullptr);
+    info->method = DET::Function::create(info->inputScope, std::string("@operator@") + ClassOperatorType_names[(size_t)type] + "@" + Shared::ClassOperatorOrientation_names[(size_t)orientation], {}, nullptr, position);
     info->method->visibility = visibilityModifier;
     info->method->isMethod = true;
     info->method->isOperator = true;
@@ -53,7 +53,7 @@ ALTACORE_AST_INFO_DETAIL_D(ClassOperatorDefinitionStatement) {
     }
     info->method->recreate(params, info->returnType->type);
     if (hasArg) {
-      auto inputAlias = std::make_shared<DET::Alias>("$", info->method->parameterVariables.front(), info->method->scope);
+      auto inputAlias = std::make_shared<DET::Alias>("$", info->method->parameterVariables.front(), argumentType->position, info->method->scope);
       info->method->scope->items.push_back(inputAlias);
     }
   }

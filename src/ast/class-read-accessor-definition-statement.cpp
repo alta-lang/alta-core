@@ -30,10 +30,10 @@ ALTACORE_AST_INFO_DETAIL_D(ClassReadAccessorDefinitionStatement) {
     info->type = type->fullDetail(info->inputScope);
   }
   if (!info->bodyScope) {
-    info->bodyScope = DET::Scope::makeWithParentScope(info->inputScope);
+    info->bodyScope = DET::Scope::makeWithParentScope(info->inputScope, position);
   }
   if (!info->function) {
-    info->function = DET::Function::create(info->inputScope, name, {}, info->type->type);
+    info->function = DET::Function::create(info->inputScope, name, {}, info->type->type, position);
     info->function->isAccessor = true;
   }
   if (!info->body && !noBody) {

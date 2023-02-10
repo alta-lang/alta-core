@@ -8,6 +8,7 @@
 #include <vector>
 #include <tuple>
 #include "../event-manager.hpp"
+#include "../errors.hpp"
 
 namespace AltaCore {
   void registerGlobalAttributes();
@@ -30,7 +31,7 @@ namespace AltaCore {
         virtual std::shared_ptr<Node> clone();
         virtual std::shared_ptr<Node> deepClone();
 
-        static std::shared_ptr<Function> create(std::shared_ptr<Scope> parentScope, std::string name, std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters, std::shared_ptr<Type> returnType);
+        static std::shared_ptr<Function> create(std::shared_ptr<Scope> parentScope, std::string name, std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters, std::shared_ptr<Type> returnType, AltaCore::Errors::Position position);
 
         std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters;
         std::vector<std::shared_ptr<Variable>> parameterVariables;
@@ -79,7 +80,7 @@ namespace AltaCore {
         EventManager<true> beganThrowing;
         EventManager<true> doneDetailing;
 
-        Function(std::shared_ptr<Scope> parentScope, std::string name);
+        Function(std::shared_ptr<Scope> parentScope, std::string name, AltaCore::Errors::Position position);
 
         std::shared_ptr<Function> instantiateGeneric(std::vector<std::shared_ptr<Type>> genericArguments);
 

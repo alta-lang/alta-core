@@ -8,7 +8,7 @@ const AltaCore::AST::NodeType AltaCore::AST::BitfieldDefinitionNode::nodeType() 
 ALTACORE_AST_DETAIL_D(BitfieldDefinitionNode) {
   ALTACORE_MAKE_DH(BitfieldDefinitionNode);
 
-  info->bitfield = DET::Class::create(name, info->inputScope, {}, true);
+  info->bitfield = DET::Class::create(name, info->inputScope, position, {}, true);
   info->inputScope->items.push_back(info->bitfield);
   info->bitfield->isStructure = true;
   info->bitfield->isBitfield = true;
@@ -72,7 +72,7 @@ ALTACORE_AST_DETAIL_D(BitfieldDefinitionNode) {
       det = tmp->fullDetail(info->bitfield->scope);
     }
     info->memberTypes.push_back(det);
-    auto var = std::make_shared<DET::Variable>(name, det->type, info->bitfield->scope);
+    auto var = std::make_shared<DET::Variable>(name, det->type, position, info->bitfield->scope);
     var->isBitfieldEntry = true;
     var->bitfieldBits = std::make_pair(start, end);
     var->visibility = Visibility::Public;

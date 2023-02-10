@@ -37,7 +37,7 @@ ALTACORE_AST_DETAIL_D(FunctionDeclarationNode) {
     publicTypes.push_back(info->returnType->type);
   }
 
-  info->function = DET::Function::create(scope, name, params, info->returnType->type);
+  info->function = DET::Function::create(scope, name, params, info->returnType->type, position);
   scope->items.push_back(info->function);
 
   for (auto& type: publicTypes) {

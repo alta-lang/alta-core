@@ -26,14 +26,14 @@ std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Function::deepClone() {
   return self;
 };
 
-std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::create(std::shared_ptr<AltaCore::DET::Scope> parentScope, std::string name, std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> parameters, std::shared_ptr<AltaCore::DET::Type> returnType) {
-  auto func = std::make_shared<Function>(parentScope, name);
+std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::create(std::shared_ptr<AltaCore::DET::Scope> parentScope, std::string name, std::vector<std::tuple<std::string, std::shared_ptr<AltaCore::DET::Type>, bool, std::string>> parameters, std::shared_ptr<AltaCore::DET::Type> returnType, AltaCore::Errors::Position position) {
+  auto func = std::make_shared<Function>(parentScope, name, position);
   func->parameters = parameters;
   func->returnType = returnType;
   func->scope = std::make_shared<Scope>(func);
 
   for (auto& [name, type, isVariable, id]: parameters) {
-    auto var = std::make_shared<Variable>(name, isVariable ? type->point() : type);
+    auto var = std::make_shared<Variable>(name, isVariable ? type->point() : type, position);
     var->parentScope = func->scope;
     var->isVariable = isVariable;
     func->parameterVariables.push_back(var);
@@ -49,8 +49,8 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::create(std::sh
   return func;
 };
 
-AltaCore::DET::Function::Function(std::shared_ptr<AltaCore::DET::Scope> _parentScope, std::string _name):
-  ScopeItem(_name, _parentScope)
+AltaCore::DET::Function::Function(std::shared_ptr<AltaCore::DET::Scope> _parentScope, std::string _name, AltaCore::Errors::Position position):
+  ScopeItem(_name, position, _parentScope)
   {};
 
 std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::instantiateGeneric(std::vector<std::shared_ptr<Type>> genericArguments) {
@@ -81,7 +81,7 @@ void AltaCore::DET::Function::recreate(std::vector<std::tuple<std::string, std::
   parameterVariables.clear();
 
   for (auto& [name, type, isVariable, id]: parameters) {
-    auto var = std::make_shared<Variable>(name, isVariable ? type->point() : type);
+    auto var = std::make_shared<Variable>(name, isVariable ? type->point() : type, position);
     var->parentScope = scope;
     var->isVariable = isVariable;
     parameterVariables.push_back(var);

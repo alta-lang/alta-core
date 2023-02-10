@@ -10,7 +10,7 @@ ALTACORE_AST_DETAIL_D(VariableDeclarationStatement) {
 
   info->type = type->fullDetail(info->inputScope);
 
-  info->variable = std::make_shared<DET::Variable>(name, info->type->type, info->inputScope);
+  info->variable = std::make_shared<DET::Variable>(name, info->type->type, position, info->inputScope);
   info->inputScope->items.push_back(info->variable);
   info->variable->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
   info->variable->isExport = std::find(modifiers.begin(), modifiers.end(), "export") != modifiers.end();

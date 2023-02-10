@@ -8,6 +8,7 @@
 #include <cinttypes>
 #include <string>
 #include <unordered_set>
+#include "../errors.hpp"
 
 namespace AltaCore {
   namespace DET {
@@ -35,15 +36,16 @@ namespace AltaCore {
 
         bool isTry = false;
         std::unordered_set<std::shared_ptr<Type>, TypePointerHash, TypePointerComparator> typesThrown;
+        AltaCore::Errors::Position position;
 
-        Scope();
-        Scope(std::shared_ptr<Scope> parent);
+        Scope(AltaCore::Errors::Position position);
+        Scope(std::shared_ptr<Scope> parent, AltaCore::Errors::Position position);
         Scope(std::shared_ptr<Module> parentModule);
         Scope(std::shared_ptr<Function> parentFunction);
         Scope(std::shared_ptr<Namespace> parentNamespace);
         Scope(std::shared_ptr<Class> parentClass);
 
-        static std::shared_ptr<Scope> makeWithParentScope(std::shared_ptr<Scope> parent);
+        static std::shared_ptr<Scope> makeWithParentScope(std::shared_ptr<Scope> parent, AltaCore::Errors::Position position);
 
         std::vector<std::shared_ptr<ScopeItem>> findAll(std::string name, std::vector<std::shared_ptr<Type>> excludeTypes = {}, bool searchParents = true, std::shared_ptr<Scope> originScope = nullptr);
         void hoist(std::shared_ptr<ScopeItem> item);

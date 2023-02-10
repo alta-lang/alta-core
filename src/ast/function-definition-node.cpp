@@ -199,7 +199,7 @@ std::vector<std::pair<std::shared_ptr<AltaCore::DET::Function>, std::vector<bool
           }
 
           if (!same) {
-            auto func = DET::Function::create(inputScope, original->name, variantParams, original->returnType);
+            auto func = DET::Function::create(inputScope, original->name, variantParams, original->returnType, original->position);
             optionalVariantFunctions.push_back(std::make_pair(func, optionalValueProvided));
 
             func->isLiteral = original->isLiteral;
@@ -251,7 +251,7 @@ std::vector<std::pair<std::shared_ptr<AltaCore::DET::Function>, std::vector<bool
           soloVariantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
         }
 
-        auto func = DET::Function::create(inputScope, original->name, soloVariantParams, original->returnType);
+        auto func = DET::Function::create(inputScope, original->name, soloVariantParams, original->returnType, original->position);
         optionalVariantFunctions.push_back(std::make_pair(func, optionalValueProvided));
 
         func->isLiteral = original->isLiteral;
@@ -281,7 +281,7 @@ std::vector<std::pair<std::shared_ptr<AltaCore::DET::Function>, std::vector<bool
       emptyVariantParams.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
     }
 
-    auto func = DET::Function::create(inputScope, original->name, emptyVariantParams, original->returnType);
+    auto func = DET::Function::create(inputScope, original->name, emptyVariantParams, original->returnType, original->position);
     optionalVariantFunctions.push_back(std::make_pair(func, std::vector<bool>(optionalParameterIndexes.size(), false)));
 
     func->isLiteral = original->isLiteral;
@@ -361,7 +361,7 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
 
   if (generics.size() > 0) {
     if (!info->function) {
-      info->function = DET::Function::create(info->inputScope, name, {}, nullptr);
+      info->function = DET::Function::create(info->inputScope, name, {}, nullptr, position);
       info->function->ast = shared_from_this();
       info->function->info = info;
       info->function->genericParameterCount = generics.size();
@@ -378,7 +378,7 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
     }
   } else {
     if (!info->function) {
-      info->function = DET::Function::create(info->inputScope, name, {}, nullptr);
+      info->function = DET::Function::create(info->inputScope, name, {}, nullptr, position);
       info->inputScope->items.push_back(info->function);
 
       info->function->isLiteral = std::find(modifiers.begin(), modifiers.end(), "literal") != modifiers.end();
@@ -431,37 +431,37 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
     }
 
     if (info->isGenerator && !info->generator) {
-      info->generator = DET::Class::create("@Generator@", info->function->scope, {}, true);
+      info->generator = DET::Class::create("@Generator@", info->function->scope, position, {}, true);
       info->function->scope->items.push_back(info->generator);
-      auto doneVar = std::make_shared<DET::Variable>("done", std::make_shared<DET::Type>(DET::NativeType::Bool), info->generator->scope);
+      auto doneVar = std::make_shared<DET::Variable>("done", std::make_shared<DET::Type>(DET::NativeType::Bool), position, info->generator->scope);
       info->generator->scope->items.push_back(doneVar);
-      auto nextFunc = DET::Function::create(info->generator->scope, "next", {}, info->returnType->type->makeOptional());
+      auto nextFunc = DET::Function::create(info->generator->scope, "next", {}, info->returnType->type->makeOptional(), position);
       info->generator->scope->items.push_back(nextFunc);
       if (info->generatorParameter) {
         std::shared_ptr<DET::Function> nextFuncWithArgs = DET::Function::create(info->generator->scope, "next", {
           {"input", info->generatorParameter->type, false, "not-so-random-uuid"},
-        }, info->returnType->type->makeOptional());
+        }, info->returnType->type->makeOptional(), position);
         info->generator->scope->items.push_back(nextFuncWithArgs);
       }
     }
 
     if (info->isAsync && !info->coroutine) {
-      info->coroutine = DET::Class::create("@Coroutine@", info->function->scope, {}, true);
+      info->coroutine = DET::Class::create("@Coroutine@", info->function->scope, position, {}, true);
       info->function->scope->items.push_back(info->coroutine);
-      auto doneVar = std::make_shared<DET::Variable>("done", std::make_shared<DET::Type>(DET::NativeType::Bool), info->coroutine->scope);
+      auto doneVar = std::make_shared<DET::Variable>("done", std::make_shared<DET::Type>(DET::NativeType::Bool), position, info->coroutine->scope);
       doneVar->isLiteral = true;
       info->coroutine->scope->items.push_back(doneVar);
-      auto valueAcc = DET::Function::create(info->coroutine->scope, "value", {}, info->returnType->type->makeOptional());
+      auto valueAcc = DET::Function::create(info->coroutine->scope, "value", {}, info->returnType->type->makeOptional(), position);
       valueAcc->isAccessor = true;
       info->coroutine->scope->items.push_back(valueAcc);
-      auto nextFunc = DET::Function::create(info->coroutine->scope, "next", {}, std::make_shared<DET::Type>(DET::NativeType::Void));
+      auto nextFunc = DET::Function::create(info->coroutine->scope, "next", {}, std::make_shared<DET::Type>(DET::NativeType::Void), position);
       info->coroutine->scope->items.push_back(nextFunc);
 
-      auto coroutineStruct = DET::Class::create("@UserAccessibleCoroutineStructure@", info->function->scope, {}, true);
-      auto idVar = std::make_shared<DET::Variable>("id", std::make_shared<DET::Type>(DET::NativeType::UserDefined, std::vector<uint8_t> {}, "uint64_t"), coroutineStruct->scope);
+      auto coroutineStruct = DET::Class::create("@UserAccessibleCoroutineStructure@", info->function->scope, position, {}, true);
+      auto idVar = std::make_shared<DET::Variable>("id", std::make_shared<DET::Type>(DET::NativeType::UserDefined, std::vector<uint8_t> {}, "uint64_t"), position, coroutineStruct->scope);
       idVar->isLiteral = true;
       coroutineStruct->scope->items.push_back(idVar);
-      auto coroutineVar = std::make_shared<DET::Variable>("$coroutine", std::make_shared<DET::Type>(coroutineStruct, DET::Type::createModifierVector({ { TypeModifierFlag::Reference } })), info->function->scope);
+      auto coroutineVar = std::make_shared<DET::Variable>("$coroutine", std::make_shared<DET::Type>(coroutineStruct, DET::Type::createModifierVector({ { TypeModifierFlag::Reference } })), position, info->function->scope);
       info->function->scope->items.push_back(coroutineVar);
     }
 
@@ -527,7 +527,7 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::AST::FunctionDefinitionNode::
 
   std::vector<std::tuple<std::string, std::shared_ptr<DET::Type>, bool, std::string>> params;
 
-  inst->function = DET::Function::create(inst->inputScope, name, {}, nullptr);
+  inst->function = DET::Function::create(inst->inputScope, name, {}, nullptr, position);
   inst->function->ast = shared_from_this();
   inst->function->info = info;
   inst->function->genericParameterCount = info->function->genericParameterCount;

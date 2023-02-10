@@ -6,8 +6,8 @@ const AltaCore::AST::NodeType AltaCore::AST::RangedForLoopStatement::nodeType() 
 
 ALTACORE_AST_DETAIL_D(RangedForLoopStatement) {
   ALTACORE_MAKE_DH(RangedForLoopStatement);
-  info->wrapperScope = DET::Scope::makeWithParentScope(scope);
-  info->scope = DET::Scope::makeWithParentScope(info->wrapperScope);
+  info->wrapperScope = DET::Scope::makeWithParentScope(scope, position);
+  info->scope = DET::Scope::makeWithParentScope(info->wrapperScope, position);
   info->scope->isLoopScope = true;
 
   info->counterType = counterType->fullDetail(info->wrapperScope);
@@ -32,7 +32,7 @@ ALTACORE_AST_DETAIL_D(RangedForLoopStatement) {
     info->generatorType = type;
   }
 
-  info->counter = std::make_shared<DET::Variable>(counterName, info->counterType->type, info->scope);
+  info->counter = std::make_shared<DET::Variable>(counterName, info->counterType->type, position, info->scope);
   info->scope->items.push_back(info->counter);
 
   info->body = body->fullDetail(info->scope);

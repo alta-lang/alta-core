@@ -7,6 +7,7 @@
 #include <exception>
 #include <functional>
 #include <stdexcept>
+#include <memory>
 #include "simple-map.hpp"
 
 #ifdef ALTACORE_LOCAL_SEMVER

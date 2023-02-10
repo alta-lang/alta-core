@@ -14,8 +14,8 @@ std::shared_ptr<AltaCore::DET::Node> AltaCore::DET::Namespace::deepClone() {
   return self;
 };
 
-std::shared_ptr<AltaCore::DET::Namespace> AltaCore::DET::Namespace::create(std::shared_ptr<AltaCore::DET::Scope> parentScope, std::string name) {
-  auto ns = std::make_shared<Namespace>(name, parentScope);
+std::shared_ptr<AltaCore::DET::Namespace> AltaCore::DET::Namespace::create(std::shared_ptr<AltaCore::DET::Scope> parentScope, std::string name, AltaCore::Errors::Position position) {
+  auto ns = std::make_shared<Namespace>(name, position, parentScope);
   ns->scope = std::make_shared<Scope>(ns);
 
   return ns;
@@ -23,9 +23,10 @@ std::shared_ptr<AltaCore::DET::Namespace> AltaCore::DET::Namespace::create(std::
 
 AltaCore::DET::Namespace::Namespace(
   std::string _name,
+  AltaCore::Errors::Position position,
   std::shared_ptr<AltaCore::DET::Scope> _parentScope
 ):
-  ScopeItem(_name, _parentScope)
+  ScopeItem(_name, position, _parentScope)
   {};
 
 auto AltaCore::DET::Namespace::fullPrivateHoistedItems() const -> std::vector<std::shared_ptr<ScopeItem>> {
