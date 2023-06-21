@@ -149,7 +149,7 @@ namespace AltaCore {
         /**
          * @brief Add a `ref` to this type
          */
-        std::shared_ptr<Type> reference() const;
+        std::shared_ptr<Type> reference(bool force = false) const;
         /**
          * @brief Remove a `ref` from this type (if present)
          */

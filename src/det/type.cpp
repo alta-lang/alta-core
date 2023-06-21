@@ -237,9 +237,9 @@ std::vector<std::shared_ptr<AltaCore::DET::Type>> AltaCore::DET::Type::getUnderl
   return { type };
 };
 
-std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::reference() const {
+std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::reference(bool force) const {
   auto other = copy();
-  if (other->referenceLevel() < 1) {
+  if (force || other->referenceLevel() < 1) {
     other->modifiers.insert(other->modifiers.begin(), (uint8_t)Shared::TypeModifierFlag::Reference);
   }
   return other;
