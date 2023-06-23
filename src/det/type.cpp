@@ -79,7 +79,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
         return acc->readAccessor->returnType;
       }
       if (acc->getsVariableLength) {
-        return std::make_shared<Type>(NativeType::UserDefined, std::vector<uint8_t> {}, "size_t");
+        return std::make_shared<Type>(NativeType::Integer, Type::createModifierVector({ { Modifier::Long, Modifier::Long } }));
       }
       throw std::runtime_error("the given accessor has not been narrowed. either narrow it or use `AltaCore::DET::Type::getUnderlyingTypes` instead");
     }

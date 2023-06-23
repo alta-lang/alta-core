@@ -1,6 +1,7 @@
 #include "../../include/altacore/ast/function-definition-node.hpp"
 #include <algorithm>
 #include "../../include/altacore/util.hpp"
+#include "altacore/det/type.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::FunctionDefinitionNode::nodeType() {
   return NodeType::FunctionDefinitionNode;
@@ -431,34 +432,42 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
     }
 
     if (info->isGenerator && !info->generator) {
-      info->generator = DET::Class::create("@Generator@", info->function->scope, position, {}, true);
+      info->generator = DET::Class::create("@Generator@", info->function->scope, position, {}, false);
       info->function->scope->items.push_back(info->generator);
       auto doneVar = std::make_shared<DET::Variable>("done", std::make_shared<DET::Type>(DET::NativeType::Bool), position, info->generator->scope);
       info->generator->scope->items.push_back(doneVar);
       auto nextFunc = DET::Function::create(info->generator->scope, "next", {}, info->returnType->type->makeOptional(), position);
       info->generator->scope->items.push_back(nextFunc);
+      nextFunc->isMethod = true;
+      nextFunc->parentClassType = std::make_shared<DET::Type>(info->generator, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
       if (info->generatorParameter) {
         std::shared_ptr<DET::Function> nextFuncWithArgs = DET::Function::create(info->generator->scope, "next", {
           {"input", info->generatorParameter->type, false, "not-so-random-uuid"},
         }, info->returnType->type->makeOptional(), position);
+        nextFuncWithArgs->isMethod = true;
+        nextFuncWithArgs->parentClassType = nextFunc->parentClassType;
         info->generator->scope->items.push_back(nextFuncWithArgs);
       }
     }
 
     if (info->isAsync && !info->coroutine) {
-      info->coroutine = DET::Class::create("@Coroutine@", info->function->scope, position, {}, true);
+      info->coroutine = DET::Class::create("@Coroutine@", info->function->scope, position, {}, false);
       info->function->scope->items.push_back(info->coroutine);
       auto doneVar = std::make_shared<DET::Variable>("done", std::make_shared<DET::Type>(DET::NativeType::Bool), position, info->coroutine->scope);
       doneVar->isLiteral = true;
       info->coroutine->scope->items.push_back(doneVar);
       auto valueAcc = DET::Function::create(info->coroutine->scope, "value", {}, info->returnType->type->makeOptional(), position);
       valueAcc->isAccessor = true;
+      valueAcc->isMethod = true;
+      valueAcc->parentClassType = std::make_shared<DET::Type>(info->coroutine, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
       info->coroutine->scope->items.push_back(valueAcc);
       auto nextFunc = DET::Function::create(info->coroutine->scope, "next", {}, std::make_shared<DET::Type>(DET::NativeType::Void), position);
       info->coroutine->scope->items.push_back(nextFunc);
+      nextFunc->isMethod = true;
+      nextFunc->parentClassType = valueAcc->parentClassType;
 
       auto coroutineStruct = DET::Class::create("@UserAccessibleCoroutineStructure@", info->function->scope, position, {}, true);
-      auto idVar = std::make_shared<DET::Variable>("id", std::make_shared<DET::Type>(DET::NativeType::UserDefined, std::vector<uint8_t> {}, "uint64_t"), position, coroutineStruct->scope);
+      auto idVar = std::make_shared<DET::Variable>("id", std::make_shared<DET::Type>(DET::NativeType::Integer, DET::Type::createModifierVector({ { DET::TypeModifierFlag::Long, DET::TypeModifierFlag::Long } })), position, coroutineStruct->scope);
       idVar->isLiteral = true;
       coroutineStruct->scope->items.push_back(idVar);
       auto coroutineVar = std::make_shared<DET::Variable>("$coroutine", std::make_shared<DET::Type>(coroutineStruct, DET::Type::createModifierVector({ { TypeModifierFlag::Reference } })), position, info->function->scope);
