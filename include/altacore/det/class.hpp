@@ -2,6 +2,7 @@
 #define ALTACORE_DET_CLASS_HPP
 
 #include "scope-item.hpp"
+#include <memory>
 #include <string>
 
 namespace AltaCore {
@@ -51,6 +52,10 @@ namespace AltaCore {
 
         // only used for capture classes
         std::vector<std::shared_ptr<Variable>> referencedVariables;
+
+        // only for suspendable functions
+        std::shared_ptr<Type> suspendableInput = nullptr;
+        std::shared_ptr<Type> suspendableOutput = nullptr;
 
         Class(std::string name, std::shared_ptr<Scope> parentScope, AltaCore::Errors::Position position, std::vector<std::shared_ptr<Class>> parents = {});
 

@@ -433,13 +433,27 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
 
     if (info->isGenerator && !info->generator) {
       info->generator = DET::Class::create("@Generator@", info->function->scope, position, {}, false);
+      info->generator->suspendableInput = info->generatorParameter ? info->generatorParameter->type : nullptr;
+      info->generator->suspendableOutput = nullptr;
       info->function->scope->items.push_back(info->generator);
-      auto doneVar = std::make_shared<DET::Variable>("done", std::make_shared<DET::Type>(DET::NativeType::Bool), position, info->generator->scope);
-      info->generator->scope->items.push_back(doneVar);
+
+      auto dtor = DET::Function::create(info->generator->scope, "destructor", {}, std::make_shared<DET::Type>(DET::NativeType::Void), position);
+      dtor->isMethod = true;
+      dtor->parentClassType = std::make_shared<DET::Type>(info->generator, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
+      dtor->isDestructor = true;
+      info->generator->destructor = dtor;
+
+      auto doneAcc = DET::Function::create(info->generator->scope, "done", {}, std::make_shared<DET::Type>(DET::NativeType::Bool), position);
+      doneAcc->isAccessor = true;
+      doneAcc->isMethod = true;
+      doneAcc->parentClassType = dtor->parentClassType;
+      info->generator->scope->items.push_back(doneAcc);
+
       auto nextFunc = DET::Function::create(info->generator->scope, "next", {}, info->returnType->type->makeOptional(), position);
       info->generator->scope->items.push_back(nextFunc);
       nextFunc->isMethod = true;
-      nextFunc->parentClassType = std::make_shared<DET::Type>(info->generator, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
+      nextFunc->parentClassType = doneAcc->parentClassType;
+
       if (info->generatorParameter) {
         std::shared_ptr<DET::Function> nextFuncWithArgs = DET::Function::create(info->generator->scope, "next", {
           {"input", info->generatorParameter->type, false, "not-so-random-uuid"},
@@ -452,15 +466,28 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
 
     if (info->isAsync && !info->coroutine) {
       info->coroutine = DET::Class::create("@Coroutine@", info->function->scope, position, {}, false);
+      info->coroutine->suspendableInput = nullptr;
+      info->coroutine->suspendableOutput = info->returnType->type;
       info->function->scope->items.push_back(info->coroutine);
-      auto doneVar = std::make_shared<DET::Variable>("done", std::make_shared<DET::Type>(DET::NativeType::Bool), position, info->coroutine->scope);
-      doneVar->isLiteral = true;
-      info->coroutine->scope->items.push_back(doneVar);
+
+      auto dtor = DET::Function::create(info->coroutine->scope, "destructor", {}, std::make_shared<DET::Type>(DET::NativeType::Void), position);
+      dtor->isMethod = true;
+      dtor->parentClassType = std::make_shared<DET::Type>(info->coroutine, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
+      dtor->isDestructor = true;
+      info->coroutine->destructor = dtor;
+
+      auto doneAcc = DET::Function::create(info->coroutine->scope, "done", {}, std::make_shared<DET::Type>(DET::NativeType::Bool), position);
+      doneAcc->isAccessor = true;
+      doneAcc->isMethod = true;
+      doneAcc->parentClassType = dtor->parentClassType;
+      info->coroutine->scope->items.push_back(doneAcc);
+
       auto valueAcc = DET::Function::create(info->coroutine->scope, "value", {}, info->returnType->type->makeOptional(), position);
       valueAcc->isAccessor = true;
       valueAcc->isMethod = true;
-      valueAcc->parentClassType = std::make_shared<DET::Type>(info->coroutine, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
+      valueAcc->parentClassType = doneAcc->parentClassType;
       info->coroutine->scope->items.push_back(valueAcc);
+
       auto nextFunc = DET::Function::create(info->coroutine->scope, "next", {}, std::make_shared<DET::Type>(DET::NativeType::Void), position);
       info->coroutine->scope->items.push_back(nextFunc);
       nextFunc->isMethod = true;
