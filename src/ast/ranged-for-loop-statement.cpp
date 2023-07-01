@@ -17,6 +17,7 @@ ALTACORE_AST_DETAIL_D(RangedForLoopStatement) {
   } else {
     auto type = DET::Type::getUnderlyingType(info->start.get());
     if (!type->klass) ALTACORE_DETAILING_ERROR("Ranged-for loop target is not an iterator");
+    if (type->pointerLevel() > 0) ALTACORE_DETAILING_ERROR("Ranged-for loop target must be an iterator or a reference to an iterator; pointers are not allowed");
     for (auto& item: type->klass->scope->items) {
       if (auto func = std::dynamic_pointer_cast<DET::Function>(item)) {
         if (func->parameters.size() != 0) continue;
