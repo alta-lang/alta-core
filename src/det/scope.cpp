@@ -81,7 +81,7 @@ std::vector<std::shared_ptr<AltaCore::DET::ScopeItem>> AltaCore::DET::Scope::fin
       }
       auto trueItem = item;
       while (trueItem->nodeType() == NodeType::Alias) {
-        trueItem = std::dynamic_pointer_cast<Alias>(item)->target;
+        trueItem = std::dynamic_pointer_cast<Alias>(trueItem)->target;
       }
       if (trueItem->nodeType() != NodeType::Function || std::dynamic_pointer_cast<Function>(trueItem)->isAccessor) {
         if (allFunctions && first) {
