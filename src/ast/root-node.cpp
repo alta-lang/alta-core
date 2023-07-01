@@ -62,6 +62,14 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
       info->module->scope
     );
     info->module->scope->items.push_back(info->module->internal.schedulerVariable);
+
+    auto schedulerClassAlias = std::make_shared<DET::Alias>(
+      "$Scheduler",
+      info->module->internal.schedulerClass,
+      AltaCore::Errors::Position(0, 0, info->module->internal.module->path),
+      info->module->scope
+    );
+    info->module->scope->items.push_back(schedulerClassAlias);
   };
 
   if (info->module->packageInfo.root == Modules::standardLibraryPath / "_internal" && info->module->name == "_internal/main") {
