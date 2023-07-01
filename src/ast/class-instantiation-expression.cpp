@@ -28,6 +28,15 @@ ALTACORE_AST_DETAIL_D(ClassInstantiationExpression) {
   } else if (auto sup = std::dynamic_pointer_cast<DH::SuperClassFetch>(info->target)) {
     info->klass = sup->superclass;
     info->superclass = true;
+  } else if (auto special = std::dynamic_pointer_cast<DH::SpecialFetchExpression>(info->target)) {
+    if (special->items.size() != 1) {
+      ALTACORE_DETAILING_ERROR("the target must be narrowed before it can be instantiated");
+    }
+    auto trueItem = special->items[0];
+    while (trueItem->nodeType() == DET::NodeType::Alias) {
+      trueItem = std::dynamic_pointer_cast<DET::Alias>(trueItem)->target;
+    }
+    info->klass = std::dynamic_pointer_cast<DET::Class>(trueItem);
   } else {
     ALTACORE_DETAILING_ERROR("invalid target retrieval node for class instantiation");
   }
