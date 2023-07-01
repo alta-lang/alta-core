@@ -547,6 +547,7 @@ namespace AltaCore {
 
       std::shared_ptr<ExpressionNode> target = nullptr;
       bool persistent = false;
+      std::shared_ptr<DET::Type> targetType = nullptr;
     };
     class TryCatchBlock: public StatementNode {
       ALTACORE_DH_CTOR(TryCatchBlock, StatementNode);
