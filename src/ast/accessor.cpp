@@ -111,10 +111,10 @@ ALTACORE_AST_DETAIL_D(Accessor) {
   /*
    * search parent classes
    *
-   * this isn't done as a recursive lambda beacause that could
+   * this isn't done as a recursive lambda because that could
    * lead to a stack overflow. granted, the number of parent classes
    * a class would have to have to cause that would be absurd, but
-   * nontheless possible. if we *can* handle it properly, why not?
+   * nonetheless possible. if we *can* handle it properly, why not?
    */
   std::vector<std::pair<std::shared_ptr<DET::Class>, size_t>> currentParents;
   std::stack<std::shared_ptr<DET::Class>> classStack;
@@ -234,17 +234,36 @@ ALTACORE_AST_DETAIL_D(Accessor) {
           narrowTo(info, i);
         }
       } else if (auto func = std::dynamic_pointer_cast<DET::Function>(item)) {
-        auto newFunc = func->instantiateGeneric(info->genericArguments);
-        info->items[i] = newFunc;
+        auto newFuncs = func->instantiateGeneric(info->genericArguments);
+        if (newFuncs.size() == 0) {
+          throw std::runtime_error("Failed to instantiate generic function");
+        }
+
+        info->items.erase(info->items.begin() + i);
+        info->items.insert(info->items.begin() + i, newFuncs.begin(), newFuncs.end());
+
+        // skip the new functions for further generic instantiation
+        i += newFuncs.size() - 1;
+
         auto thisMod = Util::getModule(info->inputScope.get()).lock();
         //thisMod->genericsUsed.push_back(newFunc);
-        auto thatMod = Util::getModule(newFunc->parentScope.lock().get()).lock();
+        auto thatMod = Util::getModule(newFuncs[0]->parentScope.lock().get()).lock();
         if (thisMod->packageInfo.name == thatMod->packageInfo.name) {
-          newFunc->instantiatedFromSamePackage = true;
+          for (const auto& newFunc: newFuncs) {
+            newFunc->instantiatedFromSamePackage = true;
+          }
         }
-        info->inputScope->hoist(info->items[i]);
+
+        for (const auto& newFunc: newFuncs) {
+          info->inputScope->hoist(newFunc);
+        }
+
         if (isNarrowedTo) {
-          narrowTo(info, i);
+          if (newFuncs.size() == 1) {
+            narrowTo(info, i);
+          } else {
+            widen(info);
+          }
         }
       } else {
         ALTACORE_DETAILING_ERROR("generic type wasn't a class or function (btw, this is impossible)");

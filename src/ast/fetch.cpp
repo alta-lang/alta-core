@@ -213,17 +213,36 @@ ALTACORE_AST_DETAIL_D(Fetch) {
           narrowTo(info, i);
         }
       } else if (auto func = std::dynamic_pointer_cast<DET::Function>(item)) {
-        auto newFunc = func->instantiateGeneric(info->genericArguments);
-        info->items[i] = newFunc;
+        auto newFuncs = func->instantiateGeneric(info->genericArguments);
+        if (newFuncs.size() == 0) {
+          throw std::runtime_error("Failed to instantiate generic function");
+        }
+
+        info->items.erase(info->items.begin() + i);
+        info->items.insert(info->items.begin() + i, newFuncs.begin(), newFuncs.end());
+
+        // skip the new functions for further generic instantiation
+        i += newFuncs.size() - 1;
+
         auto thisMod = Util::getModule(info->inputScope.get()).lock();
         //thisMod->genericsUsed.push_back(newFunc);
-        auto thatMod = Util::getModule(newFunc->parentScope.lock().get()).lock();
+        auto thatMod = Util::getModule(newFuncs[0]->parentScope.lock().get()).lock();
         if (thisMod->packageInfo.name == thatMod->packageInfo.name) {
-          newFunc->instantiatedFromSamePackage = true;
+          for (const auto& newFunc: newFuncs) {
+            newFunc->instantiatedFromSamePackage = true;
+          }
         }
-        info->inputScope->hoist(info->items[i]);
+
+        for (const auto& newFunc: newFuncs) {
+          info->inputScope->hoist(newFunc);
+        }
+
         if (isNarrowedTo) {
-          narrowTo(info, i);
+          if (newFuncs.size() == 1) {
+            narrowTo(info, i);
+          } else {
+            widen(info);
+          }
         }
       } else {
         ALTACORE_DETAILING_ERROR("generic type wasn't a class or function (btw, this is impossible)");

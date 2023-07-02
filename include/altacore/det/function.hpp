@@ -82,7 +82,7 @@ namespace AltaCore {
 
         Function(std::shared_ptr<Scope> parentScope, std::string name, AltaCore::Errors::Position position);
 
-        std::shared_ptr<Function> instantiateGeneric(std::vector<std::shared_ptr<Type>> genericArguments);
+        std::vector<std::shared_ptr<Function>> instantiateGeneric(std::vector<std::shared_ptr<Type>> genericArguments);
 
         void recreate(std::vector<std::tuple<std::string, std::shared_ptr<Type>, bool, std::string>> parameters, std::shared_ptr<Type> returnType);
 

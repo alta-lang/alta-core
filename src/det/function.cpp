@@ -53,15 +53,15 @@ AltaCore::DET::Function::Function(std::shared_ptr<AltaCore::DET::Scope> _parentS
   ScopeItem(_name, position, _parentScope)
   {};
 
-std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Function::instantiateGeneric(std::vector<std::shared_ptr<Type>> genericArguments) {
+std::vector<std::shared_ptr<AltaCore::DET::Function>> AltaCore::DET::Function::instantiateGeneric(std::vector<std::shared_ptr<Type>> genericArguments) {
   if (auto func = ast.lock()) {
     auto inf = info.lock();
     if (!inf) {
-      return nullptr;
+      return {};
     }
     return func->instantiateGeneric(inf, genericArguments);
   } else {
-    return nullptr;
+    return {};
   }
 };
 

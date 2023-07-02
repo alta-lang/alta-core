@@ -32,7 +32,7 @@ namespace AltaCore {
         FunctionDefinitionNode() {};
         FunctionDefinitionNode(std::string name, std::vector<std::shared_ptr<Parameter>> parameters, std::shared_ptr<Type> returnType, std::vector<std::string> modifiers, std::shared_ptr<BlockNode> body);
 
-        std::shared_ptr<DET::Function> instantiateGeneric(std::shared_ptr<DH::FunctionDefinitionNode> info, std::vector<std::shared_ptr<DET::Type>> genericArguments);
+        std::vector<std::shared_ptr<DET::Function>> instantiateGeneric(std::shared_ptr<DH::FunctionDefinitionNode> info, std::vector<std::shared_ptr<DET::Type>> genericArguments);
 
         ALTACORE_AST_DETAIL_NO_BODY_OPT(FunctionDefinitionNode);
         ALTACORE_AST_INFO_DETAIL(FunctionDefinitionNode);

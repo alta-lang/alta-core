@@ -360,7 +360,7 @@ ALTACORE_AST_VALIDATE_D(FunctionDefinitionNode) {
 ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
   ALTACORE_CAST_DH(FunctionDefinitionNode);
 
-  if (generics.size() > 0) {
+  if (generics.size() > 0 && !std::dynamic_pointer_cast<DH::GenericFunctionInstantiationDefinitionNode>(info)) {
     if (!info->function) {
       info->function = DET::Function::create(info->inputScope, name, {}, nullptr, position);
       info->function->ast = shared_from_this();
@@ -532,9 +532,9 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
   return info;
 };
 
-std::shared_ptr<AltaCore::DET::Function> AltaCore::AST::FunctionDefinitionNode::instantiateGeneric(std::shared_ptr<DH::FunctionDefinitionNode> info, std::vector<std::shared_ptr<DET::Type>> genericArguments) {
+std::vector<std::shared_ptr<AltaCore::DET::Function>> AltaCore::AST::FunctionDefinitionNode::instantiateGeneric(std::shared_ptr<DH::FunctionDefinitionNode> info, std::vector<std::shared_ptr<DET::Type>> genericArguments) {
   if (genericArguments.size() != generics.size()) {
-    return nullptr;
+    return {};
   }
 
   for (auto genericInst: info->genericInstantiations) {
@@ -555,7 +555,11 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::AST::FunctionDefinitionNode::
       continue;
     }
 
-    return genericInst->function;
+    std::vector<std::shared_ptr<DET::Function>> result { genericInst->function };
+    for (const auto& [func, valueProvided]: genericInst->optionalVariantFunctions) {
+      result.push_back(func);
+    }
+    return result;
   }
 
   auto inst = std::make_shared<DH::GenericFunctionInstantiationDefinitionNode>(info->inputScope);
@@ -565,7 +569,7 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::AST::FunctionDefinitionNode::
 
   inst->function = DET::Function::create(inst->inputScope, name, {}, nullptr, position);
   inst->function->ast = shared_from_this();
-  inst->function->info = info;
+  inst->function->info = inst;
   inst->function->genericParameterCount = info->function->genericParameterCount;
 
   inst->function->genericArguments = genericArguments;
@@ -597,24 +601,11 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::AST::FunctionDefinitionNode::
     }
   }
 
-  for (auto& param: parameters) {
-    auto det = param->fullDetail(inst->function->scope, false);
-    inst->parameters.push_back(det);
-    Util::exportClassIfNecessary(inst->function->scope, det->type->type);
-    params.push_back(std::make_tuple(param->name, det->type->type, param->isVariable, param->id));
-  }
+  fullDetail(inst, false);
 
-  inst->returnType = returnType->fullDetail(inst->function->scope, false);
-  Util::exportClassIfNecessary(inst->function->scope, inst->returnType->type);
-
-  inst->function->recreate(params, inst->returnType->type);
-
-  for (auto& attr: attributes) {
-    inst->attributes.push_back(attr->fullDetail(inst->inputScope, shared_from_this(), inst));
-  }
-
-  inst->body = body->fullDetail(inst->function->scope);
-  inst->function->doneDetailing.dispatch();
-
-  return inst->function;
+  std::vector<std::shared_ptr<DET::Function>> result { inst->function };
+  for (const auto& [func, valueProvided]: inst->optionalVariantFunctions) {
+    result.push_back(func);
+  };
+  return result;
 };
