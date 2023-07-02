@@ -1653,7 +1653,10 @@ size_t AltaCore::DET::Type::compatiblity(const AltaCore::DET::Type& other) const
 bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other, bool strict) const {
   if (referenceLevel() > 0) return destroyReferences()->commonCompatiblity(other, strict);
   if (other.referenceLevel() > 0) return commonCompatiblity(*other.destroyReferences(), strict);
-  if (other.isAccessor) return commonCompatiblity(*other.returnType, strict);
+  if (isAccessor != other.isAccessor) {
+    if (other.isAccessor) return commonCompatiblity(*other.returnType, strict);
+    return returnType->commonCompatiblity(other, strict);
+  }
 
   if (!strict) {
     if (other.pointerLevel() == 0 && other.klass && other.klass->findToCast(*this)) return true;
@@ -1733,7 +1736,10 @@ bool AltaCore::DET::Type::commonCompatiblity(const AltaCore::DET::Type& other, b
 };
 
 bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& other) const {
-  if (other.isAccessor) return isExactlyCompatibleWith(*other.returnType);
+  if (isAccessor != other.isAccessor) {
+    if (other.isAccessor) return isExactlyCompatibleWith(*other.returnType);
+    return returnType->isExactlyCompatibleWith(other);
+  }
   if (!commonCompatiblity(other, true)) return false;
   if (isAny || other.isAny) return false;
   if (isOptional != other.isOptional) return false;
