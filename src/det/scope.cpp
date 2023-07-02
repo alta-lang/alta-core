@@ -284,6 +284,9 @@ std::shared_ptr<AltaCore::DET::Scope> AltaCore::DET::Scope::getMemberScope(std::
     if (var->type->bitfield) return var->type->bitfield->scope;
     if (var->type->isNative || var->type->isUnion()) return nullptr;
     return var->type->klass->scope;
+  } else if (detType == NodeType::Class) {
+    auto klass = std::dynamic_pointer_cast<Class>(item);
+    return klass->scope;
   }
 
   return nullptr;

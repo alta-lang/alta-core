@@ -24,16 +24,18 @@ ALTACORE_AST_VALIDATE_D(ClassMethodDefinitionStatement) {
 ALTACORE_AST_INFO_DETAIL_D(ClassMethodDefinitionStatement) {
   ALTACORE_CAST_DH(ClassMethodDefinitionStatement);
 
+  info->isStatic = isStatic;
+
   if (funcDef == nullptr) throw std::runtime_error("stop that");
   if (!info->funcDef) {
     info->funcDef = funcDef->fullDetail(info->inputScope, noBody);
     info->funcDef->function->visibility = visibilityModifier;
-    info->funcDef->function->isMethod = true;
+    info->funcDef->function->isMethod = !isStatic;
     auto klass = info->inputScope->parentClass.lock();
     info->funcDef->function->parentClassType = std::make_shared<DET::Type>(klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
     for (auto& [variant, ignored]: info->funcDef->optionalVariantFunctions) {
       variant->visibility = visibilityModifier;
-      variant->isMethod = true;
+      variant->isMethod = !isStatic;
       variant->parentClassType = info->funcDef->function->parentClassType;
     }
   }

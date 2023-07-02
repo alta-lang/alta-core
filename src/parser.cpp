@@ -2578,8 +2578,15 @@ namespace AltaCore {
               attrs.push_back(std::dynamic_pointer_cast<AST::AttributeNode>(*exp.item));
             }
 
+            bool isStatic = false;
+
+            if (expectKeyword("static")) {
+              isStatic = true;
+            }
+
             state.internalValue = attrs;
             ruleNode = nodeFactory.create<AST::ClassMethodDefinitionStatement>(AST::parseVisibility(*visibilityMod));
+            std::dynamic_pointer_cast<AST::ClassMethodDefinitionStatement>(ruleNode)->isStatic = isStatic;
             state.internalIndex = 2;
             ACP_RULE(FunctionDefinition);
           } else {

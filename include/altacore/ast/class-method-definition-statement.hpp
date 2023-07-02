@@ -12,6 +12,7 @@ namespace AltaCore {
 
         Visibility visibilityModifier = Visibility::Private;
         std::shared_ptr<FunctionDefinitionNode> funcDef = nullptr;
+        bool isStatic = false;
 
         ClassMethodDefinitionStatement(Visibility visibilityModifier);
 

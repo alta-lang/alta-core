@@ -233,6 +233,7 @@ namespace AltaCore {
       ALTACORE_DH_CTOR(ClassMethodDefinitionStatement, ClassStatementNode);
 
       std::shared_ptr<FunctionDefinitionNode> funcDef = nullptr;
+      bool isStatic = false;
     };
     class ClassReadAccessorDefinitionStatement: public ClassStatementNode {
       ALTACORE_DH_CTOR(ClassReadAccessorDefinitionStatement, ClassStatementNode);
