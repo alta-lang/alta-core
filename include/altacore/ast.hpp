@@ -70,5 +70,6 @@
 #include "ast/yield-expression.hpp"
 #include "ast/assertion-statement.hpp"
 #include "ast/await-expression.hpp"
+#include "ast/void-expression.hpp"
 
 #endif // ALTACORE_AST_HPP

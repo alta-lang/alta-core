@@ -26,6 +26,7 @@ namespace AltaCore {
 
         std::shared_ptr<Namespace> coroutinesNamespace = nullptr;
         std::shared_ptr<Class> schedulerClass = nullptr;
+        std::shared_ptr<Class> resultClass = nullptr;
 
         std::shared_ptr<Variable> schedulerVariable = nullptr;
     };

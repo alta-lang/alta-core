@@ -51,6 +51,7 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
     info->module->internal.coroutinesNamespace = std::dynamic_pointer_cast<DET::Namespace>(info->module->internal.module->exports->findAll("Coroutines")[0]);
     info->module->internal.schedulerClass = std::dynamic_pointer_cast<DET::Class>(info->module->internal.coroutinesNamespace->scope->findAll("Scheduler")[0]);
     info->module->internal.coroutinesModule = Util::getModule(info->module->internal.schedulerClass->parentScope.lock().get()).lock();
+    info->module->internal.resultClass = std::dynamic_pointer_cast<DET::Class>(info->module->internal.module->exports->findAll("Result")[0]);
 
     info->module->internal.schedulerVariable = std::make_shared<DET::Variable>(
       "$scheduler",
@@ -64,12 +65,20 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
     info->module->scope->items.push_back(info->module->internal.schedulerVariable);
 
     auto schedulerClassAlias = std::make_shared<DET::Alias>(
-      "$Scheduler",
+      "Scheduler",
       info->module->internal.schedulerClass,
       AltaCore::Errors::Position(0, 0, info->module->internal.module->path),
       info->module->scope
     );
     info->module->scope->items.push_back(schedulerClassAlias);
+
+    auto resultClassAlias = std::make_shared<DET::Alias>(
+      "Result",
+      info->module->internal.resultClass,
+      AltaCore::Errors::Position(0, 0, info->module->internal.module->path),
+      info->module->scope
+    );
+    info->module->scope->items.push_back(resultClassAlias);
   };
 
   if (info->module->packageInfo.root == Modules::standardLibraryPath / "_internal" && info->module->name == "_internal/main") {

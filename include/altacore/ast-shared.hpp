@@ -80,6 +80,7 @@ namespace AltaCore {
       YieldExpression,
       AssertionStatement,
       AwaitExpression,
+      VoidExpression,
     };
 
     static const char* const NodeType_names[] = {
@@ -151,6 +152,7 @@ namespace AltaCore {
       "YieldExpression",
       "AssertionStatement",
       "AwaitExpression",
+      "VoidExpression",
     };
   };
 };

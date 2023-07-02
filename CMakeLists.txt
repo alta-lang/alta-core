@@ -94,6 +94,7 @@ add_library(altacore
   "${PROJECT_SOURCE_DIR}/src/ast/yield-expression.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/assertion-statement.cpp"
   "${PROJECT_SOURCE_DIR}/src/ast/await-expression.cpp"
+  "${PROJECT_SOURCE_DIR}/src/ast/void-expression.cpp"
 
   # DET nodes
   "${PROJECT_SOURCE_DIR}/src/det/node.cpp"

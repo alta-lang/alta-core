@@ -39,6 +39,7 @@ namespace AltaCore {
 
     ALTACORE_DH_SIMPLE_ALIAS(LiteralNode, ExpressionNode);
     ALTACORE_DH_SIMPLE_ALIAS(NullptrExpression, ExpressionNode);
+    ALTACORE_DH_SIMPLE_ALIAS(VoidExpression, ExpressionNode);
 
     ALTACORE_DH_SIMPLE_ALIAS(BooleanLiteralNode, LiteralNode);
     ALTACORE_DH_SIMPLE_ALIAS(IntegerLiteralNode, LiteralNode);

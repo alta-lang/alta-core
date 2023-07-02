@@ -930,7 +930,7 @@ namespace AltaCore {
           break;
         } else if (rule == RuleType::Statement) {
           if (state.iteration == 0) {
-            while (expect(TokenType::Semicolon)); // optional
+            while (expect(TokenType::Semicolon)) {} // optional
 
             ACP_RULE_LIST(
               RuleType::FunctionDeclaration,
@@ -1172,7 +1172,10 @@ namespace AltaCore {
             if (exps.back()) ACP_RULE(Attribute);
             exps.pop_back();
             state.internalIndex = 1;
-            ACP_RULE(Fetch);
+            ACP_RULE_LIST(
+              RuleType::SpecialFetch,
+              RuleType::Fetch,
+            );
           } else if (state.internalIndex == 2) {
             auto acc = std::dynamic_pointer_cast<AST::Accessor>(ruleNode);
 
@@ -1642,7 +1645,7 @@ namespace AltaCore {
           }
         } else if (rule == RuleType::ModuleOnlyStatement) {
           if (state.iteration == 0) {
-            while (expect(TokenType::Semicolon)); // optional
+            while (expect(TokenType::Semicolon)) {} // optional
             ACP_RULE_LIST(
               RuleType::Import,
               RuleType::FunctionDefinition,
@@ -1786,19 +1789,19 @@ namespace AltaCore {
 
             saveState();
 
-            if (maybeTok = expect(TokenType::QuestionMark)) {
+            if ((maybeTok = expect(TokenType::QuestionMark))) {
               isMaybe = true;
             }
 
-            if (firstTok = expect(TokenType::OpeningParenthesis)) {
+            if ((firstTok = expect(TokenType::OpeningParenthesis))) {
               isCall = true;
-            } else if (firstTok = expect(TokenType::OpeningSquareBracket)) {
+            } else if ((firstTok = expect(TokenType::OpeningSquareBracket))) {
               isSubscript = true;
             } else if (expect(TokenType::Dot) && expect(TokenType::Identifier)) {
               isAccessor = true;
-            } else if (firstTok = expect(TokenType::Increment)) {
+            } else if ((firstTok = expect(TokenType::Increment))) {
               isPostIncrement = true;
-            } else if (firstTok = expect(TokenType::Decrement)) {
+            } else if ((firstTok = expect(TokenType::Decrement))) {
               isPostDecrement = true;
             } else {
               restoreState();
@@ -2535,7 +2538,7 @@ namespace AltaCore {
 
           if (!exps.back()) ACP_NOT_OK;
 
-          while (expect(TokenType::Semicolon)); // optional
+          while (expect(TokenType::Semicolon)) {} // optional
 
           ACP_EXP(exps.back().item);
         } else if (rule == RuleType::ClassMember) {
@@ -2695,6 +2698,7 @@ namespace AltaCore {
               ACP_RULE_LIST(
                 RuleType::Sizeof,
                 RuleType::Nullptr,
+                RuleType::Void,
                 RuleType::BooleanLiteral,
                 RuleType::IntegralLiteral,
                 RuleType::String,
@@ -2722,6 +2726,7 @@ namespace AltaCore {
               ACP_RULE_LIST(
                 RuleType::Sizeof,
                 RuleType::Nullptr,
+                RuleType::Void,
                 RuleType::BooleanLiteral,
                 RuleType::IntegralLiteral,
                 RuleType::String,
@@ -2756,6 +2761,7 @@ namespace AltaCore {
               ACP_RULE_LIST(
                 RuleType::Sizeof,
                 RuleType::Nullptr,
+                RuleType::Void,
                 RuleType::BooleanLiteral,
                 RuleType::IntegralLiteral,
                 RuleType::String,
@@ -3372,7 +3378,7 @@ namespace AltaCore {
 
             auto statement = std::dynamic_pointer_cast<AST::ExportStatement>(ruleNode);
 
-            while (id = expect(TokenType::Identifier)) {
+            while ((id = expect(TokenType::Identifier))) {
               statement->externalTarget->imports.push_back(std::make_pair(id.raw, ""));
               saveState();
               if (expectKeyword("as")) {
@@ -3599,6 +3605,10 @@ namespace AltaCore {
         } else if (rule == RuleType::Nullptr) {
           if (!expectKeyword("nullptr") && !expectKeyword("null")) ACP_NOT_OK;
           auto node = nodeFactory.create<AST::NullptrExpression>();
+          ACP_NODE(node);
+        } else if (rule == RuleType::Void) {
+          if (!expectKeyword("void")) ACP_NOT_OK;
+          auto node = nodeFactory.create<AST::VoidExpression>();
           ACP_NODE(node);
         } else if (rule == RuleType::CodeLiteral) {
           if (state.iteration == 0) {

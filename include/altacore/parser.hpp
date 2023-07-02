@@ -208,6 +208,7 @@ namespace AltaCore {
       TryCatch,
       Throw,
       Nullptr,
+      Void,
       CodeLiteral,
       Bitfield,
       Lambda,
