@@ -414,7 +414,7 @@ std::vector<std::shared_ptr<AltaCore::DET::Function>> AltaCore::DET::Class::find
       auto otherType = Type::getUnderlyingType(otherFunc);
       bool skip = false;
       for (auto& virtFunc: virtFuncs) {
-        if (*Type::getUnderlyingType(virtFunc) == *otherType) {
+        if (virtFunc->name == otherFunc->name && *Type::getUnderlyingType(virtFunc) == *otherType) {
           skip = true;
           break;
         }
