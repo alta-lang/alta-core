@@ -952,9 +952,6 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
       ) {
         auto accessorClass = from->klass;
         CastPath cast;
-        if (from->referenceLevel() > 0) {
-          cast.push_back(CC(CCT::Dereference));
-        }
         size_t i = 0;
         while (i < accessorClass->parents.size()) {
           auto& parent = accessorClass->parents[i];
@@ -969,9 +966,6 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
             continue;
           }
           ++i;
-        }
-        if (to->referenceLevel() > 0) {
-          cast.push_back(CC(CCT::Reference));
         }
         AC_RETURN_INDEX;
         cast.push_back(CC(CCT::Destination));
@@ -1107,9 +1101,6 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
           auto accessorClass = special->klass;
           CastPath cast;
           cast.push_back(CC(CCT::To, method));
-          if (special->referenceLevel() > 0) {
-            cast.push_back(CC(CCT::Dereference));
-          }
           size_t i = 0;
           while (i < accessorClass->parents.size()) {
             auto& parent = accessorClass->parents[i];
@@ -1124,9 +1115,6 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
               continue;
             }
             ++i;
-          }
-          if (to->referenceLevel() > 0) {
-            cast.push_back(CC(CCT::Reference));
           }
           cast.push_back(CC(CCT::Destination));
           return cast;
@@ -1147,9 +1135,6 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
         ) {
           auto accessorClass = from->klass;
           CastPath cast;
-          if (from->referenceLevel() > 0) {
-            cast.push_back(CC(CCT::Dereference));
-          }
           size_t i = 0;
           while (i < accessorClass->parents.size()) {
             auto& parent = accessorClass->parents[i];
@@ -1164,9 +1149,6 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
               continue;
             }
             ++i;
-          }
-          if (special->referenceLevel() > 0) {
-            cast.push_back(CC(CCT::Reference));
           }
           cast.push_back(CC(CCT::From, method));
           cast.push_back(CC(CCT::Destination));
