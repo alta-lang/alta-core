@@ -716,6 +716,7 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
           auto cast = doFromOrToLoop(from, special);
           if (cast.size() > 0) {
             cast.insert(cast.end() - 1, CC(CCT::From, method));
+            return cast;
           }
         }
       }
@@ -1203,8 +1204,8 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
         if (from->referenceLevel() < maxToRefLevel) {
           auto cast = doFromOrToLoop(from->reference(), special);
           if (cast.size() > 0) {
-            cast.insert(cast.begin(), CC(CCT::From, method));
             cast.insert(cast.begin(), CC(CCT::Reference));
+            cast.insert(cast.end() - 1, CC(CCT::From, method));
             return cast;
           }
         };
