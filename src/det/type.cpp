@@ -1740,6 +1740,10 @@ bool AltaCore::DET::Type::isExactlyCompatibleWith(const AltaCore::DET::Type& oth
     }
   }
 
+  if (isOptional) {
+    if (!optionalTarget->isExactlyCompatibleWith(*other.optionalTarget)) return false;
+  }
+
   // here, we care about *exact* compatability, and that includes all modifiers
   if (modifiers.size() != other.modifiers.size()) return false;
   for (size_t i = 0; i < modifiers.size(); i++) {
