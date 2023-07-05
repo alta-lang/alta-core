@@ -679,11 +679,22 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
         AC_RETURN_INDEX;
         return { CC(CCT::Destination, SCT::WrapFunction) };
       }
+
+      // make sure to prefer simple dereferences over `from` or `to` casts
+      if (from->referenceLevel() > to->referenceLevel() && from->destroyReferences()->isExactlyCompatibleWith(*to->destroyReferences())) {
+        CastPath path;
+        for (size_t i = from->referenceLevel(); i > to->referenceLevel(); --i) {
+          path.push_back(CC(CCT::Dereference));
+        }
+        path.push_back(CC(CCT::Destination));
+        AC_RETURN_INDEX;
+        return path;
+      }
     AC_FROM_LOOP_END;
 
     std::function<CastPath(std::shared_ptr<Type>, std::shared_ptr<Type>)> doFromOrToLoop = nullptr;
     doFromOrToLoop = [&](std::shared_ptr<Type> from, std::shared_ptr<Type> to) -> CastPath {
-      if (from->indirectionLevel() == 0 && from->klass) {
+      if (from->pointerLevel() == 0 && from->klass) {
         for (auto& method: from->klass->toCasts) {
           auto& special = method->returnType;
           if (*special == *to || *special == *to->deconstify() || *special == *to->deconstify(true)) {
@@ -719,13 +730,13 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     AC_FROM_LOOP_END;
 
     AC_FROM_LOOP;
-      if (!from->isOptional && to->isOptional && to->indirectionLevel() == 0) {
+      if (to->isOptional && to->indirectionLevel() == 0) {
         auto cast = findCast(from, to->optionalTarget, false);
         if (cast.size() > 0) {
           cast.insert(cast.end() - 1, CC(CCT::Wrap));
+          AC_RETURN_INDEX;
+          return cast;
         }
-        AC_RETURN_INDEX;
-        return cast;
       }
     AC_FROM_LOOP_END;
 
@@ -988,11 +999,22 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
         AC_RETURN_INDEX;
         return { CC(CCT::Destination, SCT::WrapFunction) };
       }
+
+      // make sure to prefer simple dereferences over `from` or `to` casts
+      if (from->referenceLevel() > to->referenceLevel() && from->destroyReferences()->isExactlyCompatibleWith(*to->destroyReferences())) {
+        CastPath path;
+        for (size_t i = from->referenceLevel(); i > to->referenceLevel(); --i) {
+          path.push_back(CC(CCT::Dereference));
+        }
+        path.push_back(CC(CCT::Destination));
+        AC_RETURN_INDEX;
+        return path;
+      }
     AC_TO_LOOP_END;
 
     std::function<CastPath(std::shared_ptr<Type>, std::shared_ptr<Type>)> doFromOrToLoop = nullptr;
 
-    #define AC_CAST_FROM_LOOP if (from->indirectionLevel() == 0 && from->klass) {\
+    #define AC_CAST_FROM_LOOP if (from->pointerLevel() == 0 && from->klass) {\
         for (auto& method: from->klass->toCasts) {\
           auto& special = method->returnType;
     #define AC_CAST_FROM_LOOP_END }}
@@ -1266,7 +1288,7 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
       }
     AC_TO_LOOP_END;
     AC_TO_LOOP;
-      if (from->klass && from->indirectionLevel() == 0) {
+      if (from->klass && from->pointerLevel() == 0) {
         std::queue<std::vector<std::shared_ptr<Class>>> nextUp;
         for (auto& parent: from->klass->parents) {
           nextUp.push({ parent });
@@ -1292,13 +1314,13 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     AC_TO_LOOP_END;
 
     AC_TO_LOOP;
-      if (!from->isOptional && to->isOptional && to->indirectionLevel() == 0) {
+      if (to->isOptional && to->indirectionLevel() == 0) {
         auto cast = findCast(from, to->optionalTarget, false);
         if (cast.size() > 0) {
           cast.insert(cast.end() - 1, CC(CCT::Wrap));
+          AC_RETURN_INDEX;
+          return cast;
         }
-        AC_RETURN_INDEX;
-        return cast;
       }
     AC_TO_LOOP_END;
 
