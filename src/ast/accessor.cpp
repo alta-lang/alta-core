@@ -48,6 +48,7 @@ ALTACORE_AST_DETAIL_D(Accessor) {
       }
       targetScope = targetAccDH->readAccessor->returnType->klass->scope;
     }
+    info->targetType = targetAccDH->readAccessor->returnType;
   } else {
     auto items = DET::ScopeItem::getUnderlyingItems(info->target);
 
