@@ -99,6 +99,10 @@ ALTACORE_AST_INFO_DETAIL_D(ClassSpecialMethodDefinitionStatement) {
     }
 
     info->method->parentClassType = std::make_shared<DET::Type>(info->klass, std::vector<uint8_t> { (uint8_t)TypeModifierFlag::Reference });
+
+    for (const auto& [variant, optionalsPresent]: info->optionalVariantFunctions) {
+      variant->parentClassType = info->method->parentClassType;
+    }
   }
 
   if (!noBody && !info->body) {
