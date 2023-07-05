@@ -109,7 +109,7 @@ std::vector<std::pair<std::shared_ptr<AltaCore::DET::Function>, std::vector<bool
           // add wrapped parameters
           for (size_t k = 0; k < wrappedParamCount; ++k) {
             // add regular parameters in between wrapped parameters
-            for (size_t l = optionalParameterIndexes[i + k]; l < optionalParameterIndexes[i + 1 + k]; ++l) {
+            for (size_t l = optionalParameterIndexes[i + k] + 1; l < optionalParameterIndexes[i + 1 + k]; ++l) {
               auto& param = parameters[l];
               auto& det = paramInfos[l];
               if (param->defaultValue) {
