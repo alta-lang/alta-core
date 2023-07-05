@@ -123,7 +123,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
         // (const ptr const byte)?
         return std::make_shared<Type>(true, std::make_shared<Type>(NativeType::Byte, createModifierVector({ { Modifier::Constant, Modifier::Pointer }, { Modifier::Constant } })));
       } else {
-        return std::make_shared<Type>(true, subs->enumeration->underlyingEnumerationType);
+        return std::make_shared<Type>(true, subs->enumeration->underlyingEnumerationType->reference(true));
       }
     }
     if (subs->operatorMethod)
