@@ -21,6 +21,11 @@ ALTACORE_AST_DETAIL_D(EnumerationDefinitionNode) {
   info->underlyingType = underlyingType->fullDetail(info->inputScope);
   info->ns->underlyingEnumerationType = info->underlyingType->type;
 
+  auto rawconststringType = std::make_shared<AltaCore::DET::Type>(AltaCore::DET::NativeType::Byte, std::vector<uint8_t> { (uint8_t)AltaCore::DET::TypeModifierFlag::Pointer, (uint8_t)AltaCore::DET::TypeModifierFlag::Constant });
+
+  info->ns->enumerationLookupFunction = AltaCore::DET::Function::create(info->ns->scope, "@operator@enum_lookup", { { "$", rawconststringType->copy(), false, "" } }, info->underlyingType->type->reference(true)->makeOptional(), position);
+  info->ns->enumerationReverseLookupFunction = AltaCore::DET::Function::create(info->ns->scope, "@operator@enum_reverse_lookup", { { "$", info->underlyingType->type->copy(), false, "" }, }, rawconststringType->makeOptional(), position);
+
   info->memberType = info->underlyingType->type->copy();
   if (info->memberType->modifiers.size() == 0) {
     info->memberType->modifiers.push_back(0);

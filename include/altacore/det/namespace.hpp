@@ -7,6 +7,8 @@
 
 namespace AltaCore {
   namespace DET {
+    class Function;
+
     class Namespace: public ScopeItem {
       public:
         virtual const NodeType nodeType();
@@ -18,6 +20,8 @@ namespace AltaCore {
         std::shared_ptr<Scope> scope;
         std::vector<std::shared_ptr<Type>> hoistedFunctionalTypes;
         std::shared_ptr<Type> underlyingEnumerationType = nullptr;
+        std::shared_ptr<Function> enumerationLookupFunction = nullptr;
+        std::shared_ptr<Function> enumerationReverseLookupFunction = nullptr;
 
         Namespace(std::string name, AltaCore::Errors::Position position, std::shared_ptr<Scope> parentScope = nullptr);
         virtual std::vector<std::shared_ptr<ScopeItem>> fullPrivateHoistedItems() const;
