@@ -158,6 +158,10 @@ std::string AltaCore::Util::unescape(const std::string& data) {
         result += '\r';
       } else if (nextChar == 'n') {
         result += '\n';
+      } else if (nextChar == 'b') {
+        result += '\b';
+      } else if (nextChar == 'f') {
+        result += '\f';
       } else if (nextChar == 'x' && i + 3 < data.length()) {
         const uint8_t upperHalf = hexDigitToDecimal(data[i + 2]);
         const uint8_t lowerHalf = hexDigitToDecimal(data[i + 3]);

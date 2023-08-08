@@ -2044,6 +2044,7 @@ namespace AltaCore {
               case 'r': val = '\r'; break;
               case 't': val = '\t'; break;
               case 'v': val = '\v'; break;
+              case 'b': val = '\b'; break;
               case '0': val = '\0'; break;
             }
           }
