@@ -198,8 +198,7 @@ ALTACORE_AST_DETAIL_D(FunctionCallExpression) {
   for (auto& type: targetTypes) {
     if (!type) {
       genericFunctionError = true;
-    }
-    if (type->isAccessor) {
+    } else if (type->isAccessor) {
       type = type->returnType;
     }
   }
