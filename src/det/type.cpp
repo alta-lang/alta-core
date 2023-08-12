@@ -2091,6 +2091,9 @@ std::string AltaCore::DET::Type::toString() const {
     }
   }
   if (isFunction) {
+    if (isAccessor) {
+      result += "@read ";
+    }
     result += "(";
     bool isFirst = true;
     for (auto& [name, type, isVariable, id]: parameters) {

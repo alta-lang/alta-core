@@ -63,7 +63,8 @@ std::tuple<size_t, ALTACORE_MAP<size_t, size_t>, std::vector<ALTACORE_VARIANT<st
       }
       size_t compatiblity = 0;
       std::shared_ptr<DET::Type> finalType = nullptr;
-      for (auto& type: types) {
+      for (auto& maybeType: types) {
+        auto type = maybeType->isAccessor ? maybeType->returnType : maybeType;
         auto currentCompat = std::get<1>(targetType->parameters[funcArgIndex])->compatiblity(*type);
         if (currentCompat > 0) {
           if (AltaCore::DET::Type::findCast(type, std::get<1>(targetType->parameters[funcArgIndex])).size() == 0) {
@@ -87,7 +88,8 @@ std::tuple<size_t, ALTACORE_MAP<size_t, size_t>, std::vector<ALTACORE_VARIANT<st
       if (compatiblity == 0) {
         if (std::get<2>(targetType->parameters[funcArgIndex]) && funcArgIndex + 1 < targetType->parameters.size()) {
           funcArgIndex++;
-          for (auto& type: types) {
+          for (auto& maybeType: types) {
+            auto type = maybeType->isAccessor ? maybeType->returnType : maybeType;
             auto currentCompat = std::get<1>(targetType->parameters[funcArgIndex])->compatiblity(*type);
             if (currentCompat > compatiblity) {
               compatiblity = currentCompat;
