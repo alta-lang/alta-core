@@ -144,6 +144,12 @@ AltaCore::Filesystem::Path AltaCore::Modules::resolve(std::string importRequest,
   relativeTo = relativeTo.normalize();
   auto origRelativeTo = relativeTo;
   auto importPath = Path(importRequest, std::string(1, '/'));
+
+  if (importPath.components.size() > 0 && !importPath.isAbsolute() && importPath.components[0] == "@internal@") {
+    importPath.shift();
+    importPath = standardLibraryPath / "_internal" / importPath;
+  }
+
   if (importPath.extname() == "alta") {
     // resolve locally
     if (!relativeTo.isDirectory()) {

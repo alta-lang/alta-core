@@ -79,6 +79,9 @@ void AltaCore::AST::RootNode::detail(AltaCore::Filesystem::Path filePath, std::s
       info->module->scope
     );
     info->module->scope->items.push_back(resultClassAlias);
+
+    auto nativeNamespace = std::dynamic_pointer_cast<DET::Namespace>(info->module->internal.module->exports->findAll("Native")[0]);
+    info->module->internal.metaCoroutineClass = std::dynamic_pointer_cast<DET::Class>(nativeNamespace->scope->findAll("_Alta_basic_coroutine")[0]);
   };
 
   if (info->module->packageInfo.root == Modules::standardLibraryPath / "_internal" && info->module->name == "_internal/main") {

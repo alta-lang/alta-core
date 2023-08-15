@@ -29,6 +29,8 @@ namespace AltaCore {
         std::shared_ptr<Class> resultClass = nullptr;
 
         std::shared_ptr<Variable> schedulerVariable = nullptr;
+
+        std::shared_ptr<Class> metaCoroutineClass = nullptr;
     };
 
     class Module: public Node {
