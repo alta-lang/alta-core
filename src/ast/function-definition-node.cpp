@@ -1,7 +1,10 @@
 #include "../../include/altacore/ast/function-definition-node.hpp"
 #include <algorithm>
 #include "../../include/altacore/util.hpp"
+#include "altacore/det-shared.hpp"
+#include "altacore/det/function.hpp"
 #include "altacore/det/type.hpp"
+#include "altacore/shared.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::FunctionDefinitionNode::nodeType() {
   return NodeType::FunctionDefinitionNode;
@@ -464,6 +467,13 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
         nextFuncWithArgs->parentClassType = nextFunc->parentClassType;
         info->generator->scope->items.push_back(nextFuncWithArgs);
       }
+
+      auto copyCtor = DET::Function::create(info->generator->scope, "constructor", {{"other", dtor->parentClassType, false, "not-so-random-uuid"}}, std::make_shared<DET::Type>(DET::NativeType::Void), position);
+      copyCtor->isMethod = true;
+      copyCtor->parentClassType = dtor->parentClassType;
+      copyCtor->isConstructor = true;
+      info->generator->constructors.push_back(copyCtor);
+      info->generator->copyConstructor = copyCtor;
     }
 
     if (info->isAsync && !info->coroutine) {
@@ -495,11 +505,21 @@ ALTACORE_AST_INFO_DETAIL_D(FunctionDefinitionNode) {
       nextFunc->isMethod = true;
       nextFunc->parentClassType = valueAcc->parentClassType;
 
-      auto coroutineStruct = DET::Class::create("@UserAccessibleCoroutineStructure@", info->function->scope, position, {}, true);
-      auto idVar = std::make_shared<DET::Variable>("id", std::make_shared<DET::Type>(DET::NativeType::Integer, DET::Type::createModifierVector({ { DET::TypeModifierFlag::Long, DET::TypeModifierFlag::Long } })), position, coroutineStruct->scope);
-      idVar->isLiteral = true;
-      coroutineStruct->scope->items.push_back(idVar);
-      auto coroutineVar = std::make_shared<DET::Variable>("$coroutine", std::make_shared<DET::Type>(coroutineStruct, DET::Type::createModifierVector({ { TypeModifierFlag::Reference } })), position, info->function->scope);
+      auto idAcc = DET::Function::create(info->coroutine->scope, "id", {}, std::make_shared<DET::Type>(DET::NativeType::Integer, DET::Type::createModifierVector({ { Shared::TypeModifierFlag::Unsigned, Shared::TypeModifierFlag::Long }, { Shared::TypeModifierFlag::Long } })), position);
+      idAcc->isAccessor = true;
+      idAcc->isMethod = true;
+      idAcc->parentClassType = doneAcc->parentClassType;
+      info->coroutine->scope->items.push_back(idAcc);
+
+      auto copyCtor = DET::Function::create(info->coroutine->scope, "constructor", {{"other", dtor->parentClassType, false, "not-so-random-uuid"}}, std::make_shared<DET::Type>(DET::NativeType::Void), position);
+      copyCtor->isMethod = true;
+      copyCtor->parentClassType = dtor->parentClassType;
+      copyCtor->isConstructor = true;
+      info->coroutine->constructors.push_back(copyCtor);
+      info->coroutine->copyConstructor = copyCtor;
+
+      auto mod = AltaCore::Util::getModule(info->inputScope.get()).lock();
+      auto coroutineVar = std::make_shared<DET::Variable>("$coroutine", std::make_shared<DET::Type>(mod->internal.metaCoroutineClass, DET::Type::createModifierVector({ { TypeModifierFlag::Reference } })), position, info->function->scope);
       info->function->scope->items.push_back(coroutineVar);
     }
 
