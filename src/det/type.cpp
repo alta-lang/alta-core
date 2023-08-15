@@ -855,7 +855,8 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
     #undef AC_RETURN_INDEX
   };
 
-  bool dontLoopBack = false;
+  std::stack<bool> dontLoopBack;
+  dontLoopBack.push(false);
 
   loop = [&loop, &reverseLoop, &manual, &dontLoopBack](std::shared_ptr<Type> from, std::vector<std::shared_ptr<Type>> tos, size_t* index) -> CastPath {
     if (manual && from->isUnion() && tos.size() == 1 && !tos.front()->isUnion() && from->indirectionLevel() == 0) {
@@ -1459,8 +1460,8 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
       }
     AC_TO_LOOP_END;
 
-    if (!dontLoopBack && from->referenceLevel() > 0) {
-      dontLoopBack = true;
+    if (!dontLoopBack.top() && from->referenceLevel() > 0) {
+      dontLoopBack.push(true);
       auto other = from->dereference();
       while (other->referenceLevel() >= 0) {
         auto cast = loop(other, tos, index);
@@ -1468,10 +1469,13 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
           for (size_t i = other->referenceLevel(); i < from->referenceLevel(); ++i) {
             cast.insert(cast.begin(), CC(CCT::Dereference));
           }
+          dontLoopBack.pop();
           return cast;
         }
         if (other->referenceLevel() == 0) break;
+        other = other->dereference();
       }
+      dontLoopBack.pop();
     }
 
     size_t maxToRefLevel = 0;
@@ -1481,17 +1485,16 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
       }
     AC_TO_LOOP_END;
 
-    if (!dontLoopBack && from->referenceLevel() < maxToRefLevel) {
-      dontLoopBack = true;
+    if (!dontLoopBack.top() && from->referenceLevel() < maxToRefLevel) {
+      dontLoopBack.push(true);
       auto cast = loop(from->reference(), tos, index);
       if (cast.size() > 0) {
         cast.insert(cast.begin(), CC(CCT::Reference));
-        dontLoopBack = false;
+        dontLoopBack.pop();
         return cast;
       }
+      dontLoopBack.pop();
     };
-
-    dontLoopBack = false;
 
     AC_TO_LOOP;
       if (to->isAny && to->pointerLevel() == 0) {
