@@ -7,9 +7,7 @@ set(OPTIONAL_ENABLE_DOCS OFF CACHE BOOL "Disable Optional docs")
 set(OPTIONAL_ENABLE_TESTS OFF CACHE BOOL "Disable Optional tests")
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/deps/yaml-cpp")
-add_subdirectory("${PROJECT_SOURCE_DIR}/deps/optional")
 add_subdirectory("${PROJECT_SOURCE_DIR}/deps/crossguid")
-add_subdirectory("${PROJECT_SOURCE_DIR}/deps/variant")
 
 include("${PROJECT_SOURCE_DIR}/deps/CMakeLists-semver.c.cmake")
 
@@ -122,15 +120,9 @@ endif()
 target_include_directories(altacore PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
 target_compile_definitions(altacore PUBLIC ALTACORE_LOCAL_SEMVER)
-target_compile_definitions(altacore PUBLIC ALTACORE_LOCAL_ANY)
-
-if (CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "10.14")
-  target_compile_definitions(altacore PUBLIC ALTACORE_NO_SYSTEM_ANY)
-  target_compile_definitions(altacore PUBLIC ALTACORE_NO_SYSTEM_VARIANT)
-endif()
 
 target_link_libraries(altacore PRIVATE yaml-cpp)
-target_link_libraries(altacore PUBLIC semver_c optional crossguid mpark_variant)
+target_link_libraries(altacore PUBLIC semver_c crossguid)
 
 set_target_properties(altacore
   PROPERTIES
