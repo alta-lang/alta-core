@@ -2194,7 +2194,7 @@ std::string AltaCore::DET::Type::toString() const {
 
   if (!name.empty()) {
     result += " }";
-    result = (parentScope.lock() ? parentScope.lock()->toString() : "") + '.' + result;
+    result = Util::joinDETPaths({ (parentScope.lock() ? parentScope.lock()->toString() : ""), result });
   }
 
   return result;

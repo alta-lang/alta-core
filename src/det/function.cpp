@@ -1,6 +1,7 @@
 #include "../../include/altacore/det/function.hpp"
 #include "../../include/altacore/det/class.hpp"
 #include "../../include/altacore/ast/function-definition-node.hpp"
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Function::nodeType() {
   return NodeType::Function;
@@ -206,7 +207,7 @@ std::string AltaCore::DET::Function::toString() const {
     }
   }
 
-  result = (parentScope.lock() ? parentScope.lock()->toString() : "") + '.' + result;
+  result = Util::joinDETPaths({ (parentScope.lock() ? parentScope.lock()->toString() : ""), result });
 
   return result;
 };

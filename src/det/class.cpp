@@ -2,6 +2,7 @@
 #include "../../include/altacore/det/variable.hpp"
 #include "../../include/altacore/ast/class-definition-node.hpp"
 #include "../../include/altacore/det/scope.hpp"
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Class::nodeType() {
   return NodeType::Class;
@@ -446,7 +447,7 @@ std::string AltaCore::DET::Class::toString() const {
     result += '>';
   }
 
-  result = (parentScope.lock() ? parentScope.lock()->toString() : "") + '.' + result;
+  result = Util::joinDETPaths({ (parentScope.lock() ? parentScope.lock()->toString() : ""), result });
 
   return result;
 };

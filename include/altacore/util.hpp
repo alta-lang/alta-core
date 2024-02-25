@@ -20,6 +20,23 @@ namespace AltaCore {
     bool stringsAreEqualCaseInsensitive(const std::string& lhs, const std::string& rhs);
     void exportClassIfNecessary(std::shared_ptr<AltaCore::DET::Scope> scope, std::shared_ptr<AltaCore::DET::Type> type, bool force = false);
     std::shared_ptr<DET::Scope> findLoopScope(std::shared_ptr<DET::Scope> scope);
+
+    inline std::string joinDETPaths(std::initializer_list<std::string> paths) {
+      std::string result = "";
+      bool first = true;
+      for (const auto& path: paths) {
+        if (path.empty()) {
+          continue;
+        }
+        if (first) {
+          first = false;
+        } else {
+          result += '.';
+        }
+        result += path;
+      }
+      return result;
+    };
   };
 };
 

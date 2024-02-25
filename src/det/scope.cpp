@@ -409,20 +409,20 @@ std::shared_ptr<AltaCore::DET::Function> AltaCore::DET::Scope::findParentLambda(
 std::string AltaCore::DET::Scope::toString() const {
   std::string result;
 
-  result = "<scope#" + std::to_string(relativeID) + '>';
+  result = (relativeID == 0) ? "" : ("<scope#" + std::to_string(relativeID) + '>');
 
   if (auto pScope = parent.lock()) {
-    result = pScope->toString() + result;
+    result = Util::joinDETPaths({ pScope->toString(), result });
   }
 
   if (auto pMod = parentModule.lock()) {
-    result = '[' + pMod->toString() + "]." + result;
+    result = Util::joinDETPaths({ '[' + pMod->toString() + ']', result });
   } else if (auto pFunc = parentFunction.lock()) {
-    result = '[' + pFunc->toString() + "]." + result;
+    result = Util::joinDETPaths({ '[' + pFunc->toString() + ']', result });
   } else if (auto pClass = parentClass.lock()) {
-    result = pClass->toString() + '.' + result;
+    result = Util::joinDETPaths({ pClass->toString(), result });
   } else if (auto pNamespace = parentNamespace.lock()) {
-    result = pNamespace->toString() + '.' + result;
+    result = Util::joinDETPaths({ pNamespace->toString(), result });
   }
 
   return result;

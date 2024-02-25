@@ -1,5 +1,6 @@
 #include "../../include/altacore/det/variable.hpp"
 #include "../../include/altacore/det/scope.hpp"
+#include "../../include/altacore/util.hpp"
 
 const AltaCore::DET::NodeType AltaCore::DET::Variable::nodeType() {
   return NodeType::Variable;
@@ -26,5 +27,5 @@ AltaCore::DET::Variable::Variable(
   {};
 
 std::string AltaCore::DET::Variable::toString() const {
-  return (parentScope.lock() ? parentScope.lock()->toString() : "") + '.' + name + ": " + type->toString();
+  return Util::joinDETPaths({ (parentScope.lock() ? parentScope.lock()->toString() : ""), (name + ": " + type->toString()) });
 };
