@@ -94,7 +94,7 @@ std::shared_ptr<AltaCore::DET::Type> AltaCore::DET::Type::getUnderlyingType(Alta
     } else {
       auto type = std::make_shared<Type>(inst->klass);
       if (inst->persistent) {
-        type = type->reference();
+        type = type->point();
       }
       return type;
     }
