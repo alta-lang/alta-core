@@ -648,6 +648,9 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
           auto& parent = accessorClass->parents[i];
           if (parent->id == to->klass->id) {
             cast.push_back(CC(CCT::Upcast, parent));
+            if (from->referenceLevel() > to->referenceLevel()) {
+              cast.push_back(CC(CCT::Dereference));
+            }
             break;
           }
           if (parent->hasParent(to->klass)) {
@@ -970,6 +973,9 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
           auto& parent = accessorClass->parents[i];
           if (parent->id == to->klass->id) {
             cast.push_back(CC(CCT::Upcast, parent));
+            if (from->referenceLevel() > to->referenceLevel()) {
+              cast.push_back(CC(CCT::Dereference));
+            }
             break;
           }
           if (parent->hasParent(to->klass)) {
@@ -1130,6 +1136,9 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
             auto& parent = accessorClass->parents[i];
             if (parent->id == to->klass->id) {
               cast.push_back(CC(CCT::Upcast, parent));
+              if (special->referenceLevel() > to->referenceLevel()) {
+                cast.push_back(CC(CCT::Dereference));
+              }
               break;
             }
             if (parent->hasParent(to->klass)) {
@@ -1164,6 +1173,9 @@ auto AltaCore::DET::Type::findCast(std::shared_ptr<Type> from, std::shared_ptr<T
             auto& parent = accessorClass->parents[i];
             if (parent->id == special->klass->id) {
               cast.push_back(CC(CCT::Upcast, parent));
+              if (from->referenceLevel() > special->referenceLevel()) {
+                cast.push_back(CC(CCT::Dereference));
+              }
               break;
             }
             if (parent->hasParent(special->klass)) {
