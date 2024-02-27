@@ -21,7 +21,9 @@ namespace AltaCore {
       } },
       { "lexer", {} },
       { "DET", {} },
-      { "AST", {} },
+      { "AST", {
+        make_summary("T0001", "Possibly incorrect inferred variable type without references"),
+      } },
       { "filesystem", {} },
       { "modules", {} },
       { "validator", {} },

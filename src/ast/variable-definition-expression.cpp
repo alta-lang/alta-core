@@ -1,6 +1,7 @@
 #include "../../include/altacore/ast/variable-definition-expression.hpp"
 #include "../../include/altacore/util.hpp"
 #include "../../include/altacore/ast/nullptr-expression.hpp"
+#include "../../include/altacore/logging.hpp"
 
 const AltaCore::AST::NodeType AltaCore::AST::VariableDefinitionExpression::nodeType() {
   return NodeType::VariableDefinitionExpression;
@@ -83,8 +84,20 @@ ALTACORE_AST_INFO_DETAIL_D(VariableDefinitionExpression) {
         if (std::dynamic_pointer_cast<AST::NullptrExpression>(info->initializationExpression)) {
           ALTACORE_DETAILING_ERROR("can't infer variable type from `nullptr` (i.e. type must be explicitly declared for this variable)");
         }
+        auto initType = DET::Type::getUnderlyingType(info->initializationExpression.get())->deconstify();
+        auto inferred = initType->destroyReferences();
+        if (
+          // warn for types with references...
+          initType->referenceLevel() > 0 &&
+          // ...but NOT for retrieval nodes with a single reference
+          // (since they simply reference the variable directly and the actual behavior is the expected behavior)
+          // NOTE: this won't catch instances where a retrieval node returns a reference variable
+          !(std::dynamic_pointer_cast<RetrievalNode>(initializationExpression) && initType->referenceLevel() == 1)
+        ) {
+          Logging::log(Logging::Message("AST", "T0001", Logging::Severity::Warning, position, "Inferred variable type without references:\n  Initialization expression type = " + initType->toString() + "\n  Inferred variable type = " + inferred->toString()));
+        }
         info->type = std::make_shared<DH::Type>(info->inputScope);
-        info->type->type = DET::Type::getUnderlyingType(info->initializationExpression.get())->deconstify()->destroyReferences();
+        info->type->type = inferred;
         info->type->isAny = info->type->type->isAny;
         info->type->isNative = info->type->type->isNative;
         info->type->isFunction = info->type->type->isFunction;
